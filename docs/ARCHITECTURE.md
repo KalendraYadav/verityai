@@ -1231,8 +1231,8 @@ The detailed contract belongs in `API_CONTRACT.md`.
 
 ### 16.3 Communication conventions
 
-- **JSON over HTTPS**; multipart for uploads.
-- **Authentication**: bearer token in the `Authorization` header.
+- **JSON over HTTPS**; multipart for uploads; standard API base prefix `/api/v1/`.
+- **Authentication**: signed JWT in an HttpOnly, SameSite=Lax cookie (`Secure` in production) with a required custom CSRF request header on state-changing requests.
 - **Asynchronous work**: upload and "run validation" return `202 Accepted`; the frontend polls status endpoints at a modest interval. No WebSockets in the prototype.
 - **Errors**: a consistent body with `error_code`, `message`, and optionally `details` (never stack traces).
 - **Pagination and filtering** on list endpoints.
@@ -1410,7 +1410,7 @@ Prototype: error logs with correlation IDs and an admin-visible list of recent f
 
 ### 20.5 Performance measurement
 
-Instrument durations (Section 22): request duration middleware, stage duration (`started_at`/`finished_at`), rule duration (`duration_ms`), run duration. A simple `/health` endpoint reports liveness, database connectivity, OCR availability, and optional LLM availability.
+Instrument durations (Section 22): request duration middleware, stage duration (`started_at`/`finished_at`), rule duration (`duration_ms`), run duration. A simple `GET /api/v1/health` endpoint reports liveness, database connectivity, OCR availability, and optional LLM availability.
 
 ---
 
@@ -1610,7 +1610,7 @@ If time runs short, cut P1 and P2 first; never cut honest labelling, evidence li
 | AD-12 | **Verification provider abstraction with provenance on every result** | Prevents confusing simulated and real results; allows future integration | Hardcoded mock responses; omitting verification | Slight extra modelling effort | No |
 | AD-13 | **Simulated provider seeded from synthetic registry; always labelled** | Demonstrable without authorization; honest | Fake "verified" responses in the UI | Demo shows simulated only; must be explained transparently | No |
 | AD-14 | **All rules labelled illustrative until verified against official source** | Avoids inventing regulatory requirements | Presenting guessed rules as official | Demo rules may look "less official" | No |
-| AD-15 | **JWT bearer authentication with locally managed users** | Simple, stateless, easy to test | Session cookies; external identity provider | Token revocation is limited; no government SSO | **Yes** |
+| AD-15 | **JWT in HttpOnly, SameSite=Lax cookie with CSRF header protection** | Secure browser session management against XSS; SameSite prevents cross-origin request forgery | Bearer tokens in localStorage (vulnerable to XSS); external SSO | Session cookies require same-origin or reverse-proxy alignment in development | **No** |
 | AD-16 | **Polling for status, not WebSockets** | Simple; adequate for small scale | WebSockets; server-sent events | Slight latency and extra requests | **Yes** |
 | AD-17 | **Report as HTML rendered by templates and converted to PDF where supported** | Easy styling and full control of disclaimers | Word documents; client-side PDF | PDF conversion libraries may need system dependencies; fallback to printable HTML | **Yes** |
 | AD-18 | **Evidence references as a polymorphic link table** | One mechanism for all finding types | Separate tables per evidence type | Needs careful integrity checks in code | No |

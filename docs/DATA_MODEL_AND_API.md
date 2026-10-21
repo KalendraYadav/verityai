@@ -47,7 +47,7 @@ When this document was written, only `docs/AI_PIPELINE.md` was available in the 
 |---|---|---|---|
 | D1 | Backend: **Python 3.11+ with FastAPI**; request/response models validated with Pydantic. | Prompt allows FastAPI; AI_PIPELINE.md A1. | Keep paths and JSON; swap framework mechanics. |
 | D2 | Database: **SQLite for the demo**, schema kept **PostgreSQL-compatible**; accessed through **SQLAlchemy 2.x**. | AI_PIPELINE.md A2. | Change column types only; avoid SQLite-only features in the model. |
-| D3 | Authentication: **email + password login returning a signed bearer token (JWT)**, sent as `Authorization: Bearer <token>`. | Simplest stateless approach for a demo. | If sessions/cookies were chosen, only Section 13 changes (token → cookie); roles and permissions stay. |
+| D3 | Authentication: **email + password login setting a signed JWT in an HttpOnly, SameSite=Lax cookie** with CSRF header protection. | Standard, XSS-safe browser session architecture. | Matches `TECH_STACK.md` and `UI_UX_DESIGN.md`. All browser endpoints authenticate via session cookie. |
 | D4 | Roles: `INSTITUTION_USER`, `REVIEWER`, `ADMIN`. | Prompt Section 17. | Rename roles consistently. |
 | D5 | Document processing runs **asynchronously in the same process** (background task or single in-process worker); clients **poll** status endpoints. No WebSockets. | AI_PIPELINE.md A5; prompt Section 13. | Contracts unchanged if processing is synchronous (status simply returns `COMPLETED` at once). |
 | D6 | File storage: **local disk** behind a small storage interface; DB stores a **relative storage key**. | AI_PIPELINE.md A6. | Replace storage backend; the key semantic is unchanged. |
@@ -747,10 +747,10 @@ Do not add indexes beyond this list in P0; SQLite handles demo volumes easily.
 
 ## 12. API Design Principles
 
-1. **Base path** `/api`; JSON everywhere except file upload (multipart) and file download (binary).
+1. **Base path** `/api/v1`; JSON everywhere except file upload (multipart) and file download (binary).
 2. **Resource-oriented paths**, plural nouns, nesting only one level (`/applications/{id}/documents`).
 3. **Methods:** `GET` read, `POST` create/commands, `PATCH` partial update, `DELETE` only for soft-deleting drafts (P1). No `PUT`.
-4. **Authentication required** for every endpoint except `POST /api/auth/login` and `GET /api/health`.
+4. **Authentication required** for every endpoint except `POST /api/v1/auth/login` and `GET /api/v1/health`.
 5. **Server-side authorization** on every request (Section 13). The UI hiding a button is not security.
 6. **Long-running work is asynchronous** (document processing, validation runs): the request returns `202 Accepted` with a resource to poll. Everything else is synchronous.
 7. **Consistent envelope** (Section 16) for success and errors.
@@ -765,14 +765,15 @@ Do not add indexes beyond this list in P0; SQLite handles demo volumes easily.
 
 ## 13. API Authentication and Authorization
 
-### 13.1 Authentication (assumption D3)
+### 13.1 Authentication
 
-- `POST /api/auth/login` with email and password returns an access token (short-lived, e.g., 60 minutes) and the user profile.
-- Subsequent calls send `Authorization: Bearer <token>`.
-- Logout is **client-side token discard** (a server `POST /api/auth/logout` endpoint that writes an audit event is optional, P1).
+- `POST /api/v1/auth/login` with email and password sets an **HttpOnly, SameSite=Lax cookie** carrying the signed JWT session (short-lived, e.g., 60 minutes; `Secure` enabled outside local development) and returns the user profile.
+- Subsequent browser requests automatically include the session cookie.
+- **CSRF Mitigation:** State-changing requests (`POST`, `PATCH`, `DELETE`) require a custom request header (e.g. `X-Requested-With: VerityAI`) set by the frontend API wrapper.
+- `POST /api/v1/auth/logout` is a **P0 endpoint** that clears the session cookie (`Set-Cookie: access_token=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax`) and writes an audit event.
 - Passwords are verified against `users.password_hash`; failed logins return the same generic `401` message for unknown email and wrong password; basic rate limiting on login is P1.
-- Tokens, passwords and `Authorization` headers are **never logged**.
-- Inactive users (`is_active = false`) cannot log in and existing tokens are rejected.
+- Tokens, passwords and sensitive headers are **never logged**.
+- Inactive users (`is_active = false`) cannot log in and existing sessions are rejected.
 
 ### 13.2 Role permission matrix (P0)
 
@@ -823,61 +824,61 @@ Priority: **P0** build now, **P1** if time permits. "Async" = returns `202` and 
 
 | # | Method | Path | Purpose | Roles | Mode | Pri |
 |---|---|---|---|---|---|---|
-| 1 | GET | `/api/health` | Liveness (no auth) | none | sync | P0 |
-| 2 | POST | `/api/auth/login` | Obtain token | none | sync | P0 |
-| 3 | GET | `/api/auth/me` | Current user | all | sync | P0 |
-| 4 | POST | `/api/auth/logout` | Audit logout | all | sync | P1 |
-| 5 | GET | `/api/institutions` | List institutions | I(own), R, A | sync | P0 |
-| 6 | GET | `/api/institutions/{id}` | Institution detail | I(own), R, A | sync | P0 |
-| 7 | POST | `/api/institutions` | Create institution | A | sync | P1 |
-| 8 | PATCH | `/api/institutions/{id}` | Update institution | A | sync | P1 |
-| 9 | GET | `/api/application-categories` | List categories (+ required docs) | all | sync | P0 |
-| 10 | POST | `/api/applications` | Create draft application | I, A | sync | P0 |
-| 11 | GET | `/api/applications` | List (filters, pagination) | I(own), R, A | sync | P0 |
-| 12 | GET | `/api/applications/{id}` | Application detail | I(own), R, A | sync | P0 |
-| 13 | PATCH | `/api/applications/{id}` | Update draft fields / declared data | I(own, DRAFT), A | sync | P0 |
-| 14 | POST | `/api/applications/{id}/submit` | Submit | I(own), A | sync | P0 |
-| 15 | GET | `/api/applications/{id}/status` | Aggregated processing/validation status (polling) | I(own), R, A | sync | P0 |
-| 16 | POST | `/api/applications/{id}/documents` | Upload (multipart) | I(own), R, A | **async** | P0 |
-| 17 | GET | `/api/applications/{id}/documents` | List documents | I(own), R, A | sync | P0 |
-| 18 | GET | `/api/documents/{id}` | Document metadata | I(own), R, A | sync | P0 |
-| 19 | GET | `/api/documents/{id}/processing` | Processing status + stage runs | I(own), R, A | sync | P0 |
-| 20 | GET | `/api/documents/{id}/fields` | Current extracted fields (`?include_history=true`) | I(own,read), R, A | sync | P0 |
-| 21 | GET | `/api/documents/{id}/pages` | Page records (text source, confidence) | R, A | sync | P0 |
-| 22 | GET | `/api/documents/{id}/file` | Authorized preview/download | I(own), R, A | sync | P0 |
-| 23 | POST | `/api/documents/{id}/reprocess` | Retry/reprocess | I(own, FAILED), R, A | **async** | P0 |
-| 24 | PATCH | `/api/documents/{id}/classification` | Reviewer override of type | R, A | sync (+ async reprocess) | P0 |
-| 25 | POST | `/api/documents/{id}/fields` | Manual field entry | R, A | sync | P1 |
-| 26 | POST | `/api/fields/{id}/corrections` | Correct a field (new version) | R, A | sync (+ async revalidation) | P0 |
-| 27 | DELETE | `/api/documents/{id}` | Soft-delete (draft only) | I(own), A | sync | P1 |
-| 28 | POST | `/api/applications/{id}/validation-runs` | Start validation | I(own preview), R, A | **async** | P0 |
-| 29 | GET | `/api/validation-runs/{id}` | Run status/summary | R, A (I own preview status only) | sync | P0 |
-| 30 | GET | `/api/applications/{id}/validation-runs` | Run history | R, A | sync | P1 |
-| 31 | GET | `/api/applications/{id}/validation-summary` | Latest summary | R, A | sync | P0 |
-| 32 | GET | `/api/applications/{id}/rule-results` | Results of current run | R, A | sync | P0 |
-| 33 | GET | `/api/applications/{id}/findings` | Findings (filters) | R, A | sync | P0 |
-| 34 | GET | `/api/findings/{id}` | Finding with evidence | R, A | sync | P0 |
-| 35 | GET | `/api/validation-rules` | List rules | R, A | sync | P0 |
-| 36 | PATCH | `/api/validation-rules/{rule_code}` | Enable/disable, severity | A | sync | P1 |
-| 37 | POST | `/api/documents/{id}/verification-attempts` | Start verification | R, A | sync (simulated) / creates PENDING (manual) | P0 |
-| 38 | GET | `/api/documents/{id}/verification-attempts` | Verification history | R, A | sync | P0 |
-| 39 | POST | `/api/verification-attempts/{id}/manual-result` | Record manual outcome | R, A | sync | P0 |
-| 40 | GET | `/api/applications/{id}/compliance` | Checklist results (current run) | R, A | sync | P0 |
-| 41 | GET | `/api/compliance-requirements` | Requirement definitions | R, A | sync | P1 |
-| 42 | GET | `/api/review-queue` | Findings/applications needing review | R, A | sync | P0 |
-| 43 | POST | `/api/applications/{id}/review/start` | Move to `UNDER_REVIEW` | R, A | sync | P0 |
-| 44 | POST | `/api/applications/{id}/review/complete` | Mark review complete | R, A | sync | P0 |
-| 45 | POST | `/api/findings/{id}/review-actions` | Confirm/dismiss/request evidence/resolve/reopen/note | R, A | sync | P0 |
-| 46 | GET | `/api/findings/{id}/review-actions` | Action history | R, A | sync | P0 |
-| 47 | POST | `/api/applications/{id}/observations` | Note on application/compliance item | R, A | sync | P1 |
-| 48 | PATCH | `/api/applications/{id}/assignment` | Assign reviewer | A | sync | P1 |
-| 49 | GET | `/api/dashboard/summary` | Summary metrics | R, A | sync | P0 |
-| 50 | GET | `/api/dashboard/finding-categories` | Counts by category/severity | R, A | sync | P1 |
-| 51 | GET | `/api/dashboard/processing-stats` | Latency/throughput stats | R, A | sync | P1 |
-| 52 | GET | `/api/applications/{id}/audit-events` | Application audit timeline | R, A | sync | P0 |
-| 53 | GET | `/api/audit-events` | Global audit log | A | sync | P1 |
-| 54 | POST | `/api/applications/{id}/reports` | Generate report on demand | R, A | sync | P0 |
-| 55 | GET | `/api/applications/{id}/reports` | List persisted reports | R, A | sync | P1 |
+| 1 | GET | `/api/v1/health` | Liveness (no auth) | none | sync | P0 |
+| 2 | POST | `/api/v1/auth/login` | Obtain session cookie | none | sync | P0 |
+| 3 | GET | `/api/v1/auth/me` | Current user | all | sync | P0 |
+| 4 | POST | `/api/v1/auth/logout` | Clear session cookie & audit | all | sync | P0 |
+| 5 | GET | `/api/v1/institutions` | List institutions | I(own), R, A | sync | P0 |
+| 6 | GET | `/api/v1/institutions/{id}` | Institution detail | I(own), R, A | sync | P0 |
+| 7 | POST | `/api/v1/institutions` | Create institution | A | sync | P1 |
+| 8 | PATCH | `/api/v1/institutions/{id}` | Update institution | A | sync | P1 |
+| 9 | GET | `/api/v1/application-categories` | List categories (+ required docs) | all | sync | P0 |
+| 10 | POST | `/api/v1/applications` | Create draft application | I, A | sync | P0 |
+| 11 | GET | `/api/v1/applications` | List (filters, pagination) | I(own), R, A | sync | P0 |
+| 12 | GET | `/api/v1/applications/{id}` | Application detail | I(own), R, A | sync | P0 |
+| 13 | PATCH | `/api/v1/applications/{id}` | Update draft fields / declared data | I(own, DRAFT), A | sync | P0 |
+| 14 | POST | `/api/v1/applications/{id}/submit` | Submit | I(own), A | sync | P0 |
+| 15 | GET | `/api/v1/applications/{id}/status` | Aggregated processing/validation status (polling) | I(own), R, A | sync | P0 |
+| 16 | POST | `/api/v1/applications/{id}/documents` | Upload (multipart) | I(own), R, A | **async** | P0 |
+| 17 | GET | `/api/v1/applications/{id}/documents` | List documents | I(own), R, A | sync | P0 |
+| 18 | GET | `/api/v1/documents/{id}` | Document metadata | I(own), R, A | sync | P0 |
+| 19 | GET | `/api/v1/documents/{id}/processing` | Processing status + stage runs | I(own), R, A | sync | P0 |
+| 20 | GET | `/api/v1/documents/{id}/fields` | Current extracted fields (`?include_history=true`) | I(own,read), R, A | sync | P0 |
+| 21 | GET | `/api/v1/documents/{id}/pages` | Page records (text source, confidence) | R, A | sync | P0 |
+| 22 | GET | `/api/v1/documents/{id}/file` | Authorized preview/download | I(own), R, A | sync | P0 |
+| 23 | POST | `/api/v1/documents/{id}/reprocess` | Retry/reprocess | I(own, FAILED), R, A | **async** | P0 |
+| 24 | PATCH | `/api/v1/documents/{id}/classification` | Reviewer override of type | R, A | sync (+ async reprocess) | P0 |
+| 25 | POST | `/api/v1/documents/{id}/fields` | Manual field entry | R, A | sync | P1 |
+| 26 | POST | `/api/v1/fields/{id}/corrections` | Correct a field (new version) | R, A | sync (+ async revalidation) | P0 |
+| 27 | DELETE | `/api/v1/documents/{id}` | Soft-delete (draft only) | I(own), A | sync | P1 |
+| 28 | POST | `/api/v1/applications/{id}/validation-runs` | Start validation | I(own preview), R, A | **async** | P0 |
+| 29 | GET | `/api/v1/validation-runs/{id}` | Run status/summary | R, A (I own preview status only) | sync | P0 |
+| 30 | GET | `/api/v1/applications/{id}/validation-runs` | Run history | R, A | sync | P1 |
+| 31 | GET | `/api/v1/applications/{id}/validation-summary` | Latest summary | R, A | sync | P0 |
+| 32 | GET | `/api/v1/applications/{id}/rule-results` | Results of current run | R, A | sync | P0 |
+| 33 | GET | `/api/v1/applications/{id}/findings` | Findings (filters) | R, A | sync | P0 |
+| 34 | GET | `/api/v1/findings/{id}` | Finding with evidence | R, A | sync | P0 |
+| 35 | GET | `/api/v1/validation-rules` | List rules | R, A | sync | P0 |
+| 36 | PATCH | `/api/v1/validation-rules/{rule_code}` | Enable/disable, severity | A | sync | P1 |
+| 37 | POST | `/api/v1/documents/{id}/verification-attempts` | Start verification | R, A | sync (simulated) / creates PENDING (manual) | P0 |
+| 38 | GET | `/api/v1/documents/{id}/verification-attempts` | Verification history | R, A | sync | P0 |
+| 39 | POST | `/api/v1/verification-attempts/{id}/manual-result` | Record manual outcome | R, A | sync | P0 |
+| 40 | GET | `/api/v1/applications/{id}/compliance` | Checklist results (current run) | R, A | sync | P0 |
+| 41 | GET | `/api/v1/compliance-requirements` | Requirement definitions | R, A | sync | P1 |
+| 42 | GET | `/api/v1/review-queue` | Findings/applications needing review | R, A | sync | P0 |
+| 43 | POST | `/api/v1/applications/{id}/review/start` | Move to `UNDER_REVIEW` | R, A | sync | P0 |
+| 44 | POST | `/api/v1/applications/{id}/review/complete` | Mark review complete | R, A | sync | P0 |
+| 45 | POST | `/api/v1/findings/{id}/review-actions` | Confirm/dismiss/request evidence/resolve/reopen/note | R, A | sync | P0 |
+| 46 | GET | `/api/v1/findings/{id}/review-actions` | Action history | R, A | sync | P0 |
+| 47 | POST | `/api/v1/applications/{id}/observations` | Note on application/compliance item | R, A | sync | P1 |
+| 48 | PATCH | `/api/v1/applications/{id}/assignment` | Assign reviewer | A | sync | P1 |
+| 49 | GET | `/api/v1/dashboard/summary` | Summary metrics | R, A | sync | P0 |
+| 50 | GET | `/api/v1/dashboard/finding-categories` | Counts by category/severity | R, A | sync | P1 |
+| 51 | GET | `/api/v1/dashboard/processing-stats` | Latency/throughput stats | R, A | sync | P1 |
+| 52 | GET | `/api/v1/applications/{id}/audit-events` | Application audit timeline | R, A | sync | P0 |
+| 53 | GET | `/api/v1/audit-events` | Global audit log | A | sync | P1 |
+| 54 | POST | `/api/v1/applications/{id}/reports` | Generate report on demand | R, A | sync | P0 |
+| 55 | GET | `/api/v1/applications/{id}/reports` | List persisted reports | R, A | sync | P1 |
 
 ---
 
@@ -885,7 +886,7 @@ Priority: **P0** build now, **P1** if time permits. "Async" = returns `202` and 
 
 All examples use readable placeholder IDs matching `AI_PIPELINE.md` (`APP-2026-0001`, `DOC-0001`, `FLD-0007`, `FND-0003`, `RUN-0001`, `VER-0001`). **Real IDs are UUID strings.** All values are synthetic. Responses are shown without the `request_id` header for brevity.
 
-### 15.1 `POST /api/auth/login`
+### 15.1 `POST /api/v1/auth/login`
 
 Role: none. Sync.
 
@@ -895,14 +896,11 @@ Request:
 { "email": "reviewer1@demo.verityai.invalid", "password": "<demo password from seed documentation>" }
 ```
 
-Response `200`:
+Response `200` (Sets response header `Set-Cookie: access_token=<signed JWT>; HttpOnly; SameSite=Lax; Path=/`):
 
 ```json
 {
   "data": {
-    "access_token": "<signed token>",
-    "token_type": "Bearer",
-    "expires_in": 3600,
     "user": {
       "id": "USR-REVIEWER-01",
       "email": "reviewer1@demo.verityai.invalid",
@@ -916,7 +914,7 @@ Response `200`:
 
 Errors: `401 INVALID_CREDENTIALS` (generic message), `422 VALIDATION_ERROR` (missing fields), `403 ACCOUNT_INACTIVE`.
 
-### 15.2 `GET /api/auth/me`
+### 15.2 `GET /api/v1/auth/me`
 
 Response `200`: the `user` object above. Errors: `401 UNAUTHENTICATED`.
 
