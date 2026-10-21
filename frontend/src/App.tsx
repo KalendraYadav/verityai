@@ -7,15 +7,15 @@ import { ApplicationList } from './components/ApplicationList';
 import { EntitiesView } from './components/entities/EntitiesView';
 import { AuditTimelineView } from './components/audit/AuditTimelineView';
 import { ApplicationCreateModal } from './components/ApplicationCreateModal';
+import { DocumentsView } from './components/documents/DocumentsView';
+import { DocumentUploadModal } from './components/documents/DocumentUploadModal';
 import {
-  FolderOpen,
   GitBranch,
   BarChart2,
   Settings,
   ShieldCheck,
   RefreshCw,
   X,
-  Upload,
 } from 'lucide-react';
 
 export function App() {
@@ -29,6 +29,7 @@ export function App() {
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [categories, setCategories] = useState<ApplicationCategory[]>([]);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
   async function checkHealth() {
     setHealthLoading(true);
@@ -80,6 +81,7 @@ export function App() {
           {currentTab === 'dashboard' && (
             <DashboardView
               onOpenNewApplication={() => setCreateModalOpen(true)}
+              onOpenUploadDocument={() => setUploadModalOpen(true)}
             />
           )}
 
@@ -101,40 +103,7 @@ export function App() {
 
           {currentTab === 'audit' && <AuditTimelineView />}
 
-          {currentTab === 'documents' && (
-            <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6">
-              <div>
-                <h1 className="text-xl sm:text-2xl font-extrabold text-[#171B45] flex items-center gap-2">
-                  <FolderOpen className="w-6 h-6 text-[#7450D8]" />
-                  Document Repository
-                </h1>
-                <p className="text-xs sm:text-sm text-[#5F6485] mt-0.5">
-                  Encrypted institutional certificates, declarations, and inspection attachments.
-                </p>
-              </div>
-
-              <div className="bg-white rounded-2xl border border-[#E9E6F2] p-12 text-center shadow-xs space-y-4">
-                <div className="w-16 h-16 rounded-2xl bg-[#F3EEFC] text-[#7450D8] flex items-center justify-center mx-auto">
-                  <Upload className="w-8 h-8" />
-                </div>
-                <div className="max-w-md mx-auto space-y-1">
-                  <h3 className="text-base font-bold text-[#171B45]">
-                    Document Ingestion & Multi-Tenant Storage
-                  </h3>
-                  <p className="text-xs text-[#5F6485] leading-relaxed">
-                    Documents are securely attached to institutional applications. In Phase 2, create applications with preliminary declared metadata; file upload and SHA-256 deduplication pipelines arrive in Phase 3.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setCreateModalOpen(true)}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#F04438] text-white text-xs font-semibold hover:bg-[#E34234] transition-all cursor-pointer shadow-xs"
-                >
-                  <Upload className="w-4 h-4" />
-                  Initiate Application & Attachments
-                </button>
-              </div>
-            </div>
-          )}
+          {currentTab === 'documents' && <DocumentsView />}
 
           {currentTab === 'workflows' && (
             <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6">
@@ -304,6 +273,15 @@ export function App() {
         }}
         institutions={institutions}
         categories={categories}
+      />
+
+      {/* Document Upload Modal */}
+      <DocumentUploadModal
+        isOpen={uploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+        onSuccess={() => {
+          // If in documents view, refresh documents; if in dashboard, keep updated
+        }}
       />
     </AppShell>
   );

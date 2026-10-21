@@ -8,6 +8,7 @@ import {
   type ApplicationCategory,
 } from '../api/client';
 import { ApplicationCreateModal } from './ApplicationCreateModal';
+import { DocumentUploadModal } from './documents/DocumentUploadModal';
 import {
   FileText,
   Plus,
@@ -17,6 +18,7 @@ import {
   Calendar,
   Inbox,
   AlertCircle,
+  Upload,
 } from 'lucide-react';
 
 export function ApplicationList() {
@@ -31,6 +33,7 @@ export function ApplicationList() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [uploadModalAppId, setUploadModalAppId] = useState<string | null>(null);
 
   async function loadMetadata() {
     try {
@@ -239,7 +242,8 @@ export function ApplicationList() {
                   <th className="py-3 px-4">ACADEMIC YEAR</th>
                   <th className="py-3 px-4">STATUS</th>
                   <th className="py-3 px-4">PIPELINE</th>
-                  <th className="py-3 px-4 text-right">LAST UPDATED</th>
+                  <th className="py-3 px-4">LAST UPDATED</th>
+                  <th className="py-3 px-5 text-right">ACTIONS</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EEEAF5]">
@@ -283,8 +287,18 @@ export function ApplicationList() {
                         {app.pipeline_status}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 text-right font-mono text-[#8589A6] text-[11px]">
+                    <td className="py-3.5 px-4 font-mono text-[#8589A6] text-[11px]">
                       {new Date(app.updated_at).toLocaleDateString()} {new Date(app.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </td>
+                    <td className="py-3.5 px-5 text-right">
+                      <button
+                        onClick={() => setUploadModalAppId(app.id)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#DCD0F7] text-[11px] font-semibold text-[#7450D8] hover:bg-[#F3EEFC] transition-colors cursor-pointer"
+                        title="Upload Document"
+                      >
+                        <Upload className="w-3 h-3" />
+                        <span>Upload</span>
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -301,6 +315,17 @@ export function ApplicationList() {
         onSuccess={loadApplications}
         institutions={institutions}
         categories={categories}
+      />
+
+      {/* Upload Document Modal */}
+      <DocumentUploadModal
+        isOpen={!!uploadModalAppId}
+        initialApplicationId={uploadModalAppId || undefined}
+        onClose={() => setUploadModalAppId(null)}
+        onSuccess={() => {
+          setUploadModalAppId(null);
+          loadApplications();
+        }}
       />
     </div>
   );

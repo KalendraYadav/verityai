@@ -26,6 +26,12 @@ class Settings(BaseSettings):
     COOKIE_SECURE: bool = False
     COOKIE_SAMESITE: str = "lax"
 
+    # Storage & Uploads
+    STORAGE_LOCAL_DIR: str = "./var/uploads"
+    MAX_UPLOAD_SIZE_BYTES: int = 20 * 1024 * 1024  # 20 MB default per Section 18.1
+    ALLOWED_UPLOAD_EXTENSIONS: List[str] = [".pdf", ".png", ".jpg", ".jpeg"]
+    ALLOWED_UPLOAD_MIME_TYPES: List[str] = ["application/pdf", "image/png", "image/jpeg"]
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

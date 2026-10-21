@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from app.models.category import ApplicationCategory
     from app.models.user import User
     from app.models.audit import AuditEvent
+    from app.models.document import Document
 
 
 class Application(Base):
@@ -57,3 +58,4 @@ class Application(Base):
         "User", foreign_keys=[assigned_reviewer_id], back_populates="assigned_applications"
     )
     audit_events: Mapped[List["AuditEvent"]] = relationship("AuditEvent", back_populates="application")
+    documents: Mapped[List["Document"]] = relationship("Document", back_populates="application")

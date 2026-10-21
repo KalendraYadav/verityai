@@ -30,16 +30,20 @@ def test_alembic_migrations_fresh_database():
             "application_categories",
             "applications",
             "audit_events",
+            "documents",
+            "processing_runs",
             "alembic_version",
         }
         assert expected_tables.issubset(tables), f"Missing tables in {tables}"
 
-        # Test downgrade
+        # Test downgrade to base
         command.downgrade(alembic_cfg, "base")
         engine_after = create_engine(db_url)
         inspector_after = inspect(engine_after)
         tables_after = set(inspector_after.get_table_names())
         engine_after.dispose()
 
+        assert "documents" not in tables_after
+        assert "processing_runs" not in tables_after
         assert "applications" not in tables_after
         assert "institutions" not in tables_after

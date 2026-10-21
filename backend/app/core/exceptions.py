@@ -41,3 +41,29 @@ class ValidationException(VerityAPIException):
 class ConflictException(VerityAPIException):
     def __init__(self, code: str, message: str):
         super().__init__(status_code=status.HTTP_409_CONFLICT, code=code, message=message)
+
+
+class UnsupportedMediaTypeException(VerityAPIException):
+    def __init__(self, message: str, code: str = "UNSUPPORTED_MEDIA_TYPE"):
+        super().__init__(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, code=code, message=message)
+
+
+class PayloadTooLargeException(VerityAPIException):
+    def __init__(self, message: str, code: str = "FILE_TOO_LARGE"):
+        super().__init__(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, code=code, message=message)
+
+
+class EmptyFileException(VerityAPIException):
+    def __init__(self, message: str = "The uploaded file is empty.", code: str = "EMPTY_FILE"):
+        super().__init__(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, code=code, message=message)
+
+
+class MalformedFileException(VerityAPIException):
+    def __init__(self, message: str = "The uploaded file is corrupt or unreadable.", code: str = "MALFORMED_FILE"):
+        super().__init__(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, code=code, message=message)
+
+
+class StorageException(VerityAPIException):
+    def __init__(self, message: str = "A storage error occurred while saving the file.", code: str = "STORAGE_ERROR"):
+        super().__init__(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, code=code, message=message)
+

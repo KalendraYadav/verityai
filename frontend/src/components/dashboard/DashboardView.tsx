@@ -26,10 +26,11 @@ import {
 
 interface Props {
   onOpenNewApplication: () => void;
+  onOpenUploadDocument?: () => void;
   onSelectApplication?: (id: string) => void;
 }
 
-export const DashboardView: React.FC<Props> = ({ onOpenNewApplication }) => {
+export const DashboardView: React.FC<Props> = ({ onOpenNewApplication, onOpenUploadDocument }) => {
   const [applications, setApplications] = useState<ApplicationListItem[]>([]);
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [auditEvents, setAuditEvents] = useState<AuditEventItem[]>([]);
@@ -104,7 +105,7 @@ export const DashboardView: React.FC<Props> = ({ onOpenNewApplication }) => {
 
           {/* Primary Action Button (Reference 4: Red Button) */}
           <button
-            onClick={onOpenNewApplication}
+            onClick={onOpenUploadDocument || onOpenNewApplication}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-[#F04438] text-white hover:bg-[#E34234] transition-all shadow-xs hover:shadow-md cursor-pointer"
           >
             <Plus className="w-4 h-4" />

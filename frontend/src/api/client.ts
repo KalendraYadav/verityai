@@ -179,3 +179,130 @@ export async function fetchAuditEvents(limit = 10): Promise<AuditEventItem[]> {
   const res = await response.json();
   return res.data || [];
 }
+
+export interface DocumentListItem {
+  id: string;
+  application_id: string;
+  original_filename: string;
+  media_type: string;
+  file_size_bytes: number;
+  sha256: string;
+  page_count?: number | null;
+  file_state: string;
+  upload_status: string;
+  processing_status: string;
+  declared_type?: string | null;
+  detected_type?: string | null;
+  effective_type?: string | null;
+  latest_verification_status?: string | null;
+  possible_duplicate: boolean;
+  uploaded_by: string;
+  created_at: string;
+}
+
+export interface DocumentUploadResponseData {
+  id: string;
+  application_id: string;
+  original_filename: string;
+  media_type: string;
+  file_size_bytes: number;
+  sha256: string;
+  upload_status: string;
+  processing_status: string;
+  possible_duplicate: boolean;
+  processing_url: string;
+  created_at: string;
+}
+
+export interface PaginatedDocuments {
+  data: DocumentListItem[];
+  meta: {
+    page: number;
+    page_size: number;
+    total: number;
+  };
+}
+
+export async function uploadDocument(
+  applicationId: string,
+  file: File,
+  declaredType?: string
+): Promise<DocumentUploadResponseData> {
+  const formData = new FormData();
+  formData.append('file', file);
+  if (declaredType) {
+    formData.append('declared_type', declaredType);
+  }
+
+  // Allow browser to set boundary header automatically
+  const response = await fetch(`/api/v1/applications/${applicationId}/documents`, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'VerityAI',
+    },
+    body: formData,
+  });
+
+  const resData = await response.json();
+  if (!response.ok) {
+    const message = resData?.error?.message || 'Document upload failed';
+    const code = resData?.error?.code;
+    const error = new Error(code ? `[${code}] ${message}` : message);
+    (error as any).code = code;
+    throw error;
+  }
+
+  return resData.data;
+}
+
+export async function fetchApplicationDocuments(
+  applicationId: string,
+  page = 1,
+  pageSize = 20
+): Promise<PaginatedDocuments> {
+  const response = await fetch(
+    `/api/v1/applications/${applicationId}/documents?page=${page}&page_size=${pageSize}`,
+    {
+      method: 'GET',
+      headers: COMMON_HEADERS,
+    }
+  );
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to fetch documents (${response.status})`);
+  }
+
+  return response.json();
+}
+
+export async function fetchAllDocuments(params?: {
+  application_id?: string;
+  q?: string;
+  page?: number;
+  pageSize?: number;
+}): Promise<PaginatedDocuments> {
+  const query = new URLSearchParams();
+  if (params?.application_id) query.set('application_id', params.application_id);
+  if (params?.q) query.set('q', params.q);
+  if (params?.page) query.set('page', String(params.page));
+  if (params?.pageSize) query.set('page_size', String(params.pageSize));
+
+  const response = await fetch(`/api/v1/documents?${query.toString()}`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to fetch documents (${response.status})`);
+  }
+
+  return response.json();
+}
+
+export function getDocumentFileUrl(documentId: string, download = false): string {
+  return `/api/v1/documents/${documentId}/file${download ? '?download=true' : ''}`;
+}
+
