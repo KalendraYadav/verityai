@@ -6,6 +6,7 @@ from app.models.application import Application
 from app.models.audit import AuditEvent
 from app.models.document import Document
 from app.models.processing_run import ProcessingRun
+from app.models.document_page import DocumentPage
 
 __all__ = [
     "Base",
@@ -16,4 +17,6 @@ __all__ = [
     "AuditEvent",
     "Document",
     "ProcessingRun",
+    "DocumentPage",
 ]
+

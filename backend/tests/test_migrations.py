@@ -12,8 +12,10 @@ def test_alembic_migrations_fresh_database():
         db_url = f"sqlite:///{db_path}"
 
         # Configure Alembic to point to the temporary database
-        alembic_cfg = Config("alembic.ini")
+        ini_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "alembic.ini"))
+        alembic_cfg = Config(ini_path)
         alembic_cfg.set_main_option("sqlalchemy.url", db_url)
+        alembic_cfg.set_main_option("script_location", os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "alembic")))
 
         # Run migration to head
         command.upgrade(alembic_cfg, "head")
@@ -32,6 +34,7 @@ def test_alembic_migrations_fresh_database():
             "audit_events",
             "documents",
             "processing_runs",
+            "document_pages",
             "alembic_version",
         }
         assert expected_tables.issubset(tables), f"Missing tables in {tables}"
@@ -43,6 +46,7 @@ def test_alembic_migrations_fresh_database():
         tables_after = set(inspector_after.get_table_names())
         engine_after.dispose()
 
+        assert "document_pages" not in tables_after
         assert "documents" not in tables_after
         assert "processing_runs" not in tables_after
         assert "applications" not in tables_after

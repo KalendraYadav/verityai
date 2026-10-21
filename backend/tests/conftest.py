@@ -28,6 +28,15 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
 
+@pytest.fixture(scope="function", autouse=True)
+def override_session_local(monkeypatch):
+    """Ensure background tasks created during tests use the in-memory test database."""
+    import app.db.session as dbs
+    import app.services.extraction as exts
+    monkeypatch.setattr(dbs, "SessionLocal", TestingSessionLocal)
+    monkeypatch.setattr(exts, "SessionLocal", TestingSessionLocal)
+
+
 @pytest.fixture(scope="function")
 def db_session() -> Generator[Session, None, None]:
     """Provide a fresh in-memory database session for each test function."""

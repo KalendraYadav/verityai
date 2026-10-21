@@ -2,7 +2,7 @@ import os
 import uuid
 import re
 from typing import Optional, List
-from fastapi import APIRouter, Depends, Query, Form, File, UploadFile, status, Response
+from fastapi import APIRouter, Depends, Query, Form, File, UploadFile, status, Response, BackgroundTasks
 from fastapi.responses import FileResponse
 from sqlalchemy import select, func, desc, asc
 from sqlalchemy.orm import Session
@@ -11,6 +11,7 @@ from app.db.session import get_db
 from app.models.application import Application
 from app.models.document import Document
 from app.models.processing_run import ProcessingRun
+from app.models.document_page import DocumentPage
 from app.models.user import User
 from app.schemas.common import DataResponse, PaginatedResponse, MetaPagination
 from app.schemas.document import (
@@ -18,6 +19,11 @@ from app.schemas.document import (
     DocumentResponseData,
     DocumentListItem,
     DocumentClassification,
+    DocumentPageItem,
+    DocumentPagesResponseData,
+    DocumentProcessingStatusData,
+    ProcessingRunResponseData,
+    ReprocessRequest,
 )
 from app.core.exceptions import (
     NotFoundException,
@@ -30,6 +36,7 @@ from app.services.storage import (
     resolve_storage_path,
     remove_document_file,
 )
+from app.services.extraction import run_background_extraction
 
 router = APIRouter()
 
@@ -61,6 +68,7 @@ def _resolve_user_id(db: Session, institution_id: Optional[str] = None) -> str:
 )
 async def upload_document(
     application_id: str,
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     declared_type: Optional[str] = Form(None),
     db: Session = Depends(get_db),
@@ -170,6 +178,9 @@ async def upload_document(
         db.commit()
         db.refresh(doc_record)
 
+        # Enqueue background text extraction & OCR pipeline
+        background_tasks.add_task(run_background_extraction, doc_record.id, initial_run.id)
+
     except Exception as e:
         db.rollback()
         # Clean up stored file if database commit fails
@@ -235,6 +246,7 @@ def list_application_documents(
             file_state=doc.file_state,
             upload_status=doc.upload_status,
             processing_status=doc.processing_status,
+            extraction_quality_band=doc.extraction_quality_band,
             declared_type=doc.declared_type,
             detected_type=doc.detected_type,
             effective_type=doc.effective_type,
@@ -294,6 +306,7 @@ def list_all_documents(
             file_state=doc.file_state,
             upload_status=doc.upload_status,
             processing_status=doc.processing_status,
+            extraction_quality_band=doc.extraction_quality_band,
             declared_type=doc.declared_type,
             detected_type=doc.detected_type,
             effective_type=doc.effective_type,
@@ -418,3 +431,187 @@ def retrieve_document_file(
             "Cache-Control": "no-store",
         },
     )
+
+
+@router.get(
+    "/documents/{document_id}/pages",
+    response_model=DataResponse[DocumentPagesResponseData],
+)
+def get_document_pages(
+    document_id: str,
+    db: Session = Depends(get_db),
+):
+    """Retrieve extracted page-level text, method, and OCR confidence."""
+    doc = db.scalar(
+        select(Document).where(Document.id == document_id, Document.deleted_at.is_(None))
+    )
+    if not doc:
+        raise NotFoundException("DOCUMENT_NOT_FOUND", f"Document '{document_id}' not found.")
+
+    # Find the latest processing run's pages or all pages for this document
+    pages = db.scalars(
+        select(DocumentPage)
+        .where(DocumentPage.document_id == document_id)
+        .order_by(DocumentPage.page_number.asc())
+    ).all()
+
+    page_items = [
+        DocumentPageItem(
+            id=p.id,
+            document_id=p.document_id,
+            processing_run_id=p.processing_run_id,
+            page_number=p.page_number,
+            text_source=p.text_source,
+            raw_text=p.raw_text,
+            clean_text=p.clean_text,
+            char_count=p.char_count,
+            ocr_mean_confidence=p.ocr_mean_confidence,
+            rotation_applied=p.rotation_applied,
+            status=p.status,
+            error_code=p.error_code,
+            duration_ms=p.duration_ms,
+            created_at=p.created_at,
+        )
+        for p in pages
+    ]
+
+    return DataResponse(
+        data=DocumentPagesResponseData(
+            document_id=doc.id,
+            page_count=doc.page_count or len(page_items),
+            pages=page_items,
+        )
+    )
+
+
+@router.get(
+    "/documents/{document_id}/processing",
+    response_model=DataResponse[DocumentProcessingStatusData],
+)
+def get_document_processing_status(
+    document_id: str,
+    db: Session = Depends(get_db),
+):
+    """Retrieve processing status, error information, and run history."""
+    doc = db.scalar(
+        select(Document).where(Document.id == document_id, Document.deleted_at.is_(None))
+    )
+    if not doc:
+        raise NotFoundException("DOCUMENT_NOT_FOUND", f"Document '{document_id}' not found.")
+
+    runs = db.scalars(
+        select(ProcessingRun)
+        .where(ProcessingRun.document_id == document_id)
+        .order_by(ProcessingRun.started_at.desc())
+    ).all()
+
+    current_run_item = None
+    runs_history = []
+    for r in runs:
+        item = ProcessingRunResponseData(
+            id=r.id,
+            document_id=r.document_id,
+            trigger=r.trigger,
+            status=r.status,
+            pipeline_version=r.pipeline_version,
+            warnings=r.warnings,
+            error_code=r.error_code,
+            safe_error_summary=r.safe_error_summary,
+            quality_summary=r.quality_summary,
+            started_at=r.started_at,
+            completed_at=r.completed_at,
+            duration_ms=r.duration_ms,
+        )
+        if current_run_item is None:
+            current_run_item = item
+        runs_history.append(item)
+
+    return DataResponse(
+        data=DocumentProcessingStatusData(
+            document_id=doc.id,
+            processing_status=doc.processing_status,
+            extraction_quality_band=doc.extraction_quality_band,
+            current_run=current_run_item,
+            runs_history=runs_history,
+        )
+    )
+
+
+@router.post(
+    "/documents/{document_id}/reprocess",
+    response_model=DataResponse[DocumentProcessingStatusData],
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def reprocess_document(
+    document_id: str,
+    background_tasks: BackgroundTasks,
+    request_data: Optional[ReprocessRequest] = None,
+    db: Session = Depends(get_db),
+):
+    """Trigger re-extraction/reprocessing of an uploaded document.
+    Enforces idempotency and prevents concurrent duplicate processing.
+    """
+    doc = db.scalar(
+        select(Document).where(Document.id == document_id, Document.deleted_at.is_(None))
+    )
+    if not doc:
+        raise NotFoundException("DOCUMENT_NOT_FOUND", f"Document '{document_id}' not found.")
+
+    if doc.file_state == "DELETED":
+        raise NotFoundException("DOCUMENT_DELETED", "Cannot reprocess a deleted document.")
+
+    if doc.processing_status == "PROCESSING":
+        raise ConflictException(
+            "PROCESSING_ACTIVE", "A processing run is already currently active for this document."
+        )
+
+    file_path = resolve_storage_path(doc.storage_key)
+    if not file_path.exists():
+        doc.file_state = "MISSING"
+        db.commit()
+        raise NotFoundException("FILE_NOT_FOUND", "Document file is missing from storage.")
+
+    # Create new ProcessingRun
+    user_id = _resolve_user_id(db)
+    new_run = ProcessingRun(
+        id=f"RUN-{uuid.uuid4().hex[:8].upper()}",
+        document_id=doc.id,
+        trigger="REPROCESS",
+        status="QUEUED",
+        pipeline_version="0.1.0",
+        requested_by=user_id,
+    )
+    doc.processing_status = "QUEUED"
+    db.add(new_run)
+    db.commit()
+    db.refresh(new_run)
+    db.refresh(doc)
+
+    # Enqueue background extraction
+    background_tasks.add_task(run_background_extraction, doc.id, new_run.id)
+
+    run_item = ProcessingRunResponseData(
+        id=new_run.id,
+        document_id=new_run.document_id,
+        trigger=new_run.trigger,
+        status=new_run.status,
+        pipeline_version=new_run.pipeline_version,
+        warnings=new_run.warnings,
+        error_code=new_run.error_code,
+        safe_error_summary=new_run.safe_error_summary,
+        quality_summary=new_run.quality_summary,
+        started_at=new_run.started_at,
+        completed_at=new_run.completed_at,
+        duration_ms=new_run.duration_ms,
+    )
+
+    return DataResponse(
+        data=DocumentProcessingStatusData(
+            document_id=doc.id,
+            processing_status=doc.processing_status,
+            extraction_quality_band=doc.extraction_quality_band,
+            current_run=run_item,
+            runs_history=[run_item],
+        )
+    )
+

@@ -8,6 +8,7 @@ from app.db.base import Base
 if TYPE_CHECKING:
     from app.models.document import Document
     from app.models.user import User
+    from app.models.document_page import DocumentPage
 
 
 class ProcessingRun(Base):
@@ -41,3 +42,6 @@ class ProcessingRun(Base):
     # Relationships
     document: Mapped["Document"] = relationship("Document", back_populates="processing_runs")
     requester: Mapped[Optional["User"]] = relationship("User", foreign_keys=[requested_by])
+    pages: Mapped[List["DocumentPage"]] = relationship(
+        "DocumentPage", back_populates="processing_run", cascade="all, delete-orphan", order_by="DocumentPage.page_number"
+    )

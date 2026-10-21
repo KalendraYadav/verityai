@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from app.models.application import Application
     from app.models.user import User
     from app.models.processing_run import ProcessingRun
+    from app.models.document_page import DocumentPage
 
 
 class Document(Base):
@@ -62,4 +63,7 @@ class Document(Base):
     uploader: Mapped["User"] = relationship("User", foreign_keys=[uploaded_by])
     processing_runs: Mapped[List["ProcessingRun"]] = relationship(
         "ProcessingRun", back_populates="document", cascade="all, delete-orphan", order_by="desc(ProcessingRun.started_at)"
+    )
+    pages: Mapped[List["DocumentPage"]] = relationship(
+        "DocumentPage", back_populates="document", cascade="all, delete-orphan", order_by="DocumentPage.page_number"
     )

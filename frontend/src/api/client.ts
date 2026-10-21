@@ -191,6 +191,7 @@ export interface DocumentListItem {
   file_state: string;
   upload_status: string;
   processing_status: string;
+  extraction_quality_band?: string | null;
   declared_type?: string | null;
   detected_type?: string | null;
   effective_type?: string | null;
@@ -212,6 +213,52 @@ export interface DocumentUploadResponseData {
   possible_duplicate: boolean;
   processing_url: string;
   created_at: string;
+}
+
+export interface DocumentPageItem {
+  id: string;
+  document_id: string;
+  processing_run_id: string;
+  page_number: number;
+  text_source: 'DIGITAL_TEXT' | 'OCR' | 'NONE';
+  raw_text: string | null;
+  clean_text: string | null;
+  char_count: number;
+  ocr_mean_confidence: number | null;
+  rotation_applied: number | null;
+  status: string;
+  error_code: string | null;
+  duration_ms: number | null;
+  created_at: string;
+}
+
+export interface DocumentPagesResponseData {
+  document_id: string;
+  page_count: number;
+  pages: DocumentPageItem[];
+}
+
+export interface ProcessingRunItem {
+  id: string;
+  document_id: string;
+  trigger: string;
+  status: string;
+  pipeline_version: string;
+  warnings: string[] | null;
+  error_code: string | null;
+  safe_error_summary: string | null;
+  quality_summary: Record<string, any> | null;
+  started_at: string;
+  completed_at: string | null;
+  duration_ms: number | null;
+}
+
+export interface DocumentProcessingStatusData {
+  document_id: string;
+  processing_status: string;
+  extraction_quality_band: string | null;
+  current_run: ProcessingRunItem | null;
+  runs_history: ProcessingRunItem[];
 }
 
 export interface PaginatedDocuments {
@@ -305,4 +352,55 @@ export async function fetchAllDocuments(params?: {
 export function getDocumentFileUrl(documentId: string, download = false): string {
   return `/api/v1/documents/${documentId}/file${download ? '?download=true' : ''}`;
 }
+
+export async function fetchDocumentPages(documentId: string): Promise<DocumentPagesResponseData> {
+  const response = await fetch(`/api/v1/documents/${documentId}/pages`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to fetch document pages (${response.status})`);
+  }
+
+  const resJson = await response.json();
+  return resJson.data;
+}
+
+export async function fetchDocumentProcessing(documentId: string): Promise<DocumentProcessingStatusData> {
+  const response = await fetch(`/api/v1/documents/${documentId}/processing`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to fetch processing status (${response.status})`);
+  }
+
+  const resJson = await response.json();
+  return resJson.data;
+}
+
+export async function reprocessDocument(documentId: string): Promise<DocumentProcessingStatusData> {
+  const response = await fetch(`/api/v1/documents/${documentId}/reprocess`, {
+    method: 'POST',
+    headers: COMMON_HEADERS,
+    body: JSON.stringify({ from_stage: 'TEXT_EXTRACT' }),
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    const message = errData?.error?.message || `Failed to reprocess document (${response.status})`;
+    const code = errData?.error?.code;
+    const error = new Error(code ? `[${code}] ${message}` : message);
+    (error as any).code = code;
+    throw error;
+  }
+
+  const resJson = await response.json();
+  return resJson.data;
+}
+
 
