@@ -155,3 +155,27 @@ export async function createApplication(payload: ApplicationCreatePayload): Prom
 
   return resData.data;
 }
+
+export interface AuditEventItem {
+  id: string;
+  event_type: string;
+  actor_id?: string | null;
+  actor_type: string;
+  application_id?: string | null;
+  occurred_at: string;
+  metadata?: Record<string, any> | null;
+}
+
+export async function fetchAuditEvents(limit = 10): Promise<AuditEventItem[]> {
+  const response = await fetch(`/api/v1/audit-events?limit=${limit}`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+  });
+
+  if (!response.ok) {
+    return [];
+  }
+
+  const res = await response.json();
+  return res.data || [];
+}

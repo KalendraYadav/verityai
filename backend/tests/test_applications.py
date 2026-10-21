@@ -225,3 +225,22 @@ def test_get_application_audit_events(client, db_session):
     assert len(events) >= 1
     assert events[0]["event_type"] == "APPLICATION_CREATED"
     assert events[0]["application_id"] == app_id
+
+
+def test_list_global_audit_events(client, db_session):
+    """Test retrieving global audit event timeline."""
+    inst, cat = _setup_fixtures(db_session)
+    client.post(
+        "/api/v1/applications",
+        json={
+            "institution_id": inst.id,
+            "category_code": cat.code,
+            "declared_data": {},
+        },
+    )
+
+    resp = client.get("/api/v1/audit-events?limit=10")
+    assert resp.status_code == 200
+    events = resp.json()["data"]
+    assert len(events) >= 1
+    assert events[0]["event_type"] == "APPLICATION_CREATED"
