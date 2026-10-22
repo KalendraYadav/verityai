@@ -21,7 +21,7 @@
 | **Phase 8** | End-to-End Workflow Orchestration | `prompt.md` L817–1242 | `COMPLETED` | 81 passed (6 workflow) | `b74a2bf` | State machine, multi-dimensional readiness, scrutiny queue, pipeline stepper |
 | **Phase 9** | Explainable AI, Reviewer Decision Support & Reports | `prompt.md` L1243–1630 | `COMPLETED` | 86 passed (5 reports) | `c67ea8c` | PyMuPDF multi-page PDF & JSON dossiers, decision support summary, evidence trace |
 | **Phase 10** | Security Hardening, Performance & Production Readiness | `prompt.md` L1631–2052 | `COMPLETED` | 92 passed (6 security) | `7f5b2f1` | Security headers, sanitized errors, CSRF protection, safe environment defaults, DB health probe |
-| **Phase 11** | Extended Verification & Registry Integration | `prompt.md` L2053–2350 | `COMPLETED` | 101 passed (9 registry) | Pending | Registry provider adapter, Synthetic AISHE, official stub, safe CSV/JSON import, deterministic comparison, discrepancy resolution |
+| **Phase 11** | Extended Verification & Registry Integration | `prompt.md` L2053–2350 | `COMPLETED` | 101 passed (9 registry) | `d002cf4` | Registry provider adapter, Synthetic AISHE, official stub, safe CSV/JSON import, deterministic comparison, discrepancy resolution |
 | **Phase 12** | Advanced Multilingual Document Scrutiny | `prompt.md` L2351–2760 | `IN_PROGRESS` | Pending | TBD | Multilingual extraction, Hindi/English detection, script normalization |
 | **Phase 13** | Institutional Dossier History & Versioning | `prompt.md` | `NOT_STARTED` | N/A | N/A | Application/document versioning, diffs, report versions |
 | **Phase 14** | External Regulatory Portal Interoperability | `prompt.md` | `NOT_STARTED` | N/A | N/A | External portal adapters, TLS, SSRF protection |
