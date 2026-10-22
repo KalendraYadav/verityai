@@ -4133,3 +4133,1546 @@ Do not claim production readiness solely because the application builds and test
 
 Begin by inspecting the actual repository and its authoritative instructions. Complete the final pilot-demonstration and evaluation package, verify the system, update the execution ledger, and report the verified outcome.
 
+
+
+# PHASE 16: DEPLOYMENT, ENVIRONMENT VALIDATION & END-TO-END VERIFICATION
+
+You are the lead deployment engineer, senior full-stack developer, QA engineer, and release manager for VerityAI / EntityLocker.
+
+Phases 1–15 are reported complete. Your task is to prepare the existing application for reliable demonstration and evaluation by verifying its actual deployment readiness, configuring an appropriate deployment approach, and testing the complete application.
+
+## 1. AUTONOMOUS EXECUTION
+
+* Read `AGENTS.md`, `README.md`, `docs/PROJECT_STATUS.md`, `docs/AUTONOMOUS_EXECUTION_STATUS.md`, and relevant architecture and security documentation.
+* Inspect the existing codebase and Git status before modifying anything.
+* Do not ask routine questions or wait for approval between implementation steps.
+* Make safe, reasonable decisions using the existing architecture.
+* Preserve existing features, user changes, database records, and Git history.
+* Do not rebuild completed features unnecessarily.
+* Implement, test, document, and verify the work yourself wherever possible.
+* If credentials or external services are unavailable, complete every independent task and document the genuine limitation.
+
+## 2. DEPLOYMENT STRATEGY
+
+Inspect the actual backend and frontend requirements before selecting a deployment strategy.
+
+Determine:
+
+* Required Python and Node.js versions.
+* Backend and frontend build requirements.
+* Database engine, migrations, and persistence requirements.
+* File-upload and generated-document storage requirements.
+* Environment variables and secrets.
+* Authentication cookie, CORS, CSRF, and HTTPS requirements.
+* OCR dependencies and operating-system compatibility.
+* Background processing and other runtime requirements.
+
+Recommend and implement the simplest reliable deployment architecture compatible with the existing application.
+
+Do not assume SQLite, local uploads, or an ephemeral filesystem are suitable for every hosting environment. Verify the persistence characteristics of the selected host.
+
+Do not migrate the database or switch hosting providers unnecessarily. If deployment credentials are unavailable, prepare and validate deployment configuration without pretending a live deployment occurred.
+
+## 3. SECURITY AND CONFIGURATION
+
+* Review environment-variable handling and provide a complete, accurate environment-variable example file without real secrets.
+* Ensure secrets are never committed.
+* Verify production cookie settings, CORS origins, CSRF protections, authentication, and role-based authorization.
+* Verify that uploaded documents cannot be accessed without authorization.
+* Ensure debug mode and development-only features are disabled in production configuration.
+* Review API errors and logging for accidental disclosure of sensitive information.
+* Ensure HTTPS is used for production traffic.
+* Verify database migration and backup considerations.
+* Do not disable security controls to make deployment easier.
+
+## 4. DEPLOYMENT IMPLEMENTATION
+
+Inspect existing deployment files before adding or changing anything.
+
+Where appropriate:
+
+* Add or correct the deployment configuration.
+* Configure frontend build and backend startup commands.
+* Configure health checks.
+* Configure required environment variables.
+* Ensure database migrations run through a safe, documented process.
+* Ensure persistent document storage is supported.
+* Configure suitable request limits and timeouts.
+* Document startup, shutdown, recovery, and troubleshooting procedures.
+* Avoid introducing unnecessary infrastructure or paid services.
+
+Do not publish secrets, expose private services, destroy databases, or deploy to a paid service without the required authorization.
+
+## 5. END-TO-END VERIFICATION
+
+Run the available automated tests and production build.
+
+Then verify as many complete workflows as possible:
+
+1. Application startup and health checks.
+2. Login, logout, and role-based access.
+3. Application creation and management.
+4. Document upload and protected document access.
+5. Extraction and validation.
+6. Anomaly detection and explanation of findings.
+7. Scrutiny workflow and reviewer actions.
+8. Audit history and application/document version history.
+9. Registry integration using the available synthetic or authorized provider.
+10. Multilingual processing for supported languages.
+11. External regulatory gateway behavior, including unavailable-provider scenarios.
+12. Final demonstration data and readiness checks.
+
+Verify actual API responses and frontend behavior where practical.
+
+Do not claim that a live workflow passed if you only inspected its code. Distinguish automated tests, local end-to-end verification, and actual hosted verification.
+
+Repair defects caused by deployment configuration or integration issues.
+
+## 6. LIVE HOSTING
+
+If an authorized hosting account and required credentials are already available, deploy using the safest compatible method.
+
+If they are not available:
+
+* Complete all local deployment preparation.
+* Validate configuration and build artifacts.
+* Identify the exact missing external requirements.
+* Provide the deployment instructions and configuration needed to proceed.
+* Do not fabricate a public URL or claim a successful deployment.
+
+Never expose credentials in logs, documentation, Git commits, or the final response.
+
+## 7. DOCUMENTATION
+
+Create or update:
+
+* `docs/DEPLOYMENT.md`
+* `docs/END_TO_END_VERIFICATION.md`
+* `.env.example` or the existing equivalent, if needed
+* `README.md`
+* `docs/PROJECT_STATUS.md`
+* `docs/AUTONOMOUS_EXECUTION_STATUS.md`
+
+Document verified behavior, required configuration, deployment steps, known limitations, and recovery procedures.
+
+## 8. GIT AND REGRESSION CONTROL
+
+* Preserve all existing user changes.
+* Review `git diff` before committing.
+* Never use destructive Git commands.
+* Do not commit secrets, databases, uploads, or generated private data.
+* Create a focused Phase 16 commit if appropriate and safe.
+* Record actual commit hashes and test results.
+
+## 9. DEFINITION OF DONE
+
+Phase 16 is complete only when:
+
+* Deployment requirements have been inspected.
+* Deployment configuration is implemented or corrected where feasible.
+* Security-sensitive configuration has been reviewed.
+* Automated tests and production build have been executed.
+* Critical end-to-end workflows have been tested where practical.
+* Deployment and verification documentation is updated.
+* Actual deployment status and remaining external blockers are clearly recorded.
+* The execution ledger reflects verified results.
+
+Do not label the application deployed unless a real deployment has succeeded.
+
+## START NOW
+
+Inspect the repository and begin Phase 16 immediately.
+
+Work autonomously through implementation, verification, defect repair, and documentation. Do not stop after creating a plan.
+
+When complete, report actual results, test counts, deployment status, any public URL that was genuinely created, and remaining blockers.
+
+
+
+
+
+
+# PHASE 17: FINAL UI/UX AUDIT & JUDGE-FACING POLISH
+
+## VerityAI / EntityLocker — Smart India Hackathon 2026
+
+You are the Principal Product Designer, Senior Frontend Engineer, Accessibility Specialist, and UX Quality Auditor for VerityAI / EntityLocker.
+
+Phases 1–15 are reported complete. Phase 16 concerns deployment and end-to-end verification. Your task is to perform a comprehensive audit of the existing frontend and implement the improvements necessary to make the product professional, intuitive, consistent, accessible, responsive, and ready for a Smart India Hackathon demonstration.
+
+**Do not merely write recommendations. Inspect, implement, test, and verify the improvements.**
+
+## 1. AUTONOMOUS EXECUTION
+
+* Read `AGENTS.md`, `README.md`, `docs/UI_UX_DESIGN.md`, `docs/PROJECT_STATUS.md`, and `docs/AUTONOMOUS_EXECUTION_STATUS.md`.
+* Inspect the existing frontend, application routes, components, design tokens, API integrations, and available screenshots or reference assets.
+* Inspect Git status before changing files.
+* Do not ask routine questions or request approval between tasks.
+* Make reasonable design decisions consistent with the existing project.
+* Preserve working features, user changes, API contracts, authentication, authorization, and backend behavior.
+* Do not rebuild the application from scratch.
+* Avoid unrelated refactoring and unnecessary dependencies.
+* Continue through implementation, testing, and documentation without stopping after the audit.
+
+## 2. PRESERVE THE APPROVED DESIGN SYSTEM
+
+Maintain the established VerityAI / EntityLocker visual identity.
+
+### Colors
+
+* Lavender: `#CBB3E8`
+* Light lavender: `#F3EEFC`
+* Very light lavender: `#FAF8FF`
+* Purple: `#7450D8`
+* Deep purple: `#5633B8`
+* Tomato red: `#E34234`
+* Action red: `#F04438`
+* Light red: `#FFF0EF`
+* Main background: `#FAF9FC`
+* White cards: `#FFFFFF`
+* Primary text: `#171B45`
+* Secondary text: `#5F6485`
+* Muted text: `#8589A6`
+* Borders: `#E9E6F2`
+
+Use the existing Inter typography, spacing, border-radius, shadow, and component conventions wherever possible.
+
+Do not introduce a new color palette or redesign the brand without a compelling technical reason.
+
+The result must feel like a mature, institutional-grade regulatory scrutiny platform—not a generic SaaS dashboard or a childish AI-generated interface.
+
+## 3. PRODUCT-SPECIFIC INFORMATION ARCHITECTURE
+
+Inspect the actual implementation before modifying navigation.
+
+Ensure that the navigation, page titles, actions, and terminology accurately represent the product.
+
+Use product-specific areas where supported by implemented functionality, such as:
+
+* Overview
+* Applications
+* Scrutiny Queue
+* Documents
+* Validation Rules
+* Institutions
+* Registry Verification
+* Regulatory Gateways
+* Audit Trail
+
+Do not create duplicate navigation items if equivalent functionality already exists.
+
+Do not expose nonfunctional pages, dead links, fake buttons, or placeholder workflows as completed features.
+
+Every displayed action must either work or be clearly marked as unavailable or planned.
+
+## 4. AUDIT EVERY IMPORTANT SCREEN
+
+Review all implemented screens, including:
+
+* Landing and login pages.
+* Main dashboard.
+* Application list, details, and creation flows.
+* Document upload, processing, preview, and extraction.
+* Validation results and anomaly findings.
+* Scrutiny queue and reviewer workspace.
+* Institution management.
+* Registry verification and external gateways.
+* Application/document history and version comparisons.
+* Audit timeline.
+* User management and permissions, where implemented.
+* Error pages, empty states, and unavailable-provider states.
+
+For each screen, inspect:
+
+1. Visual hierarchy.
+2. Information density.
+3. Typography and readability.
+4. Alignment, spacing, and consistency.
+5. Action placement and button hierarchy.
+6. Responsive layout.
+7. Loading, empty, success, and error states.
+8. Keyboard navigation and accessibility.
+9. Real data integration.
+10. Whether the screen communicates its purpose clearly.
+
+Fix actual problems rather than changing components solely for novelty.
+
+## 5. DASHBOARD AND DATA INTEGRITY
+
+Make the overview immediately useful to an institutional reviewer.
+
+Where supported by real data, prioritize:
+
+* Applications requiring scrutiny.
+* Pending reviewer actions.
+* Validation failures requiring attention.
+* Documents awaiting processing.
+* Recent institutional activity.
+* Registry or external-provider availability.
+
+Use accurate API-backed information.
+
+Do not fabricate application counts, compliance percentages, AI accuracy, risk scores, OCR progress, recent activity, or verification results.
+
+When data is unavailable, show a clear empty or unavailable state rather than a misleading number.
+
+Ensure that important review actions are easy to discover.
+
+## 6. APPLICATION AND SCRUTINY EXPERIENCE
+
+Make the main evaluation workflow easy to understand:
+
+1. Open an application.
+2. Inspect its institution and supporting documents.
+3. Review extracted information and its provenance.
+4. Examine deterministic validation results.
+5. Review AI-assisted anomalies and their supporting evidence.
+6. Inspect registry or external verification results when available.
+7. Review relevant application and document history.
+8. Record the authorized reviewer's decision or next action.
+9. Inspect the resulting audit history.
+
+Only implement workflow steps supported by the existing backend.
+
+Clearly distinguish:
+
+* Extracted information.
+* Institution-provided information.
+* Reference-registry information.
+* Deterministic validation findings.
+* AI-generated suggestions.
+* External verification results.
+* Human reviewer decisions.
+
+Do not present AI-generated suggestions as official decisions or confirmed fraud findings.
+
+## 7. COMPONENT AND INTERACTION QUALITY
+
+Inspect and improve reusable components, including:
+
+* Buttons and icon buttons.
+* Forms and validation messages.
+* Tables and filters.
+* Search and pagination.
+* Dialogs and confirmation prompts.
+* Status badges.
+* Tabs.
+* Cards.
+* Notifications and alerts.
+* Tooltips.
+* Loading indicators and skeletons.
+* Empty states.
+* Error boundaries.
+* Document previews.
+* Evidence and findings panels.
+
+Requirements:
+
+* Use consistent spacing and sizing.
+* Make primary and secondary actions visually distinct.
+* Prevent accidental destructive actions.
+* Provide clear feedback after successful operations.
+* Preserve form values when safe after recoverable failures.
+* Avoid excessive animation and unnecessary decoration.
+* Use confirmation prompts for consequential actions.
+* Do not introduce mock interactions that appear to modify real data.
+
+## 8. RESPONSIVE DESIGN
+
+Verify important screens at representative viewport widths:
+
+* Mobile: approximately 375 px.
+* Tablet: approximately 768 px.
+* Desktop: approximately 1366 px or wider.
+
+Check for:
+
+* Horizontal overflow.
+* Clipped dialogs.
+* Unreadable tables.
+* Overlapping buttons.
+* Broken navigation.
+* Unusable forms.
+* Incorrectly scaled document previews.
+* Content hidden behind fixed elements.
+
+Implement suitable responsive behavior without compromising desktop workflows.
+
+Use actual browser-based verification if an appropriate browser-testing capability is available. Otherwise, run the available automated checks and clearly record the limits of visual verification.
+
+## 9. ACCESSIBILITY
+
+Review and improve:
+
+* Semantic HTML.
+* Accessible names for controls.
+* Keyboard navigation.
+* Visible focus indicators.
+* Form labels and error associations.
+* Color contrast.
+* Status indicators that do not rely on color alone.
+* Dialog focus management.
+* Reduced-motion support where relevant.
+* Screen-reader announcements for important asynchronous changes.
+
+Prefer native accessible elements and existing project conventions over unnecessary custom implementations.
+
+## 10. PERFORMANCE AND CODE QUALITY
+
+Inspect the frontend for:
+
+* Unnecessary repeated API requests.
+* Excessive component re-rendering.
+* Large unnecessary dependencies.
+* Oversized assets.
+* Duplicate components or styles.
+* Browser console errors.
+* Unhandled promise rejections.
+* Broken routes.
+* TypeScript errors.
+* Incorrect loading and cancellation behavior.
+
+Make targeted improvements without introducing regressions.
+
+Do not weaken TypeScript strictness, suppress meaningful errors, or remove tests to achieve a passing build.
+
+## 11. VERIFICATION
+
+After implementation:
+
+1. Run the configured frontend production build.
+2. Run frontend tests and lint/type checks where available.
+3. Run relevant backend tests if API contracts or behavior were affected.
+4. Verify every changed screen and interaction.
+5. Check browser console and network errors where browser tooling is available.
+6. Test authentication and role-specific navigation.
+7. Verify empty, loading, error, and success states.
+8. Check responsive behavior at the specified viewport sizes.
+9. Confirm that API-backed content remains connected to the real backend.
+10. Review the final Git diff for unintended changes.
+
+Do not claim visual or browser-based verification if it was not actually performed.
+
+Repair discovered regressions before marking the phase complete.
+
+## 12. DOCUMENTATION AND CHANGE CONTROL
+
+Update:
+
+* `docs/UI_UX_DESIGN.md`
+* `docs/PROJECT_STATUS.md`
+* `docs/AUTONOMOUS_EXECUTION_STATUS.md`
+
+Record the principal UI improvements, verification performed, known issues, and actual results.
+
+Preserve user changes and Git history. Never use destructive Git operations. Do not commit secrets or generated private data.
+
+Create a focused Phase 17 commit if appropriate and safe.
+
+## 13. DEFINITION OF DONE
+
+Phase 17 is complete only when:
+
+* The implemented screens have been audited.
+* Meaningful UX and visual defects have been corrected.
+* The approved visual design system remains consistent.
+* Product terminology and navigation match actual functionality.
+* Fake metrics and misleading interactions have been removed or corrected.
+* The critical scrutiny workflow is understandable.
+* Responsive and accessibility improvements have been implemented where needed.
+* The frontend production build passes.
+* Relevant tests and checks have been executed.
+* Regressions and known limitations are documented.
+* The project status and execution ledger reflect actual results.
+
+## START NOW
+
+Inspect the repository and begin Phase 17 immediately.
+
+Work autonomously through the audit, implementation, testing, defect repair, and documentation.
+
+Do not merely return a list of recommendations. Make the necessary changes and verify them.
+
+At completion, provide a concise report of the improvements, files changed, actual test/build results, Git status, and remaining issues.
+
+
+
+
+# PHASE 18: SMART INDIA HACKATHON PRESENTATION & PITCH DECK
+
+## VerityAI / EntityLocker — SIH 2026
+
+You are the Lead Presentation Designer, Technical Storyteller, Product Strategist, and SIH Pitch Coach for VerityAI / EntityLocker.
+
+Your task is to create a polished, persuasive, technically accurate presentation for the Smart India Hackathon 2026 evaluation.
+
+The presentation must communicate the problem, proposed solution, innovation, system architecture, AI pipeline, security, working prototype, impact, feasibility, and implementation status.
+
+**Do not merely write an outline. Create the complete presentation and its supporting materials.**
+
+---
+
+## 1. AUTONOMOUS EXECUTION
+
+* Read `AGENTS.md`, `README.md`, `docs/PROJECT_STATUS.md`, `docs/EVALUATION_PACKAGE.md`, `docs/DEMO_SCRIPT.md`, `docs/ARCHITECTURE.md`, `docs/AI_PIPELINE.md`, and `docs/TESTING_SECURITY_AND_DEMO.md`, if present.
+* Read the original SIH problem statement and any available official submission instructions in the repository.
+* Inspect the actual implementation and distinguish working features from planned, simulated, or unavailable integrations.
+* Inspect Git status before modifying anything.
+* Do not ask routine questions or request approval between tasks.
+* Make reasonable decisions based on the source documents and the actual project.
+* Preserve existing work and documentation.
+* Continue through presentation creation, quality checks, and documentation.
+
+If an official presentation template or slide limit is available, follow it. Do not invent official requirements when they are unavailable.
+
+## 2. PRESENTATION OBJECTIVE
+
+Create a presentation that enables an SIH evaluator to understand, within a few minutes:
+
+1. What problem the institution faces.
+2. Why existing manual scrutiny is challenging.
+3. How VerityAI / EntityLocker addresses the problem.
+4. What is technically innovative about the solution.
+5. How the system works from document submission to reviewer decision.
+6. How AI, deterministic rules, and reference-registry checks work together.
+7. How security, auditability, and human oversight are maintained.
+8. What has actually been implemented and tested.
+9. What measurable benefits the solution could deliver.
+10. How the system could be deployed and scaled responsibly.
+
+Use a coherent narrative rather than a collection of unrelated technical slides.
+
+## 3. RECOMMENDED SLIDE STRUCTURE
+
+Create approximately 12–15 slides unless official constraints specify otherwise.
+
+### Slide 1 — Title
+
+* VerityAI / EntityLocker.
+* A concise, memorable product tagline.
+* Smart India Hackathon 2026.
+* Team and institution details only when supported by available information.
+
+### Slide 2 — Problem Statement
+
+Explain the institutional scrutiny problem in clear language.
+
+Describe the challenge of checking applications, supporting documents, institutional records, and regulatory requirements across large volumes of submissions.
+
+Preserve the meaning of the official problem statement. Do not exaggerate the scale or invent statistics.
+
+### Slide 3 — Existing Challenges
+
+Explain relevant challenges such as:
+
+* Manual document review.
+* Inconsistent verification.
+* Missing or conflicting information.
+* Difficulty tracing evidence.
+* Limited visibility into review progress.
+* Maintaining an auditable decision history.
+
+Distinguish documented facts from reasonable observations.
+
+### Slide 4 — Proposed Solution
+
+Introduce VerityAI / EntityLocker as an AI-assisted institutional application scrutiny platform.
+
+Explain how it combines document processing, deterministic validation, anomaly detection, reference checks, reviewer workflows, and audit history.
+
+### Slide 5 — End-to-End Workflow
+
+Present a simple workflow:
+
+Application submission → Document upload → Text extraction → Field identification → Deterministic validation → Anomaly analysis → Reference verification → Human review → Auditable outcome.
+
+Adjust the diagram to match the actual implementation. Clearly label optional, simulated, or unavailable stages.
+
+### Slide 6 — System Architecture
+
+Create a readable architecture diagram showing the actual components:
+
+* React/Vite frontend.
+* FastAPI backend.
+* API layer.
+* Authentication and authorization.
+* Database and migrations.
+* Private document storage.
+* OCR and document-processing pipeline.
+* Validation and anomaly services.
+* Registry/provider adapters.
+* Audit and history services.
+
+Verify component names against the repository before including them.
+
+### Slide 7 — AI and Document Intelligence
+
+Explain the implemented document-processing pipeline, including supported PDF/image extraction and OCR behavior.
+
+Explain the distinction between:
+
+* Extracted data.
+* Deterministic rule-based validation.
+* AI-assisted anomaly suggestions.
+* External reference results.
+* Human reviewer decisions.
+
+Do not claim that an AI model independently determines legal compliance or fraud.
+
+### Slide 8 — Explainability and Evidence
+
+Explain how reviewers can trace findings to source documents, extracted values, validation rules, and relevant reference records.
+
+Use actual screenshots or real synthetic examples from the project where available.
+
+### Slide 9 — Security and Governance
+
+Cover implemented protections such as authentication, role-based access, private document access, input validation, audit history, and external-request protections.
+
+Include only verified controls. Clearly disclose any controls that remain incomplete.
+
+### Slide 10 — Working Prototype
+
+Show actual screenshots from the running application.
+
+Prioritize the most convincing workflow:
+
+* Application details.
+* Document review.
+* Validation findings.
+* Reviewer actions.
+* Audit history.
+* Registry or regulatory gateway screens where useful.
+
+Use screenshots from the actual application, not fabricated interface mockups presented as working software.
+
+If screenshots cannot be captured, prepare clear placeholders and record that genuine screenshots are still required. Do not claim the placeholders are real application captures.
+
+### Slide 11 — Innovation and Differentiation
+
+Explain the solution's distinguishing characteristics based on verified implementation, such as:
+
+* Combining deterministic validation with AI-assisted anomaly detection.
+* Traceable evidence and reviewer explanations.
+* Version-aware scrutiny history.
+* Configurable reference-provider integrations.
+* Human-in-the-loop institutional decision-making.
+
+Avoid unsupported claims such as “first in India,” “100% accurate,” or “fully autonomous approval.”
+
+### Slide 12 — Impact and Benefits
+
+Describe expected benefits, such as reduced repetitive manual effort, more consistent checks, better traceability, and improved review visibility.
+
+Do not invent time savings, accuracy percentages, cost reductions, or other measured outcomes.
+
+If appropriate, propose a future pilot evaluation measuring:
+
+* Average review time.
+* Finding precision and recall.
+* Reviewer agreement.
+* False-positive rate.
+* Percentage of applications requiring manual escalation.
+
+Label these as proposed evaluation metrics, not achieved results.
+
+### Slide 13 — Feasibility and Scalability
+
+Explain the current prototype architecture and a realistic path toward deployment.
+
+Discuss storage, database, OCR throughput, security, monitoring, and integration requirements where supported.
+
+Do not imply that the prototype has been validated at government-scale production volume.
+
+### Slide 14 — Implementation and Testing Status
+
+Report actual implementation and test results.
+
+The existing project report claims:
+
+* 121 backend tests passed.
+* Frontend production build succeeded.
+* Demonstration-readiness audit passed 10/10 checks.
+
+Verify these results against the latest available execution reports before including them. If they cannot be independently reverified, identify them as reported results and state their source.
+
+Clearly distinguish implemented features from simulated services and unavailable official integrations.
+
+### Slide 15 — Roadmap and Closing
+
+Summarize the next steps:
+
+* Pilot validation.
+* Authorized official registry integration.
+* Evaluation using representative institutional documents.
+* Deployment hardening.
+* Performance and accuracy measurement.
+
+Finish with a concise statement explaining why the solution matters.
+
+Do not claim official deployment, institutional endorsement, or government partnership without evidence.
+
+---
+
+## 4. DESIGN REQUIREMENTS
+
+Use a polished, enterprise-grade presentation style consistent with the product.
+
+### Visual identity
+
+* Lavender: `#CBB3E8`
+* Light lavender: `#F3EEFC`
+* Very light lavender: `#FAF8FF`
+* Purple: `#7450D8`
+* Deep purple: `#5633B8`
+* Tomato red: `#E34234`
+* Action red: `#F04438`
+* White: `#FFFFFF`
+* Primary text: `#171B45`
+
+Use Inter or a suitable available sans-serif font.
+
+### Presentation principles
+
+* One primary message per slide.
+* Strong headlines that communicate conclusions.
+* Short, readable text.
+* Consistent spacing and alignment.
+* High contrast and large typography.
+* Architecture and workflow diagrams that remain readable on a projector.
+* Consistent icons and restrained visual decoration.
+* No unnecessary gradients, oversized illustrations, or cluttered layouts.
+* No screenshots containing secrets, personal information, or real sensitive documents.
+
+Prioritize clarity over decorative complexity.
+
+## 5. CREATE THE ACTUAL PRESENTATION FILE
+
+Inspect the repository and available tooling first.
+
+Create an editable PowerPoint presentation at:
+
+`docs/submission/VerityAI_SIH_2026_Presentation.pptx`
+
+Use the presentation-generation tooling available in the environment. If a suitable existing presentation tool is already integrated, use it. Otherwise, use a reliable PowerPoint-generation library available in the environment.
+
+Also create:
+
+* `docs/submission/PRESENTATION_CONTENT.md` — complete slide-by-slide content and speaker notes.
+* `docs/submission/PRESENTATION_ASSET_CHECKLIST.md` — screenshots, diagrams, and assets used or still required.
+
+Create `docs/submission/` if necessary.
+
+The PowerPoint must be a real, editable presentation file, not a PDF renamed to `.pptx`.
+
+## 6. SPEAKER NOTES AND PITCH NARRATIVE
+
+Include concise speaker notes for each slide.
+
+The notes should explain:
+
+* What to say.
+* Which key point evaluators should remember.
+* How the slide connects to the next one.
+* Which technical details deserve emphasis.
+
+Keep the narrative natural, confident, and technically credible.
+
+Target a presentation of approximately 5–7 minutes unless the official rules specify another duration.
+
+Do not overload slides with speech text.
+
+## 7. QUALITY ASSURANCE
+
+After creating the presentation:
+
+1. Verify the PowerPoint file exists and opens successfully.
+2. Inspect slide count and ordering.
+3. Check text overflow, clipping, overlapping objects, and unreadable diagrams.
+4. Verify spelling, grammar, terminology, and consistency.
+5. Check every technical claim against the implementation or project documentation.
+6. Verify that all statistics and test results have an identifiable source.
+7. Ensure simulated integrations are clearly disclosed.
+8. Ensure no secrets or sensitive data appear.
+9. Render slides to images or PDF for visual inspection if suitable tools are available.
+10. Correct detected presentation defects.
+
+Do not claim visual inspection occurred if it did not.
+
+## 8. GIT AND DOCUMENTATION
+
+* Preserve user changes and existing Git history.
+* Review the final diff.
+* Do not commit secrets or generated private data.
+* Create a focused Phase 18 commit if appropriate and safe.
+* Update `docs/PROJECT_STATUS.md` and `docs/AUTONOMOUS_EXECUTION_STATUS.md`.
+* Record the presentation file path, verification performed, and remaining content requiring user-supplied details.
+
+## 9. DEFINITION OF DONE
+
+Phase 18 is complete only when:
+
+* The actual presentation file has been generated.
+* The slide narrative is coherent and SIH-focused.
+* Technical claims match the implementation.
+* Speaker notes are included.
+* Required screenshots and assets are either genuine or clearly marked as outstanding.
+* The presentation has been checked for basic structural and visual defects.
+* Supporting Markdown files are created.
+* Project status and the execution ledger are updated.
+* Actual results and remaining limitations are reported.
+
+## START NOW
+
+Inspect the project and the original SIH problem statement. Create the complete editable PowerPoint and supporting materials.
+
+Work autonomously through content creation, slide design, verification, and documentation.
+
+Do not stop after providing an outline. Do not fabricate team details, performance results, official integrations, or endorsements.
+
+At completion, report the actual file paths, slide count, verification results, and any remaining information or assets required before submission.
+
+
+
+
+# PHASE 19: DEMONSTRATION VIDEO & RECORDING PACKAGE
+
+## VerityAI / EntityLocker — Smart India Hackathon 2026
+
+You are the Video Production Director, Product Demonstration Engineer, Technical Storyteller, and Release QA Engineer for VerityAI / EntityLocker.
+
+Your objective is to prepare a compelling, accurate, professional demonstration video that showcases the working prototype and explains how it addresses the selected SIH problem statement.
+
+Do not merely write a script. Prepare the complete recording package, capture genuine application footage wherever the available tools permit, and produce the final video if a suitable recording and editing capability is available.
+
+**Work autonomously. Do not ask routine questions or wait for intermediate approval.**
+
+---
+
+## 1. INSPECT THE PROJECT
+
+Before starting:
+
+1. Read `AGENTS.md` and `README.md`.
+2. Read `docs/PROJECT_STATUS.md` and `docs/AUTONOMOUS_EXECUTION_STATUS.md`.
+3. Read `docs/DEMO_SCRIPT.md` and `docs/EVALUATION_PACKAGE.md`.
+4. Review the original SIH problem statement and the Phase 18 presentation, if available.
+5. Inspect the current application, supported features, test results, deployment configuration, and known limitations.
+6. Inspect Git status and preserve existing user changes.
+
+Verify which features actually work before deciding what to demonstrate.
+
+Do not assume Phase 16, 17, or 18 succeeded merely because their prompts were issued. Inspect the actual repository and deliverables.
+
+## 2. VIDEO OBJECTIVE
+
+Create a demonstration that answers five questions:
+
+1. What problem does VerityAI / EntityLocker address?
+2. How does an institutional application move through scrutiny?
+3. How does the platform process documents and identify potential issues?
+4. How does it help a human reviewer investigate findings and make decisions?
+5. Why is the solution useful, feasible, secure, and worthy of further evaluation?
+
+The video should emphasize a working end-to-end workflow rather than a long tour of every screen.
+
+Target a duration of approximately **3–5 minutes**, unless the official SIH submission requirements specify another duration.
+
+If a shorter duration is required, prioritize the core workflow and the strongest verified capabilities.
+
+## 3. CREATE THE RECORDING PACKAGE
+
+Create the directory:
+
+`docs/submission/video/`
+
+Prepare these files:
+
+### A. `VIDEO_SCRIPT.md`
+
+Include:
+
+* Timestamped narration.
+* On-screen actions.
+* Expected screen content.
+* Suggested transitions.
+* Important technical explanations.
+* Closing message.
+
+### B. `RECORDING_CHECKLIST.md`
+
+Include:
+
+* Environment preparation.
+* Demo-account preparation.
+* Data reset or seeding instructions, where safe.
+* Browser configuration.
+* Screen resolution and scaling.
+* Cursor movement and recording quality.
+* Audio and microphone checks.
+* Privacy and secret checks.
+* Final playback verification.
+
+### C. `SHOT_LIST.md`
+
+List every planned shot, its purpose, the application state required, and the expected output.
+
+### D. `VIDEO_ASSETS.md`
+
+Record the actual screenshots, diagrams, narration assets, title cards, and other materials used.
+
+### E. `FINAL_VIDEO_REPORT.md`
+
+Record the output file, duration, resolution, audio status, quality checks, and remaining limitations.
+
+Do not put real credentials, passwords, tokens, or private institutional records into these files.
+
+## 4. RECOMMENDED VIDEO STORYBOARD
+
+Adapt this storyboard to the real application.
+
+### Scene 1 — Opening and Problem
+
+**Duration:** 15–25 seconds.
+
+Introduce the institutional application scrutiny challenge.
+
+Explain the difficulty of examining applications, supporting documents, institutional records, and regulatory requirements manually.
+
+Use concise on-screen text and restrained branding.
+
+Do not invent statistics or claim official endorsement.
+
+### Scene 2 — Introduce the Solution
+
+**Duration:** 15–25 seconds.
+
+Show the actual VerityAI / EntityLocker interface.
+
+Explain that the platform combines document processing, deterministic validation, AI-assisted anomaly analysis, reference checks, reviewer workflows, and audit history where implemented.
+
+### Scene 3 — Application and Document Intake
+
+**Duration:** 25–40 seconds.
+
+Show a genuine synthetic demonstration application.
+
+Open its details and inspect its supporting documents.
+
+Demonstrate actual document upload or existing demo-document access, whichever works reliably.
+
+### Scene 4 — Document Intelligence
+
+**Duration:** 30–45 seconds.
+
+Show the actual extraction pipeline or its resulting output.
+
+Explain how the system extracts available text and identifies candidate information.
+
+If OCR or multilingual processing is shown, use supported inputs and verified results.
+
+Do not stage fake loading animations or claim processing is occurring when it is not.
+
+### Scene 5 — Validation and Anomaly Analysis
+
+**Duration:** 35–50 seconds.
+
+Show actual validation results.
+
+Demonstrate a meaningful synthetic mismatch, missing field, or anomaly.
+
+Explain the difference between a deterministic rule violation and an AI-assisted suggestion.
+
+Show the evidence supporting the finding.
+
+Do not label a synthetic anomaly as confirmed fraud.
+
+### Scene 6 — Registry and Regulatory Verification
+
+**Duration:** 20–35 seconds.
+
+Show the actual registry or regulatory gateway interface, if implemented and functional.
+
+Clearly distinguish:
+
+* Local synthetic verification.
+* Configurable external-provider capability.
+* Live official government integration.
+
+If live AICTE credentials are unavailable, explicitly state that official production integration requires authorized access.
+
+Never fabricate a successful live government request.
+
+### Scene 7 — Human Review and Auditability
+
+**Duration:** 30–45 seconds.
+
+Show the reviewer inspecting findings and taking an authorized action.
+
+Demonstrate application history or the audit trail where available.
+
+Explain how evidence, reviewer actions, and historical records support traceability.
+
+### Scene 8 — Architecture and Security
+
+**Duration:** 20–30 seconds.
+
+Use a verified architecture diagram or brief on-screen annotations.
+
+Explain the relevant frontend, backend, database, document processing, validation, and integration components.
+
+Mention only security controls that have actually been implemented and verified.
+
+### Scene 9 — Closing
+
+**Duration:** 10–20 seconds.
+
+Summarize the practical value of the platform.
+
+Emphasize more structured scrutiny, traceable findings, and human-supervised decision-making.
+
+End with the product name and a concise closing statement.
+
+Adjust all timings to fit the final video duration.
+
+## 5. PREPARE A RELIABLE DEMO ENVIRONMENT
+
+Inspect the existing environment and identify the safest way to launch the application.
+
+Where appropriate:
+
+* Verify dependencies.
+* Verify database connectivity and migrations.
+* Prepare synthetic demonstration data.
+* Verify demo accounts and their roles.
+* Run the backend and frontend.
+* Verify API health and critical workflows.
+* Check document storage and OCR dependencies.
+* Ensure the application is stable before recording.
+
+Use synthetic data only unless explicit authorization exists for other data.
+
+Do not delete production data, reset an important database, expose secrets, or modify the user's environment destructively.
+
+If existing demo records are needed, preserve them and create additional synthetic records using the project's established seeding approach.
+
+Do not invent successful results for unavailable providers.
+
+## 6. RECORD GENUINE APPLICATION FOOTAGE
+
+Use available browser, desktop, or recording tools if supported.
+
+Capture genuine application behavior, including:
+
+* Application overview.
+* Document review.
+* Extraction results.
+* Validation findings.
+* Reviewer workflow.
+* Audit history.
+* Registry or gateway behavior, if relevant.
+
+Use a clean browser window and consistent screen resolution.
+
+Avoid:
+
+* Browser developer consoles unless technically necessary.
+* Visible secrets or environment variables.
+* Personal messages and unrelated desktop content.
+* Accidental clicks and long idle periods.
+* Rapid cursor movement.
+* Unreadable text.
+* Repeated navigation.
+* Unsupported claims in narration.
+
+If the available environment cannot record the screen, prepare a precise shot-by-shot recording package and identify the exact missing recording capability.
+
+**Do not fabricate screenshots or represent generated mockups as genuine footage from the running application.**
+
+## 7. NARRATION AND AUDIO
+
+Prepare narration that sounds natural, confident, and technically credible.
+
+Use short sentences and explain technical terms in plain language.
+
+If an authorized speech-generation or audio-recording capability is available, produce narration with appropriate pacing and pronunciation.
+
+If audio generation is unavailable, provide a clean narration script with timestamps and pronunciation notes.
+
+Ensure the narration:
+
+* Matches the actions visible on screen.
+* Does not repeat every interface label.
+* Explains why each feature matters.
+* Distinguishes implemented capabilities from future integrations.
+* Avoids unsupported accuracy, performance, or impact claims.
+
+Background music is optional. If used, it must be licensed or otherwise permitted and kept below the narration.
+
+## 8. VIDEO EDITING
+
+If suitable video editing tools are available, produce:
+
+`docs/submission/video/VerityAI_SIH_2026_Demo.mp4`
+
+Preferred output:
+
+* MP4 container.
+* H.264 video.
+* 1920 × 1080 resolution where practical.
+* 16:9 aspect ratio.
+* Clear narration.
+* Readable interface text.
+* Consistent title cards and transitions.
+* No unnecessary effects.
+
+Use restrained lavender, purple, tomato-red, and white branding consistent with the application.
+
+Add concise captions or labels where they improve comprehension.
+
+Do not spend time on elaborate cinematic effects at the expense of genuine product functionality.
+
+If a full video cannot be generated within the available environment, complete the script, shot list, recording checklist, asset plan, and production instructions. Report the precise remaining step honestly.
+
+## 9. PRIVACY AND CLAIM VERIFICATION
+
+Before finalizing:
+
+* Check all footage for credentials, tokens, private records, and personal information.
+* Verify every technical claim against the actual implementation.
+* Verify test counts against available reports.
+* Ensure synthetic data is clearly identified.
+* Ensure simulated registry responses are not presented as live official verification.
+* Do not claim production deployment unless it has actually succeeded.
+* Do not claim measured benefits without evidence.
+* Do not claim that AI independently determines fraud or official approval.
+
+## 10. FINAL VIDEO QUALITY ASSURANCE
+
+If a video file is generated:
+
+1. Confirm that the file exists and is nonempty.
+2. Verify the actual duration and resolution.
+3. Check that the file can be decoded and played.
+4. Inspect the beginning, middle, and end.
+5. Check narration synchronization.
+6. Check audio levels and intelligibility.
+7. Check that important interface text remains readable.
+8. Verify that transitions do not obscure content.
+9. Verify that the ending is complete.
+10. Correct detected problems and recheck the final file.
+
+Do not claim a quality check passed if it was not performed.
+
+## 11. DOCUMENTATION AND CHANGE CONTROL
+
+Update:
+
+* `docs/PROJECT_STATUS.md`
+* `docs/AUTONOMOUS_EXECUTION_STATUS.md`
+
+Preserve existing user changes and Git history.
+
+Do not commit secrets or private generated data.
+
+Create a focused Phase 19 commit if appropriate and safe.
+
+## 12. DEFINITION OF DONE
+
+Phase 19 is complete when:
+
+* The video script is finalized.
+* The storyboard and shot list match the actual product.
+* The demo environment has been checked.
+* The recording checklist is available.
+* Genuine footage has been captured where the available tools permit.
+* The final video has been generated and checked, if the required recording and editing capabilities are available.
+* Otherwise, the remaining recording requirement is documented precisely.
+* Technical claims and integration status are accurate.
+* Project documentation and the execution ledger are updated.
+
+## START NOW
+
+Inspect the repository and begin Phase 19.
+
+Proceed autonomously through demo preparation, script creation, recording, editing, verification, and documentation wherever the available capabilities permit.
+
+Do not stop after writing the script if actual recording and editing tools are available.
+
+At completion, report the actual deliverables, file paths, video duration if generated, verification results, and any remaining actions that genuinely require user involvement.
+
+
+
+
+# PHASE 20: FINAL SIH SUBMISSION READINESS AUDIT
+
+## VerityAI / EntityLocker — Smart India Hackathon 2026
+
+You are the Final Release Manager, Senior QA Engineer, Security Auditor, Technical Documentation Reviewer, and SIH Submission Coordinator for VerityAI / EntityLocker.
+
+Phases 1–19 are reported as completed or planned. Your first responsibility is to inspect the actual repository and verify which deliverables genuinely exist.
+
+Your objective is to bring the project to a verified, submission-ready state without unnecessary new features, disruptive refactoring, or changes that could destabilize the working prototype.
+
+**Operate autonomously. Do not ask routine questions or wait for intermediate approvals. Inspect, verify, repair, document, and report.**
+
+---
+
+## 1. AUTONOMOUS EXECUTION
+
+1. Read `AGENTS.md`, `README.md`, `docs/PROJECT_STATUS.md`, and `docs/AUTONOMOUS_EXECUTION_STATUS.md`.
+2. Read the original SIH problem statement and all available official submission instructions.
+3. Inspect the deliverables created by Phases 16–19.
+4. Inspect Git status, recent commits, project structure, configuration, database migrations, tests, and documentation.
+5. Verify claims made in previous phase reports against actual files and execution results.
+6. Identify incomplete requirements and prioritize those that could prevent submission.
+7. Implement safe, necessary corrections without waiting for routine approval.
+
+Do not assume a phase succeeded just because its prompt was executed or its report says it completed.
+
+Preserve user changes, existing data, and Git history. Never use destructive commands or overwrite user work to make the project appear complete.
+
+If official submission instructions or external credentials are unavailable, finish all independent work and clearly record the missing requirement.
+
+---
+
+## 2. VERIFY THE OFFICIAL SUBMISSION REQUIREMENTS
+
+Inspect the actual SIH problem statement, official submission instructions, and any available organizer-provided checklist.
+
+Determine, where documented:
+
+* Required presentation format and slide limit.
+* Required demonstration video format and duration.
+* Required source-code or repository submission.
+* Required project description or abstract.
+* Required team and institution details.
+* Required architecture or methodology documents.
+* Required deployment link or prototype access.
+* File size, naming, and upload restrictions.
+* Submission deadline and applicable time zone.
+* Any required declarations, permissions, or supporting documents.
+
+Use official documentation already available in the repository or authorized sources.
+
+Do not invent deadlines, mandatory documents, slide counts, or evaluation rules.
+
+If the official instructions cannot be accessed, create a clearly labelled provisional checklist and list the specific requirements that still need confirmation.
+
+---
+
+## 3. FINAL SOFTWARE VERIFICATION
+
+Run the available checks against the actual codebase.
+
+### Backend
+
+* Run the complete available backend test suite.
+* Verify the application starts successfully.
+* Verify health checks and database connectivity.
+* Verify migrations are consistent with the current models.
+* Check authentication and role-based authorization.
+* Verify document upload and protected access.
+* Verify document processing, validation, and anomaly analysis.
+* Verify application workflows and audit history.
+* Verify registry and external gateway behavior.
+* Verify failure handling and unavailable-provider behavior.
+
+### Frontend
+
+* Run the production build.
+* Run configured frontend tests, linting, and type checks.
+* Verify critical routes and navigation.
+* Check for broken API calls and runtime errors where browser tooling is available.
+* Verify responsive behavior on representative viewport sizes.
+* Confirm that major controls work and that error states are understandable.
+
+### Integration
+
+* Test critical end-to-end workflows wherever practical.
+* Verify that frontend requests match backend API contracts.
+* Check authentication, permissions, persistence, and error handling across the stack.
+* Verify that synthetic providers are clearly distinguished from live external services.
+
+Record actual results and commands. Do not invent test counts or claim unexecuted checks passed.
+
+Repair submission-blocking defects and rerun the affected checks.
+
+---
+
+## 4. DEPLOYMENT AND ACCESSIBILITY CHECK
+
+Inspect Phase 16 results and determine the actual deployment status.
+
+If the application has been deployed:
+
+* Verify that the public URL is reachable.
+* Check the deployed frontend and backend health.
+* Test authentication and a critical workflow against the deployed environment.
+* Check HTTPS, CORS, cookies, and relevant production configuration.
+* Verify database persistence and document storage.
+* Check that demo credentials and required access instructions are accurate.
+* Verify that secrets and private data are not exposed.
+
+If the application is not deployed:
+
+* Verify local startup and the documented deployment process.
+* Identify the remaining hosting requirements.
+* Prepare the deployment configuration where feasible.
+* Clearly report that deployment has not been completed.
+
+Do not fabricate a public URL or claim successful live access without testing it.
+
+Do not deploy to a paid service, expose private infrastructure, or use credentials without appropriate authorization.
+
+---
+
+## 5. FINAL PRESENTATION AUDIT
+
+Inspect:
+
+`docs/submission/VerityAI_SIH_2026_Presentation.pptx`
+
+and related Phase 18 materials.
+
+Verify:
+
+* The actual presentation file exists and opens.
+* The slide count follows applicable official instructions.
+* The narrative accurately describes the problem and solution.
+* Architecture diagrams match the implemented system.
+* AI capabilities are described accurately.
+* Test results are supported by actual reports.
+* Screenshots represent the real application or are clearly identified as illustrative.
+* Simulated integrations are not presented as live government integrations.
+* No unsupported accuracy, performance, cost-saving, or impact claims appear.
+* Team details are accurate where included.
+* Spelling, typography, layout, and readability are acceptable.
+
+Correct genuine errors.
+
+If a presentation-generation tool is available, render slides for visual inspection. Otherwise, perform the available structural checks and document the visual-verification limitation.
+
+Do not invent missing team names, institution names, or endorsements.
+
+---
+
+## 6. FINAL DEMONSTRATION VIDEO AUDIT
+
+Inspect:
+
+`docs/submission/video/`
+
+Check whether the actual video file exists.
+
+If `VerityAI_SIH_2026_Demo.mp4` exists:
+
+* Verify that it is nonempty and playable.
+* Check duration, resolution, and audio.
+* Inspect its opening, main workflow, and closing.
+* Ensure the footage shows genuine application behavior.
+* Verify that narration matches the actions.
+* Check for exposed credentials, private data, and unsupported claims.
+* Confirm that the video meets official submission constraints where known.
+
+If only the script, storyboard, and recording checklist exist, mark the video as **NOT YET RECORDED**.
+
+Do not treat a script or collection of screenshots as a finished demonstration video.
+
+If recording or editing tools are available, complete the video where feasible. Otherwise, document the exact remaining recording task.
+
+---
+
+## 7. REPOSITORY AND RELEASE HYGIENE
+
+Inspect the Git repository and prepare a safe release state.
+
+* Check the current branch and working tree.
+* Review uncommitted changes.
+* Check for secrets, API keys, passwords, tokens, private records, and uploaded documents.
+* Verify `.gitignore` and environment examples.
+* Check for unnecessary generated files, caches, build artifacts, and local databases.
+* Verify that setup and deployment instructions are accurate.
+* Ensure required migrations and synthetic seed data are included.
+* Ensure private or generated data is not committed.
+* Verify that the repository does not depend on undocumented local-only configuration.
+* Review the README for accurate setup, architecture, features, testing, and limitations.
+
+Do not delete legitimate project assets or user changes merely to clean the repository.
+
+Do not rewrite Git history or perform destructive resets.
+
+Create a final release commit only if the changes are safe, coherent, and appropriate. Record the actual commit hash.
+
+---
+
+## 8. DOCUMENTATION AND SUBMISSION PACKAGE
+
+Inspect existing documentation and update it instead of creating unnecessary duplicates.
+
+Prepare or update the following where appropriate:
+
+* `README.md`
+* `docs/PROJECT_STATUS.md`
+* `docs/AUTONOMOUS_EXECUTION_STATUS.md`
+* `docs/DEPLOYMENT.md`
+* `docs/END_TO_END_VERIFICATION.md`
+* `docs/DEMO_SCRIPT.md`
+* `docs/EVALUATION_PACKAGE.md`
+* `docs/submission/PRESENTATION_CONTENT.md`
+* `docs/submission/PRESENTATION_ASSET_CHECKLIST.md`
+* `docs/submission/video/VIDEO_SCRIPT.md`
+* `docs/submission/video/RECORDING_CHECKLIST.md`
+* `docs/submission/video/FINAL_VIDEO_REPORT.md`
+
+Create only the files that are useful and relevant.
+
+Ensure the documents agree with one another and accurately distinguish implemented, tested, simulated, unavailable, and planned functionality.
+
+Prepare a final checklist that clearly separates:
+
+1. Completed and verified.
+2. Completed but not independently verified.
+3. Outstanding work that the agent can still perform.
+4. Actions that genuinely require the user.
+5. Requirements awaiting official confirmation.
+
+---
+
+## 9. FINAL CLAIMS AND SECURITY AUDIT
+
+Before declaring the project ready:
+
+* Check every important claim in the README, presentation, demo script, and evaluation package.
+* Verify test counts and build results.
+* Verify deployment status.
+* Verify the status of official registry integrations.
+* Verify that the prototype does not misrepresent synthetic verification as official confirmation.
+* Ensure that AI-assisted anomalies are not described as confirmed fraud.
+* Ensure that human review and decision-making are accurately represented.
+* Remove or correct unsupported claims.
+* Ensure no secrets or sensitive records are included in submission artifacts.
+
+The prototype report previously stated that live AICTE production credentials were unavailable. Verify whether that limitation still applies and disclose it accurately.
+
+---
+
+## 10. CREATE THE FINAL SUBMISSION CHECKLIST
+
+Create:
+
+`docs/submission/FINAL_SUBMISSION_CHECKLIST.md`
+
+Organize it into the following sections:
+
+### A. Software
+
+* Backend tests.
+* Frontend build and tests.
+* Database migrations.
+* Critical end-to-end workflows.
+* Security review.
+* Deployment status.
+
+### B. Presentation
+
+* PowerPoint exists and opens.
+* Official format and slide constraints checked.
+* Technical claims verified.
+* Screenshots checked.
+* Team information confirmed where applicable.
+
+### C. Demonstration Video
+
+* Actual video file exists.
+* Duration and format checked.
+* Audio and visuals checked.
+* Core workflow demonstrated.
+* Privacy and claims checked.
+
+### D. Repository
+
+* README and setup instructions.
+* Required source files.
+* Environment examples without secrets.
+* Git status and final commit.
+* No accidental sensitive data.
+
+### E. Official Submission
+
+* Problem statement and submission rules confirmed.
+* Required fields and documents identified.
+* Deadline and time zone confirmed.
+* Required links and files verified.
+* Outstanding organizer-specific requirements listed.
+
+For each item, use one of these statuses:
+
+* `PASS`
+* `FAIL`
+* `NOT VERIFIED`
+* `NOT APPLICABLE`
+* `WAITING FOR USER`
+* `WAITING FOR OFFICIAL INFORMATION`
+
+Do not mark an item PASS without sufficient evidence.
+
+---
+
+## 11. FINAL PROJECT STATUS
+
+Update `docs/PROJECT_STATUS.md` and `docs/AUTONOMOUS_EXECUTION_STATUS.md` with the actual Phase 20 results.
+
+Mark the phase VERIFIED only when the defined checks have been completed.
+
+If any critical requirement remains unresolved, classify the project as PARTIALLY READY rather than READY.
+
+Distinguish software readiness from submission readiness:
+
+* **Software readiness:** Does the application work?
+* **Demonstration readiness:** Can the critical workflow be shown reliably?
+* **Submission readiness:** Are all required files, links, and official requirements satisfied?
+
+These are different statuses and must be reported separately.
+
+---
+
+## 12. FINAL REPORT
+
+At completion, provide a concise report containing:
+
+1. Overall status: `READY`, `PARTIALLY READY`, or `NOT READY`.
+2. Software readiness.
+3. Demonstration readiness.
+4. Submission readiness.
+5. Actual backend test results.
+6. Actual frontend build/test results.
+7. End-to-end verification results.
+8. Deployment status and verified URL, if one exists.
+9. Presentation file status.
+10. Video file status.
+11. Final checklist path.
+12. Git branch, working-tree status, and actual final commit hash where applicable.
+13. Every remaining critical issue.
+14. Every action that genuinely requires the user.
+15. Any official requirement that could not be verified.
+
+Prioritize outstanding blockers instead of listing minor cosmetic issues first.
+
+Do not claim everything is complete if the video is missing, required official information is unknown, or a critical workflow remains unverified.
+
+---
+
+# START NOW
+
+Inspect the actual repository and submission requirements.
+
+Execute the final audit, fix safe submission-blocking defects, verify the available deliverables, and update the final checklist.
+
+Do not ask routine questions. Do not merely produce recommendations.
+
+**Finish every task that can safely be completed without user intervention, and clearly identify only the remaining actions that genuinely require external information or the user's participation.**
+
+
+
+
