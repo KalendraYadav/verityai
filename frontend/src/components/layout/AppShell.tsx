@@ -14,6 +14,8 @@ import {
   X,
 } from 'lucide-react';
 
+import type { UserProfile } from '../../api/client';
+
 export type NavItemKey =
   | 'overview'
   | 'applications'
@@ -30,6 +32,8 @@ interface Props {
   onViewModeChange: (mode: 'landing' | 'dashboard') => void;
   apiHealthy: boolean;
   onProbeClick: () => void;
+  currentUser: UserProfile | null;
+  onOpenAuthModal: () => void;
   children: React.ReactNode;
 }
 
@@ -40,6 +44,8 @@ export const AppShell: React.FC<Props> = ({
   onViewModeChange,
   apiHealthy,
   onProbeClick,
+  currentUser,
+  onOpenAuthModal,
   children,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -114,20 +120,22 @@ export const AppShell: React.FC<Props> = ({
                 <ShieldCheck className="w-4 h-4 text-[#7450D8]" />
                 <span>Scrutiny Session</span>
               </div>
-              <span className="font-bold text-[#12B886] text-[10px] uppercase">Active</span>
+              <span className={`font-bold text-[10px] uppercase ${currentUser ? 'text-[#12B886]' : 'text-[#8589A6]'}`}>
+                {currentUser ? 'Active' : 'Guest'}
+              </span>
             </div>
             <div className="text-[11px] text-[#5F6485] space-y-0.5">
               <div className="flex justify-between">
+                <span className="text-[#8589A6]">User:</span>
+                <span className="font-semibold text-[#171B45] truncate max-w-[120px]">{currentUser ? currentUser.display_name : 'Guest User'}</span>
+              </div>
+              <div className="flex justify-between">
                 <span className="text-[#8589A6]">Role:</span>
-                <span className="font-semibold text-[#171B45]">Reviewer</span>
+                <span className="font-semibold text-[#7450D8]">{currentUser ? currentUser.role : 'GUEST / DEMO'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#8589A6]">Engine:</span>
                 <span className="font-mono text-[#7450D8]">VerityAI v0.2</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#8589A6]">Storage:</span>
-                <span className="text-[#171B45]">SQLite (WAL)</span>
               </div>
             </div>
           </div>
@@ -206,15 +214,25 @@ export const AppShell: React.FC<Props> = ({
               </div>
 
               {/* User Profile Area */}
-              <div className="flex items-center gap-2.5 pl-2 border-l border-[#EEEAF5]">
+              <button
+                onClick={onOpenAuthModal}
+                className="flex items-center gap-2.5 pl-2 border-l border-[#EEEAF5] hover:opacity-80 transition-opacity cursor-pointer text-left"
+                title={currentUser ? `Signed in as ${currentUser.display_name} (${currentUser.role}). Click to manage session.` : 'Click to sign in'}
+              >
                 <div className="w-9 h-9 rounded-xl bg-[#7450D8] text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                  SO
+                  {currentUser ? currentUser.display_name.slice(0, 2).toUpperCase() : 'SO'}
                 </div>
                 <div className="hidden sm:block text-left">
-                  <div className="text-xs font-bold text-[#171B45] leading-tight">Scrutiny Desk</div>
-                  <div className="text-[11px] text-[#5F6485] leading-tight">Regulatory Reviewer</div>
+                  <div className="text-xs font-bold text-[#171B45] leading-tight flex items-center gap-1.5">
+                    <span>{currentUser ? currentUser.display_name : 'Scrutiny Desk'}</span>
+                  </div>
+                  <div className="text-[11px] text-[#5F6485] leading-tight flex items-center gap-1">
+                    <span className="font-semibold text-[#7450D8]">{currentUser ? currentUser.role : 'Regulatory Reviewer'}</span>
+                    <span className="text-[#8589A6]">·</span>
+                    <span className="text-[#8589A6] text-[10px] underline">{currentUser ? 'Manage' : 'Sign In'}</span>
+                  </div>
                 </div>
-              </div>
+              </button>
             </div>
           </header>
 

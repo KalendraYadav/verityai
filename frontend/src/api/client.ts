@@ -823,4 +823,180 @@ export async function fetchExtractedFields(
   return resJson.data;
 }
 
+// ---------------------------------------------------------------------------
+// Phase 7: Authentication, Session & User Management Types & Client
+// ---------------------------------------------------------------------------
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  display_name: string;
+  role: 'ADMIN' | 'REVIEWER' | 'VIEWER' | 'INSTITUTION_USER' | string;
+  institution_id?: string | null;
+  is_active: boolean;
+  last_login_at?: string | null;
+  created_at: string;
+}
+
+export interface PaginatedUsers {
+  data: UserProfile[];
+  meta: {
+    page: number;
+    page_size: number;
+    total: number;
+  };
+}
+
+export async function loginUser(email: string, password: string): Promise<UserProfile> {
+  const response = await fetch('/api/v1/auth/login', {
+    method: 'POST',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+    body: JSON.stringify({ email, password }),
+  });
+
+  const resJson = await response.json();
+  if (!response.ok) {
+    const message = resJson?.error?.message || 'Authentication failed';
+    const code = resJson?.error?.code;
+    const error = new Error(code ? `[${code}] ${message}` : message);
+    (error as any).code = code;
+    throw error;
+  }
+
+  return resJson.data;
+}
+
+export async function logoutUser(): Promise<void> {
+  const response = await fetch('/api/v1/auth/logout', {
+    method: 'POST',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const resJson = await response.json().catch(() => null);
+    throw new Error(resJson?.error?.message || 'Logout failed');
+  }
+}
+
+export async function fetchCurrentUser(): Promise<UserProfile | null> {
+  try {
+    const response = await fetch('/api/v1/auth/me', {
+      method: 'GET',
+      headers: COMMON_HEADERS,
+      credentials: 'include',
+    });
+
+    if (response.status === 401 || response.status === 403) {
+      return null;
+    }
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const resJson = await response.json();
+    return resJson.data;
+  } catch (err) {
+    return null;
+  }
+}
+
+export async function changeUserPassword(currentPassword: string, newPassword: string): Promise<UserProfile> {
+  const response = await fetch('/api/v1/auth/change-password', {
+    method: 'POST',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword,
+    }),
+  });
+
+  const resJson = await response.json();
+  if (!response.ok) {
+    const message = resJson?.error?.message || 'Failed to change password';
+    const code = resJson?.error?.code;
+    const error = new Error(code ? `[${code}] ${message}` : message);
+    (error as any).code = code;
+    throw error;
+  }
+
+  return resJson.data;
+}
+
+export async function fetchUsersList(params?: {
+  page?: number;
+  pageSize?: number;
+  role?: string;
+  isActive?: boolean;
+}): Promise<PaginatedUsers> {
+  const query = new URLSearchParams();
+  if (params?.page) query.set('page', String(params.page));
+  if (params?.pageSize) query.set('page_size', String(params.pageSize));
+  if (params?.role) query.set('role', params.role);
+  if (params?.isActive !== undefined) query.set('is_active', String(params.isActive));
+
+  const response = await fetch(`/api/v1/users?${query.toString()}`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to fetch users (${response.status})`);
+  }
+
+  return response.json();
+}
+
+export async function createNewUser(payload: {
+  email: string;
+  display_name: string;
+  password: string;
+  role: string;
+  institution_id?: string;
+}): Promise<UserProfile> {
+  const response = await fetch('/api/v1/users', {
+    method: 'POST',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+
+  const resJson = await response.json();
+  if (!response.ok) {
+    const message = resJson?.error?.message || 'Failed to create user';
+    const code = resJson?.error?.code;
+    const error = new Error(code ? `[${code}] ${message}` : message);
+    (error as any).code = code;
+    throw error;
+  }
+
+  return resJson.data;
+}
+
+export async function toggleUserActiveStatus(userId: string, isActive: boolean): Promise<UserProfile> {
+  const response = await fetch(`/api/v1/users/${userId}/status`, {
+    method: 'PATCH',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+    body: JSON.stringify({ is_active: isActive }),
+  });
+
+  const resJson = await response.json();
+  if (!response.ok) {
+    const message = resJson?.error?.message || 'Failed to update user status';
+    const code = resJson?.error?.code;
+    const error = new Error(code ? `[${code}] ${message}` : message);
+    (error as any).code = code;
+    throw error;
+  }
+
+  return resJson.data;
+}
+
+
 

@@ -1,5 +1,14 @@
 import { useState, useEffect } from 'react';
-import { fetchHealth, fetchInstitutions, fetchCategories, type HealthResponse, type Institution, type ApplicationCategory } from './api/client';
+import {
+  fetchHealth,
+  fetchInstitutions,
+  fetchCategories,
+  fetchCurrentUser,
+  type HealthResponse,
+  type Institution,
+  type ApplicationCategory,
+  type UserProfile,
+} from './api/client';
 import { AppShell, type NavItemKey } from './components/layout/AppShell';
 import { LandingPage } from './components/landing/LandingPage';
 import { DashboardView } from './components/dashboard/DashboardView';
@@ -12,6 +21,7 @@ import { AuditTimelineView } from './components/audit/AuditTimelineView';
 import { ApplicationCreateModal } from './components/ApplicationCreateModal';
 import { DocumentsView } from './components/documents/DocumentsView';
 import { DocumentUploadModal } from './components/documents/DocumentUploadModal';
+import { AuthModal } from './components/auth/AuthModal';
 import {
   ShieldCheck,
   RefreshCw,
@@ -22,6 +32,9 @@ export function App() {
   const [viewMode, setViewMode] = useState<'landing' | 'dashboard'>('dashboard');
   const [currentTab, setCurrentTab] = useState<NavItemKey>('overview');
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
+
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [healthLoading, setHealthLoading] = useState(false);
@@ -55,9 +68,19 @@ export function App() {
     }
   }
 
+  async function checkUserSession() {
+    try {
+      const user = await fetchCurrentUser();
+      setCurrentUser(user);
+    } catch (e) {
+      setCurrentUser(null);
+    }
+  }
+
   useEffect(() => {
     checkHealth();
     loadMetadata();
+    checkUserSession();
   }, []);
 
   return (
@@ -73,6 +96,8 @@ export function App() {
       onViewModeChange={setViewMode}
       apiHealthy={health?.status === 'healthy'}
       onProbeClick={() => setShowHealthModal(true)}
+      currentUser={currentUser}
+      onOpenAuthModal={() => setAuthModalOpen(true)}
     >
       {viewMode === 'landing' ? (
         <LandingPage
@@ -218,6 +243,19 @@ export function App() {
         onClose={() => setUploadModalOpen(false)}
         onSuccess={() => {
           // If in documents view, refresh documents; if in dashboard, keep updated
+        }}
+      />
+
+      {/* Authentication and Session Management Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        currentUser={currentUser}
+        onAuthSuccess={(user) => {
+          setCurrentUser(user);
+        }}
+        onLogoutSuccess={() => {
+          setCurrentUser(null);
         }}
       />
     </AppShell>

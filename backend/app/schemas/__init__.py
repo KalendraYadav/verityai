@@ -34,6 +34,14 @@ from app.schemas.finding import (
     FindingReviewRequest,
     ApplicationAnalysisResponse,
 )
+from app.schemas.auth import (
+    LoginRequest,
+    UserResponse,
+    UserCreateRequest,
+    UserStatusUpdateRequest,
+    ChangePasswordRequest,
+    TokenPayload,
+)
 
 __all__ = [
     "MetaPagination",
@@ -62,4 +70,10 @@ __all__ = [
     "FindingResponse",
     "FindingReviewRequest",
     "ApplicationAnalysisResponse",
+    "LoginRequest",
+    "UserResponse",
+    "UserCreateRequest",
+    "UserStatusUpdateRequest",
+    "ChangePasswordRequest",
+    "TokenPayload",
 ]
