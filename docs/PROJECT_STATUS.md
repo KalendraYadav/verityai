@@ -1,7 +1,7 @@
 # PROJECT_STATUS.md — VerityAI & EntityLocker
 
 **Project:** VerityAI / EntityLocker (Smart India Hackathon 2026, Smart Automation Track)  
-**Milestone:** Phase 4 — Document Text Extraction & OCR Pipeline (P0)  
+**Milestone:** Phase 4 + UI Direction Correction (VerityAI Institutional Information Architecture)  
 **Last Updated:** 2026-10-22  
 **Baseline Environment:** WSL2 Ubuntu 24.04 LTS (Python 3.12.3, Node.js v22.23.2, npm 10.9.8, SQLite with WAL mode)
 
@@ -11,12 +11,14 @@
 
 | Component / Feature | Status | Notes / Verified Capabilities |
 |---|---|---|
-| **Design System & Visual Tokens** | Implemented | Unified tokens for Brand (Lavender `#CBB3E8`, Purple `#7450D8`, Deep Purple `#5633B8`), Primary Actions (Tomato Red `#E34234`, Button Red `#F04438`), Neutrals (`#FAF9FC`, `#FFFFFF`, `#171B45`, `#5F6485`), and Statuses. Inter typography and 8px spacing grid. |
-| **Shared Application Shell (`AppShell`)** | Implemented | Collapsible left sidebar (Dashboard, Applications, Documents, Entities, Workflows, Analytics, Audit Logs, Settings) with active lavender states, storage quota meter, global search, and reviewer profile badge (`RY`). Matches Reference 4. |
-| **Public-Facing Landing Page (`LandingPage`)** | Implemented | High-fidelity hero with organic lavender background blobs, "For Entities, Organizations and MSMEs" typography, tomato-red CTA, floating document illustration, 3-step "How It Works" circular process cards, and regulatory compliance features. Matches References 1, 2, and 3. |
-| **Authenticated Portal Dashboard (`DashboardView`)** | Implemented | 4 summary metric cards, recent applications/documents table, alerts & notifications panel, linked entities card, circular validation gauge, and real-time activity timeline backed by live backend APIs. Upload Document button opens the document upload dialog with real application selection. Matches Reference 4. |
-| **Institutional Entities View (`EntitiesView`)** | Implemented | Tenant directory displaying registered institutions from the live SQLite database, isolation badges, and search filtering. |
-| **Regulatory Audit Timeline (`AuditTimelineView`)** | Implemented | Chronological timeline of audit events loaded directly from `GET /api/v1/audit-events`. |
+| **Design System & Visual Tokens** | Implemented | Unified tokens for Brand (Lavender `#CBB3E8`, Purple `#7450D8`, Deep Purple `#5633B8`), Primary Actions (Tomato Red `#E34234`, Button Red `#F04438`), Neutrals (`#FAF9FC`, `#FFFFFF`, `#171B45`, `#5F6485`), and Statuses. Inter typography and 8px spacing grid. Reference images treated strictly as color palette and styling guide. |
+| **VerityAI Information Architecture & Shell (`AppShell`)** | Implemented | Product-centric navigation: Overview, Applications, Scrutiny Queue, Documents, Validation Rules, Institutions, Audit Trail. Removed copied SaaS patterns (storage quota meter, generic SaaS labels). Added truthful Scrutiny Session metadata panel (Reviewer role, SQLite WAL storage, VerityAI v0.2). |
+| **Institutional Overview Dashboard (`DashboardView`)** | Implemented | Workload-centric: registered applications, awaiting scrutiny count, drafts, document processing distribution (Extracted, Processing, Needs Review), active applications work queue with direct Scrutiny Workspace triggers, and live regulatory audit events feed. Removed fake +12% metrics, fake compliance percentages, and circular gauge. |
+| **Application Scrutiny Workspace (`ApplicationDetailWorkspace`)** | Implemented | Central scrutiny workspace: Application dossier, category required documents checklist (evaluates PRESENT vs MISSING), submitted documents with extraction quality badges, live scrutiny audit trail, and institution profile. |
+| **Scrutiny Queue (`ScrutinyQueueView`)** | Implemented | Dedicated queue for submitted applications awaiting official review, tracking document readiness, extraction completeness, and direct "Examine Scrutiny" workspace triggers. |
+| **Validation & Compliance Rules (`ValidationComplianceView`)** | Implemented | Deterministic rule type definitions (`REQUIRED_DOCUMENT`, `REQUIRED_FIELD`, `EXPIRY_CHECK`, `DATE_SANITY`, `FIELD_EQUALS_APPLICATION`, `UNIQUENESS`), result status vocabulary (`PASS`, `FAIL`, `NEEDS_REVIEW`, `UNABLE_TO_EVALUATE`), evidence-linking standards, and live category required document checklists. |
+| **Registered Technical Institutions (`EntitiesView`)** | Implemented | AICTE institutional directory displaying registered engineering and technical colleges from the live SQLite database, AISHE identifiers, city, state, and tenant isolation status. |
+| **Regulatory Audit Timeline (`AuditTimelineView`)** | Implemented | Chronological timeline of regulatory audit events loaded directly from `GET /api/v1/audit-events`. |
 | **Core Models (`User`, `Institution`, `ApplicationCategory`, `Application`, `AuditEvent`)** | Implemented | SQLAlchemy 2.0 models conforming to `DATA_MODEL_AND_API.md`. Foreign keys enforce `RESTRICT`/`SET NULL`; SQLite WAL and PRAGMA foreign_keys=ON verified. |
 | **Document & Processing Run Models (`Document`, `ProcessingRun`)** | Implemented | Conforms to Section 6.6 and Section 6.7 of `DATA_MODEL_AND_API.md`. UUID primary keys, relative storage keys, SHA-256 deduplication indexing, lifecycle status tracking, and cascading processing runs. Migration `5770d28a3aaa` applied. |
 | **Document Pages Model (`DocumentPage`)** | Implemented | Conforms strictly to Section 6.7 of `DATA_MODEL_AND_API.md`. Tracks `document_id`, `processing_run_id`, `page_number`, `text_source` (`DIGITAL_TEXT`, `OCR`, `NONE`), `raw_text`, `clean_text`, `char_count`, `ocr_mean_confidence` (engine-reported float, strictly null for digital text), `rotation_applied`, `status`, `error_code`, `duration_ms`. Alembic migration `66af7474b624` applied. |

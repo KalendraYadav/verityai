@@ -56,6 +56,36 @@ export interface ApplicationCreatePayload {
   declared_data: Record<string, any>;
 }
 
+export interface ApplicationDetailResponse {
+  id: string;
+  application_reference: string;
+  institution: {
+    id: string;
+    institution_name: string;
+    institution_identifier?: string | null;
+    institution_type?: string | null;
+    state?: string | null;
+    city?: string | null;
+    status: string;
+  };
+  category_code: string;
+  academic_year?: string | null;
+  lifecycle_status: string;
+  pipeline_status: string;
+  declared_data: Record<string, any>;
+  submitted_at?: string | null;
+  assigned_reviewer_id?: string | null;
+  created_by: string;
+  data_origin: string;
+  created_at: string;
+  updated_at: string;
+  documents_summary?: {
+    total: number;
+    by_status: Record<string, number>;
+  };
+  current_validation_run_id?: string | null;
+}
+
 export interface PaginatedApplications {
   data: ApplicationListItem[];
   meta: {
@@ -155,6 +185,36 @@ export async function createApplication(payload: ApplicationCreatePayload): Prom
 
   return resData.data;
 }
+
+export async function fetchApplicationDetail(applicationId: string): Promise<ApplicationDetailResponse> {
+  const response = await fetch(`/api/v1/applications/${applicationId}`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to fetch application detail (${response.status})`);
+  }
+
+  const res = await response.json();
+  return res.data;
+}
+
+export async function fetchApplicationAudit(applicationId: string): Promise<AuditEventItem[]> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/audit`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+  });
+
+  if (!response.ok) {
+    return [];
+  }
+
+  const res = await response.json();
+  return res.data || [];
+}
+
 
 export interface AuditEventItem {
   id: string;

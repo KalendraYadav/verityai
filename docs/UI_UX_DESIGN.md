@@ -245,18 +245,43 @@ flowchart LR
 
 ---
 
-## 8. Visual Design Direction
+## 8. Visual Design Direction & EntityLocker Theme
 
-**Character:** a sober, institutional, evidence-oriented interface. Navy sidebar, white work surfaces, light grey page background, teal for primary actions and links, strongly legible status badges. Information density is moderate (14 px base text) because reviewers work with tables and fields.
+**Branding & Visual Palette (EntityLocker Theme):**
+The platform is presented through the **EntityLocker** visual design language:
+- **Primary Lavender:** `#CBB3E8`
+- **Light Lavender:** `#F3EEFC`
+- **Very Light Lavender:** `#FAF8FF`
+- **Primary Purple:** `#7450D8`
+- **Deep Purple:** `#5633B8`
+- **Tomato Red (Primary Actions):** `#E34234`
+- **Button Red:** `#F04438`
+- **Light Red:** `#FFF0EF`
+- **Main Background:** `#FAF9FC`
+- **Card Surfaces:** `#FFFFFF`
+- **Primary Text:** `#171B45` (Deep Navy)
+- **Secondary Text:** `#5F6485`
+- **Muted Text:** `#8589A6`
+- **Border:** `#E9E6F2`
+- **Typography:** Inter (clean, highly legible tabular and display weights)
+
+**Crucial Visual-Theme Rule (No Layout Copying):**
+Reference mockups serve **exclusively as a color palette and visual styling guide** (lavender surfaces, purple accents, tomato-red buttons, soft borders, Inter typography).
+- **Never copy** generic SaaS organizational document-storage layouts, storage quotas (e.g. "12 MB of 100 MB"), fictional metrics ("+12% from baseline"), fake compliance gauges, or department management trees.
+- Every layout, navigation item, dashboard card, and queue must strictly reflect **VerityAI's AICTE institutional application scrutiny, document text extraction/OCR, deterministic rule checking, and evidence-linked reviewer decision-support workflow**.
 
 **Do:**
+- Use white and off-white surfaces with thin `#E9E6F2` borders.
+- Use tomato-red (`#F04438` / `#E34234`) exclusively for primary constructive actions (`New Application`, `Upload Document`, `Submit Review`).
+- Use purple (`#7450D8`) for interactive tabs, active navigation states, and document view links.
+- Use monospaced font for identifiers (application reference, AISHE ID, document UUIDs, hashes).
+- Maintain honest status banners (Synthetic demo environment, decision-support disclaimer).
 
-- Use whitespace and thin borders to group, not heavy shadows.
-- Use icons paired with text labels in badges.
-- Use monospaced text for identifiers (application ID, rule ID, hashes).
-- Use subtle banners for context (synthetic data, simulated results, illustrative rules).
-
-**Do not:** use gradients (except none at all in P0), large hero illustrations, glassmorphism, bouncing/looping animations, "AI sparkle" iconography, robot imagery, neon colours, emoji in UI chrome, or decorative charts.
+**Do not:**
+- Invent metrics, fake percentages, or circular progress rings.
+- Label any unverified document "genuine" or "fraudulent".
+- Treat the application as a generic file-locker SaaS.
+- Use decorative charts without underlying real data.
 
 **Government-appropriate tone:** neutral, factual language. Prefer "Requires review", "Indicator requiring review", "Unable to evaluate". Avoid "Fraud", "Fake", "Rejected by AI", "Approved by AI".
 

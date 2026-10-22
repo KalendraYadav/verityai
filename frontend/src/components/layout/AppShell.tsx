@@ -3,28 +3,25 @@ import { EntityLockerLogo } from '../brand/EntityLockerLogo';
 import {
   LayoutDashboard,
   FileText,
+  ClipboardCheck,
   FolderOpen,
+  ShieldCheck,
   Building2,
-  GitBranch,
-  BarChart2,
   History,
-  Settings,
   Search,
   Bell,
-  Cloud,
   Menu,
   X,
 } from 'lucide-react';
 
 export type NavItemKey =
-  | 'dashboard'
+  | 'overview'
   | 'applications'
+  | 'scrutiny'
   | 'documents'
-  | 'entities'
-  | 'workflows'
-  | 'analytics'
-  | 'audit'
-  | 'settings';
+  | 'compliance'
+  | 'institutions'
+  | 'audit';
 
 interface Props {
   currentTab: NavItemKey;
@@ -48,14 +45,13 @@ export const AppShell: React.FC<Props> = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
-    { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { key: 'overview', label: 'Overview', icon: LayoutDashboard },
     { key: 'applications', label: 'Applications', icon: FileText },
+    { key: 'scrutiny', label: 'Scrutiny Queue', icon: ClipboardCheck },
     { key: 'documents', label: 'Documents', icon: FolderOpen },
-    { key: 'entities', label: 'Entities', icon: Building2 },
-    { key: 'workflows', label: 'Workflows', icon: GitBranch },
-    { key: 'analytics', label: 'Analytics', icon: BarChart2 },
-    { key: 'audit', label: 'Audit Logs', icon: History },
-    { key: 'settings', label: 'Settings', icon: Settings },
+    { key: 'compliance', label: 'Validation Rules', icon: ShieldCheck },
+    { key: 'institutions', label: 'Institutions', icon: Building2 },
+    { key: 'audit', label: 'Audit Trail', icon: History },
   ] as const;
 
   return (
@@ -74,7 +70,7 @@ export const AppShell: React.FC<Props> = ({
       </div>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Desktop Sidebar (Reference 4) */}
+        {/* Desktop Sidebar */}
         <aside className="hidden lg:flex w-64 bg-white border-r border-[#E9E6F2] flex-col justify-between shrink-0">
           <div>
             {/* Sidebar Brand Header */}
@@ -111,21 +107,28 @@ export const AppShell: React.FC<Props> = ({
             </nav>
           </div>
 
-          {/* Sidebar Bottom: Storage Quota Widget (Reference 4) */}
+          {/* Sidebar Bottom: Scrutiny Session Info (Mandatory Truthful Display) */}
           <div className="p-4 m-3 rounded-2xl bg-[#FAF8FF] border border-[#DCD0F7]/60 space-y-2">
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-1.5 font-semibold text-[#171B45]">
-                <Cloud className="w-4 h-4 text-[#7450D8]" />
-                <span>Storage Used</span>
+                <ShieldCheck className="w-4 h-4 text-[#7450D8]" />
+                <span>Scrutiny Session</span>
               </div>
-              <span className="font-bold text-[#7450D8]">12%</span>
+              <span className="font-bold text-[#12B886] text-[10px] uppercase">Active</span>
             </div>
-            <div className="w-full bg-[#E9E6F2] h-2 rounded-full overflow-hidden">
-              <div className="bg-[#7450D8] h-full rounded-full" style={{ width: '12%' }} />
-            </div>
-            <div className="text-[11px] text-[#5F6485] flex justify-between">
-              <span>12.4 MB of 100 MB</span>
-              <span className="text-[#8589A6]">Local SQLite</span>
+            <div className="text-[11px] text-[#5F6485] space-y-0.5">
+              <div className="flex justify-between">
+                <span className="text-[#8589A6]">Role:</span>
+                <span className="font-semibold text-[#171B45]">Reviewer</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#8589A6]">Engine:</span>
+                <span className="font-mono text-[#7450D8]">VerityAI v0.2</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#8589A6]">Storage:</span>
+                <span className="text-[#171B45]">SQLite (WAL)</span>
+              </div>
             </div>
           </div>
         </aside>
@@ -148,7 +151,7 @@ export const AppShell: React.FC<Props> = ({
                 <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8589A6]" />
                 <input
                   type="text"
-                  placeholder="Search documents, entities, departments..."
+                  placeholder="Search applications, AISHE ID, institutions, documents..."
                   className="w-full text-xs rounded-xl border border-[#E9E6F2] bg-[#FAF9FC] pl-10 pr-4 py-2 text-[#171B45] placeholder-[#8589A6] focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-[#7450D8]/20 focus:border-[#7450D8] transition-all"
                 />
               </div>
@@ -176,7 +179,7 @@ export const AppShell: React.FC<Props> = ({
                       : 'text-[#5F6485] hover:text-[#171B45]'
                   }`}
                 >
-                  Portal
+                  Scrutiny Portal
                 </button>
               </div>
 
@@ -202,14 +205,14 @@ export const AppShell: React.FC<Props> = ({
                 </button>
               </div>
 
-              {/* User Profile Area (Reference 4) */}
+              {/* User Profile Area */}
               <div className="flex items-center gap-2.5 pl-2 border-l border-[#EEEAF5]">
                 <div className="w-9 h-9 rounded-xl bg-[#7450D8] text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                  RY
+                  SO
                 </div>
                 <div className="hidden sm:block text-left">
-                  <div className="text-xs font-bold text-[#171B45] leading-tight">Rishu Yadav</div>
-                  <div className="text-[11px] text-[#5F6485] leading-tight">Scrutiny Official</div>
+                  <div className="text-xs font-bold text-[#171B45] leading-tight">Scrutiny Desk</div>
+                  <div className="text-[11px] text-[#5F6485] leading-tight">Regulatory Reviewer</div>
                 </div>
               </div>
             </div>
@@ -221,10 +224,10 @@ export const AppShell: React.FC<Props> = ({
           {/* Standard Footer */}
           <footer className="border-t border-[#EEEAF5] bg-white py-4 px-6 text-center text-xs text-[#5F6485] flex flex-col sm:flex-row items-center justify-between gap-2">
             <div>
-              <strong>EntityLocker</strong> — Secure Institutional Document Locker & Scrutiny Assistant
+              <strong>EntityLocker</strong> — AI-Assisted Institutional Application Scrutiny & Document Locker
             </div>
             <div className="text-[11px] text-[#8589A6]">
-              SIH 2026 Prototype · Synthetic Data Only · AI Decision Support
+              SIH 2026 Prototype · Synthetic Data Sandbox · AICTE Decision Support
             </div>
           </footer>
         </div>
@@ -271,7 +274,7 @@ export const AppShell: React.FC<Props> = ({
                     viewMode === 'dashboard' ? 'bg-white text-[#7450D8] shadow-xs' : 'text-[#5F6485]'
                   }`}
                 >
-                  Dashboard
+                  Portal
                 </button>
               </div>
 

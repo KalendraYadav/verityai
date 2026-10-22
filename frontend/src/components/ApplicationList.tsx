@@ -21,7 +21,11 @@ import {
   Upload,
 } from 'lucide-react';
 
-export function ApplicationList() {
+interface Props {
+  onSelectApplication?: (applicationId: string) => void;
+}
+
+export function ApplicationList({ onSelectApplication }: Props = {}) {
   const [applications, setApplications] = useState<ApplicationListItem[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -248,13 +252,17 @@ export function ApplicationList() {
               </thead>
               <tbody className="divide-y divide-[#EEEAF5]">
                 {applications.map((app) => (
-                  <tr key={app.id} className="hover:bg-[#FAF8FF] transition-colors group">
+                  <tr
+                    key={app.id}
+                    className="hover:bg-[#FAF8FF] transition-colors group cursor-pointer"
+                    onClick={() => onSelectApplication?.(app.id)}
+                  >
                     <td className="py-3.5 px-5">
                       <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-lg bg-[#FFF0EF] text-[#F04438] flex items-center justify-center font-bold text-[10px] shrink-0">
                           PDF
                         </div>
-                        <span className="font-mono font-bold text-[#171B45] group-hover:text-[#7450D8] transition-colors">
+                        <span className="font-mono font-bold text-[#171B45] group-hover:text-[#7450D8] transition-colors underline-offset-2 group-hover:underline">
                           {app.application_reference}
                         </span>
                       </div>
@@ -290,15 +298,26 @@ export function ApplicationList() {
                     <td className="py-3.5 px-4 font-mono text-[#8589A6] text-[11px]">
                       {new Date(app.updated_at).toLocaleDateString()} {new Date(app.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </td>
-                    <td className="py-3.5 px-5 text-right">
-                      <button
-                        onClick={() => setUploadModalAppId(app.id)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#DCD0F7] text-[11px] font-semibold text-[#7450D8] hover:bg-[#F3EEFC] transition-colors cursor-pointer"
-                        title="Upload Document"
-                      >
-                        <Upload className="w-3 h-3" />
-                        <span>Upload</span>
-                      </button>
+                    <td className="py-3.5 px-5 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="inline-flex items-center gap-2">
+                        {onSelectApplication && (
+                          <button
+                            onClick={() => onSelectApplication(app.id)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#7450D8] text-white hover:bg-[#5633B8] text-[11px] font-semibold transition-colors cursor-pointer"
+                            title="Open Application Scrutiny Dossier"
+                          >
+                            <span>Scrutinize →</span>
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setUploadModalAppId(app.id)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#DCD0F7] text-[11px] font-semibold text-[#7450D8] hover:bg-[#F3EEFC] transition-colors cursor-pointer"
+                          title="Upload Document"
+                        >
+                          <Upload className="w-3 h-3" />
+                          <span>Upload</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

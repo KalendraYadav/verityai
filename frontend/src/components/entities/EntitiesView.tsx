@@ -36,10 +36,10 @@ export const EntitiesView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-[#171B45] flex items-center gap-2">
-            Linked Entities & Institutions
+            Registered Technical Institutions
           </h1>
           <p className="text-xs sm:text-sm text-[#5F6485] mt-0.5">
-            Registered educational institutions and organizational tenants in the VerityAI ecosystem.
+            Accredited educational institutions, universities, and polytechnics under regulatory scrutiny purview.
           </p>
         </div>
 
