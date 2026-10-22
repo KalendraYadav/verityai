@@ -1,0 +1,54 @@
+# ==============================================================================
+# VerityAI / EntityLocker — Docker Compose Production & Demo Orchestration
+# Smart India Hackathon 2026 (Smart Automation Track)
+# ==============================================================================
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: verityai-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - DATABASE_URL=sqlite:///./var/verityai.db
+      - STORAGE_LOCAL_DIR=./var/uploads
+      - STORAGE_ROOT=./var/uploads
+      - COOKIE_SECURE=false
+      - COOKIE_SAMESITE=lax
+      - ALLOWED_ORIGINS=["http://localhost","http://localhost:80","http://localhost:5173","http://127.0.0.1"]
+      - JWT_SECRET_KEY=verityai-production-secret-key-sih-2026-min-32-chars
+    volumes:
+      - verityai_data:/app/var
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: verityai-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  verityai_data:
+    name: verityai_data_volume

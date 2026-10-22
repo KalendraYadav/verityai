@@ -4,6 +4,7 @@ pydantic>=2.10.0
 pydantic-settings>=2.6.0
 sqlalchemy>=2.0.36
 alembic>=1.13.0
+pyjwt>=2.8.0
 argon2-cffi>=23.1.0
 python-multipart>=0.0.18
 pytest>=8.3.0

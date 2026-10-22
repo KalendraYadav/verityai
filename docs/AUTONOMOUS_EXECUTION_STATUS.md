@@ -26,6 +26,11 @@
 | **Phase 13** | Institutional Dossier History & Versioning | `prompt.md` L2761–3150 | `COMPLETED` | 115 passed (7 versioning) | `d4c006a` | Application revisions, document versioning, stale evaluation detection, historical diffing |
 | **Phase 14** | External Regulatory Portal Interoperability | `prompt.md` L3151–3570 | `COMPLETED` | 121 passed (6 integration) | `e4d45bd` | External portal adapters, SSRF defense, official stubs, sync history audit |
 | **Phase 15** | Final Pilot Demonstration & Evaluation Package | `prompt.md` L3571–4136 | `COMPLETED` | 121 passed + 10/10 readiness | `eabd3e5` | Complete demo dataset, PyMuPDF PDF synthesis, readiness auditor, DEMO_SCRIPT, EVALUATION_PACKAGE, README |
+| **Phase 16** | Deployment, Environment Validation & End-to-End Verification | `prompt.md` L4140–4295 | `COMPLETED` | 121 passed (12/12 e2e) | Pending | Multi-stage Dockerfiles, docker-compose, DEPLOYMENT.md, END_TO_END_VERIFICATION.md, verify_e2e.py |
+| **Phase 17** | Final UI/UX Audit & Judge-Facing Polish | `prompt.md` L4296–4595 | `IN_PROGRESS` | Pending | TBD | Design tokens, component refinement, accessibility, responsive audit |
+| **Phase 18** | Smart India Hackathon Presentation & Pitch Deck | `prompt.md` L4596–4895 | `NOT_STARTED` | N/A | N/A | Editable PowerPoint (.pptx), speaker notes, presentation content & asset checklists |
+| **Phase 19** | Demonstration Video & Recording Package | `prompt.md` L4896–5220 | `NOT_STARTED` | N/A | N/A | Video script, shot list, recording checklist, video generation |
+| **Phase 20** | Final SIH Submission Readiness Audit | `prompt.md` L5221–5679 | `NOT_STARTED` | N/A | N/A | Release audit, FINAL_SUBMISSION_CHECKLIST.md, final deliverable packaging |
 
 ---
 
@@ -151,10 +156,41 @@
     - `docs/EVALUATION_PACKAGE.md`: Comprehensive 16-section technical evaluation package detailing architecture, algorithms, security posture, and test matrices.
     - `README.md`: Modern, clear project documentation with quickstart instructions, architecture diagram, and statutory disclosures.
     - `docs/PROJECT_STATUS.md`: Full phase inventory and milestone updates.
+---
+
+### Phase 16 — Deployment, Environment Validation & End-to-End Verification
+- **Status:** VERIFIED
+- **Commit:** Pending
+- **Scope & Implementation:**
+  - Deployment Architecture & Containerization:
+    - Multi-stage security-hardened `backend/Dockerfile` with Python 3.12-slim, non-root user `appuser` (UID 1000), OS dependencies for PyMuPDF & RapidOCR (`libgl1`, `libglib2.0-0`), and automated health check.
+    - Production multi-stage `frontend/Dockerfile` (Node 22 build -> Nginx Alpine runner) with customized `frontend/nginx.conf` handling SPA client-side routing, API reverse-proxying with timeouts, static caching, and security headers (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-XSS-Protection: 1; mode=block`).
+    - Unified `docker-compose.yml` orchestrating backend and frontend services with persistent named volume `verityai_data` for database and document uploads.
+  - Environment Configuration & Security Review:
+    - Updated [`.env.example`](../.env.example) with production-ready settings (`COOKIE_SECURE`, `COOKIE_SAMESITE`, `ALLOWED_ORIGINS`, `JWT_SECRET_KEY`).
+    - Added `pyjwt>=2.8.0` to `backend/requirements.txt` to align with `pyproject.toml`.
+  - Comprehensive End-to-End Automated Verification:
+    - Developed [`scripts/verify_e2e.py`](../scripts/verify_e2e.py) exercising all 12 operational capability workflows.
+    - Result: **12/12 Workflows Verified (100% Operational Health)**:
+      1. Application Startup & Health Probe (`PASS`)
+      2. Authentication & Session RBAC (`PASS`)
+      3. Application Portfolio Management (`PASS`)
+      4. Protected Document Storage & Security (`PASS`)
+      5. Text Extraction & OCR Pipeline (`PASS`)
+      6. Deterministic Validation Engine (`PASS`)
+      7. Anomaly Detection Subsystem (`PASS`)
+      8. Scrutiny Workflow & Readiness Assessment (`PASS`)
+      9. Dossier History & Versioning (`PASS`)
+      10. Regulatory Reference Registries (`PASS`)
+      11. Multilingual Scrutiny & Glossary (`PASS`)
+      12. External Gateways & SSRF Defenses (`PASS`)
+  - Documentation Deliverables:
+    - Produced [`docs/DEPLOYMENT.md`](DEPLOYMENT.md) (architecture, prerequisites, containerized launch, bare-metal steps, security hardening, troubleshooting).
+    - Produced [`docs/END_TO_END_VERIFICATION.md`](END_TO_END_VERIFICATION.md) (workflow matrix, test counts, hosting status disclosure).
   - Verification:
-    - Backend Test Suite: **121 passed, 0 failures** in 17.13s.
+    - Full Backend Test Suite: **121 passed, 0 failures** in 16.91s.
     - Frontend Production Build: **1948 modules transformed, 0 errors** (`vite build` in 4.81s).
-    - Pre-flight Readiness Auditor: **10/10 checks passed (100% Score)**.
+
 
 
 
