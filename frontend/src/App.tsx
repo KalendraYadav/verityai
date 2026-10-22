@@ -22,6 +22,8 @@ import { ApplicationCreateModal } from './components/ApplicationCreateModal';
 import { DocumentsView } from './components/documents/DocumentsView';
 import { DocumentUploadModal } from './components/documents/DocumentUploadModal';
 import { AuthModal } from './components/auth/AuthModal';
+import { RegistryVerificationView } from './components/registry/RegistryVerificationView';
+import { RegulatoryGatewaysView } from './components/gateways/RegulatoryGatewaysView';
 import {
   ShieldCheck,
   RefreshCw,
@@ -72,7 +74,7 @@ export function App() {
     try {
       const user = await fetchCurrentUser();
       setCurrentUser(user);
-    } catch (e) {
+    } catch {
       setCurrentUser(null);
     }
   }
@@ -157,6 +159,18 @@ export function App() {
           {currentTab === 'compliance' && <ValidationComplianceView />}
 
           {currentTab === 'institutions' && <EntitiesView />}
+
+          {currentTab === 'registry' && (
+            <RegistryVerificationView
+              onNavigateToApplications={() => setCurrentTab('applications')}
+              onSelectApplication={(id) => {
+                setSelectedApplicationId(id);
+                setCurrentTab('applications');
+              }}
+            />
+          )}
+
+          {currentTab === 'gateways' && <RegulatoryGatewaysView />}
 
           {currentTab === 'audit' && <AuditTimelineView />}
         </>

@@ -1472,6 +1472,93 @@ export async function resolveRegistryDiscrepancy(
   return response.json();
 }
 
+export interface RegistryRecordItem {
+  id: string;
+  provider_code: string;
+  reference_identifier: string;
+  institution_name: string;
+  institution_name_normalized: string;
+  state?: string | null;
+  district?: string | null;
+  address?: string | null;
+  status: string;
+  approved_intake?: number | null;
+  year_of_establishment?: number | null;
+  source_dataset: string;
+  dataset_version: string;
+  is_stale: boolean;
+  metadata_json?: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RegistryImportPayload {
+  provider_code: string;
+  source_dataset?: string;
+  dataset_version?: string;
+  records: Array<{
+    reference_identifier: string;
+    institution_name: string;
+    state?: string;
+    district?: string;
+    address?: string;
+    status?: string;
+    approved_intake?: number;
+    year_of_establishment?: number;
+    metadata_json?: Record<string, any>;
+  }>;
+}
+
+export interface RegistryImportResult {
+  provider_code: string;
+  source_dataset: string;
+  dataset_version: string;
+  created_count: number;
+  updated_count: number;
+  total_processed: number;
+}
+
+export async function fetchRegistryRecords(params?: {
+  provider_code?: string;
+  q?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<RegistryRecordItem[]> {
+  const query = new URLSearchParams();
+  if (params?.provider_code) query.append('provider_code', params.provider_code);
+  if (params?.q) query.append('q', params.q);
+  if (params?.limit) query.append('limit', String(params.limit));
+  if (params?.offset) query.append('offset', String(params.offset));
+
+  const response = await fetch(`/api/v1/registry/records?${query.toString()}`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to fetch registry records (${response.status})`);
+  }
+  return response.json();
+}
+
+export async function importRegistryDataset(payload: RegistryImportPayload): Promise<RegistryImportResult> {
+  const response = await fetch('/api/v1/registry/imports', {
+    method: 'POST',
+    headers: {
+      ...COMMON_HEADERS,
+      'X-Requested-With': 'VerityAI',
+    },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.detail?.message || err?.error?.message || `Failed to import registry dataset (${response.status})`);
+  }
+  return response.json();
+}
+
 // ---------------------------------------------------------------------------
 // Phase 12 — Advanced Multilingual Document Scrutiny
 // ---------------------------------------------------------------------------

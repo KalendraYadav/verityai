@@ -8,6 +8,8 @@ import {
   ShieldCheck,
   Building2,
   History,
+  Database,
+  Network,
   Search,
   Bell,
   Menu,
@@ -23,6 +25,8 @@ export type NavItemKey =
   | 'documents'
   | 'compliance'
   | 'institutions'
+  | 'registry'
+  | 'gateways'
   | 'audit';
 
 interface Props {
@@ -57,6 +61,8 @@ export const AppShell: React.FC<Props> = ({
     { key: 'documents', label: 'Documents', icon: FolderOpen },
     { key: 'compliance', label: 'Validation Rules', icon: ShieldCheck },
     { key: 'institutions', label: 'Institutions', icon: Building2 },
+    { key: 'registry', label: 'Registry Verification', icon: Database },
+    { key: 'gateways', label: 'Regulatory Gateways', icon: Network },
     { key: 'audit', label: 'Audit Trail', icon: History },
   ] as const;
 

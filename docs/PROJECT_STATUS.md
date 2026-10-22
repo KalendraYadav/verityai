@@ -27,6 +27,8 @@
 | **Phase 13** | Dossier History & Versioning | Implemented | Immutable `ApplicationVersion` snapshots, `DocumentRevision` ledgers, dossier freshness auditing, version diff engine. |
 | **Phase 14** | External Interoperability | Implemented | Three-tier gateway architecture (Category A Synthetic, Category B Generic REST, Category C Statutory Stub), socket-level SSRF defense. |
 | **Phase 15** | Final Pilot Demonstration | Implemented | Repeatable synthetic demo seeding (`seed.py`), pre-flight readiness auditor (`readiness.py`), `DEMO_SCRIPT.md`, `EVALUATION_PACKAGE.md`. |
+| **Phase 16** | Deployment & E2E Verification | Implemented | Multi-stage Dockerfiles, docker-compose, `DEPLOYMENT.md`, `END_TO_END_VERIFICATION.md`, `verify_e2e.py` (12/12 workflows verified). |
+| **Phase 17** | Final UI/UX Audit & Polish | Implemented | Dedicated Registry Verification & Regulatory Gateways views, design token compliance, accessibility & responsive layout audit, Vite production build passing. |
 
 ---
 
@@ -49,6 +51,7 @@
 | • `tests/test_versioning.py` (7 tests) | Snapshots, document revisions, freshness auditing | 7 passed |
 | • `tests/test_integration.py` (6 tests) | SSRF defenses, Category A/B/C adapters, sync log | 6 passed |
 | **Frontend Production Build** | `npm run build` | **Built successfully** (`vite build`) in 4.81s with 0 errors |
+| **End-to-End Operational Verification** | `python scripts/verify_e2e.py` | **12/12 Workflows Verified (100% Operational Health)** |
 | **Demonstration Readiness Pre-Flight** | `python -m app.cli.readiness` | **10/10 Checks Passed (100% Score)** |
 
 ---
