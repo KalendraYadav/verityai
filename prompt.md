@@ -2049,3 +2049,2087 @@ Provide:
 * Git commit hash, if created.
 
 Begin by inspecting the actual repository. Verify prerequisites, implement Phase 10, run the checks, and report only verified outcomes.
+
+
+
+
+# PHASE 11 — EXTENDED VERIFICATION & REGISTRY INTEGRATION
+
+## Project: VerityAI / EntityLocker — SIH 2026
+
+Act as a senior integration architect, regulatory-data engineer, backend developer, security engineer, and React/TypeScript developer.
+
+Implement Phase 11 end-to-end in the existing VerityAI repository. Inspect the actual project, reuse existing functionality, implement the required features, run the tests, fix regressions, update documentation, and create a Git checkpoint if permitted.
+
+Work autonomously on routine tasks. Do not stop after creating a plan. Never claim an external integration works unless it has genuinely been configured and tested.
+
+## 1. INSPECT THE PROJECT
+
+Read:
+
+* `AGENTS.md`
+* `docs/ARCHITECTURE.md`
+* `docs/TECH_STACK.md`
+* `docs/UI_UX_DESIGN.md`
+* `docs/AI_PIPELINE.md`
+* `docs/DATA_MODEL_AND_API.md`
+* `docs/TESTING_SECURITY_AND_DEMO.md`
+* `docs/PROJECT_STATUS.md`
+* `docs/AUTONOMOUS_EXECUTION_STATUS.md`, if present.
+
+Inspect the actual models, migrations, application workflow, validation engine, extracted fields, anomaly detection, authentication, audit logging, and report-generation implementation.
+
+The latest reported checkpoint is `7f5b2f1`, with 92 backend tests passing and the frontend production build succeeding. Verify the current repository rather than assuming this report is current.
+
+The project currently uses SQLite and local document storage. It is a prototype and is not connected to production AICTE databases or state revenue portals.
+
+Preserve user changes, existing data, API contracts, and Git history.
+
+## 2. OBJECTIVE
+
+Implement an extensible registry-verification layer that compares institution and application information against configurable reference records.
+
+The system should support:
+
+* Institution identity checks.
+* AISHE or other configured identifier comparisons.
+* Institution-name comparisons.
+* Location and jurisdiction comparisons where relevant.
+* Application reference verification when corresponding reference data exists.
+* Registration and affiliation identifier checks where supported.
+* Registry-record provenance and freshness.
+* Explainable discrepancies with evidence.
+* Human review of uncertain or conflicting results.
+
+Do not invent registry records or claim official verification when using synthetic data.
+
+## 3. REGISTRY ADAPTER ARCHITECTURE
+
+Create a registry-provider interface that separates verification logic from any particular data source.
+
+Support the following provider capabilities where appropriate:
+
+* Search by institution identifier.
+* Search by normalized institution name.
+* Retrieve a reference record.
+* Return source metadata and retrieval timestamps.
+* Report unavailable or incomplete reference data.
+
+Implement a local synthetic registry provider for the prototype.
+
+Use explicit provider configuration and a consistent result schema.
+
+A future authorized official provider should be addable without rewriting the core verification engine.
+
+Do not scrape restricted portals, bypass access controls, or invent unofficial APIs.
+
+Do not require network access for the local registry provider.
+
+## 4. REFERENCE RECORD MODEL
+
+Inspect the existing schema before adding models.
+
+Implement appropriate records for:
+
+* Registry provider.
+* Registry reference record.
+* Record source and provenance.
+* Retrieval or import timestamp.
+* External reference identifier.
+* Verification execution.
+* Verification result.
+* Evidence and discrepancy details.
+
+Use SQLAlchemy 2.x and Alembic migrations.
+
+Avoid storing duplicate institution data unnecessarily.
+
+Track source and freshness so a reviewer can distinguish current reference data from stale or unverified data.
+
+Preserve historical verification outcomes where appropriate.
+
+Do not destructively recreate existing database tables.
+
+## 5. REGISTRY DATA IMPORT
+
+Implement a safe import mechanism for authorized registry datasets.
+
+Support a documented CSV or JSON format where appropriate.
+
+Requirements:
+
+* Validate the file structure and required fields.
+* Validate identifier formats.
+* Reject malformed records with actionable errors.
+* Detect duplicate identifiers.
+* Report import counts and rejected records.
+* Prevent partial imports from leaving inconsistent state.
+* Support safe repeat imports.
+* Track source, import timestamp, and dataset version.
+* Avoid logging sensitive record contents unnecessarily.
+
+Use only synthetic data for the default demonstration.
+
+Do not download or claim to possess official institutional datasets unless they are actually available and authorized.
+
+## 6. VERIFICATION ENGINE
+
+Implement deterministic comparisons using explicit normalization and matching rules.
+
+Support:
+
+* Exact identifier matches.
+* Carefully normalized institution-name comparisons.
+* Location comparisons where source data supports them.
+* Missing reference records.
+* Conflicting reference records.
+* Stale reference data.
+* Incomplete source records.
+* Ambiguous matches requiring human review.
+
+Use a consistent result vocabulary, such as:
+
+* `MATCH`
+* `MISMATCH`
+* `NOT_FOUND`
+* `AMBIGUOUS`
+* `STALE_REFERENCE`
+* `INSUFFICIENT_DATA`
+* `PROVIDER_UNAVAILABLE`
+
+Reuse the project's established vocabulary if equivalent states already exist.
+
+Every result must explain:
+
+* What was compared.
+* Which source record was used.
+* Which values matched or differed.
+* When the source data was last updated.
+* Why the result received its status.
+* Whether further human verification is necessary.
+
+Do not treat a missing reference record as proof of fraud.
+
+Do not automatically reject an application because of a mismatch.
+
+## 7. EVIDENCE AND AUDITABILITY
+
+Connect registry-verification results to:
+
+* The relevant application.
+* The institution record.
+* The compared extracted or declared fields.
+* The registry provider and reference record.
+* Existing validation results and anomalies, where relevant.
+
+Record meaningful audit events for:
+
+* Registry imports.
+* Verification execution.
+* Verification failure.
+* Reference-data updates.
+* Reviewer resolution of discrepancies.
+
+Avoid duplicating full documents or unnecessary personal data.
+
+Preserve enough provenance to reproduce and explain a verification result.
+
+## 8. API ENDPOINTS
+
+Follow the existing API conventions and use `/api/v1/`.
+
+Implement equivalent endpoints where needed for:
+
+* Listing available registry providers.
+* Importing an authorized reference dataset.
+* Searching registry records.
+* Triggering application registry verification.
+* Retrieving verification results.
+* Retrieving discrepancy details.
+* Reviewing and resolving a discrepancy.
+
+Possible route patterns include:
+
+* `GET /api/v1/registry/providers`
+* `POST /api/v1/registry/imports`
+* `GET /api/v1/registry/records`
+* `POST /api/v1/applications/{application_id}/registry-verification`
+* `GET /api/v1/applications/{application_id}/registry-verification`
+* `GET /api/v1/registry-verification/{result_id}`
+
+Adapt these routes to the actual existing contract. Do not create duplicate endpoints.
+
+Enforce authentication and role-based authorization for sensitive operations.
+
+Validate inputs, paginate large results, and return consistent errors.
+
+## 9. FRONTEND INTEGRATION
+
+Integrate registry verification into the existing VerityAI application.
+
+Extend the application scrutiny workspace to show:
+
+* Verification status.
+* Reference source.
+* Identifier and name comparisons.
+* Data freshness.
+* Discrepancies.
+* Uncertain matches.
+* Evidence and source timestamps.
+* Required reviewer actions.
+
+Add registry administration or import controls only where authorized.
+
+Clearly label synthetic registry data as demonstration data.
+
+Show an explicit unavailable state when an official provider is not configured.
+
+Do not use fabricated success results or claim that an institution has been verified by AICTE.
+
+Preserve the existing lavender, pale-purple, tomato-red, deep-navy, white, and Inter design system.
+
+## 10. SECURITY
+
+Protect registry import and administration endpoints.
+
+Prevent:
+
+* Unauthorized reference-data modification.
+* Unsafe file parsing.
+* Injection through imported records.
+* Cross-application data exposure.
+* Leakage of sensitive data in errors or logs.
+* Unrestricted external requests.
+
+Do not create arbitrary outbound network connections to registry URLs supplied by users.
+
+If an external provider is implemented in the future, require explicit trusted configuration, timeouts, TLS verification, response-size limits, and appropriate access controls.
+
+## 11. TESTING
+
+Add tests for:
+
+* Exact identifier matches.
+* Name normalization.
+* Identifier mismatches.
+* Missing reference records.
+* Ambiguous matches.
+* Stale reference data.
+* Incomplete records.
+* Provider unavailability.
+* Invalid CSV and JSON imports.
+* Duplicate identifiers.
+* Safe repeat imports.
+* Transaction rollback on failed imports.
+* Evidence provenance.
+* Authorization restrictions.
+* Audit-event creation.
+* API error handling.
+* Database migrations.
+* Regression coverage for existing validation, workflow, and report generation.
+
+Use synthetic fixtures and temporary databases.
+
+Do not require access to official portals or external networks for the core tests.
+
+Run the full backend test suite and frontend production build. Fix implementation-related failures before declaring completion.
+
+## 12. DOCUMENTATION AND GIT
+
+Update:
+
+* `docs/PROJECT_STATUS.md`
+* `docs/ARCHITECTURE.md`
+* `docs/DATA_MODEL_AND_API.md`
+* `docs/TESTING_SECURITY_AND_DEMO.md`
+* `docs/AUTONOMOUS_EXECUTION_STATUS.md`, if present.
+
+Document:
+
+* Provider architecture.
+* Import format.
+* Reference-data provenance.
+* Matching rules.
+* Verification result semantics.
+* Security constraints.
+* Synthetic-data limitations.
+* Actual test results.
+
+Follow `AGENTS.md` for Git operations. Preserve existing history and user changes. Create a focused commit only if permitted and after relevant checks pass.
+
+## 13. DEFINITION OF DONE
+
+Phase 11 is complete only when:
+
+1. A registry-provider interface exists.
+2. The local synthetic provider works end-to-end.
+3. Reference data can be imported and validated safely.
+4. Registry comparisons use actual stored data.
+5. Results include source provenance and explanations.
+6. Ambiguous and unavailable cases are represented honestly.
+7. Verification results are accessible through the API and frontend.
+8. Sensitive operations enforce authorization where supported.
+9. Audit events are recorded.
+10. Existing functionality remains operational.
+11. Backend tests and frontend production build pass.
+12. Documentation is updated.
+13. The execution ledger reflects the verified outcome.
+
+## 14. FINAL REPORT
+
+Report:
+
+* Features implemented.
+* Registry-provider architecture.
+* Import format and safeguards.
+* Database migrations.
+* API endpoints.
+* Frontend changes.
+* Actual test results.
+* Build result.
+* Git commit hash, if created.
+* Remaining limitations.
+
+Begin by inspecting the repository and implementing Phase 11 end-to-end.
+
+
+
+
+
+# PHASE 12 — ADVANCED MULTILINGUAL DOCUMENT SCRUTINY
+
+## Project: VerityAI / EntityLocker — SIH 2026
+
+Act as a senior document-AI engineer, multilingual NLP specialist, OCR architect, Python backend developer, and React/TypeScript engineer.
+
+Implement Phase 12 end-to-end in the existing VerityAI repository. Inspect the actual code, reuse existing services, implement the required functionality, run tests, fix regressions, update documentation, and create a Git checkpoint if permitted.
+
+Work autonomously on routine implementation tasks. Do not stop after writing a plan. Never claim a language, OCR engine, or translation provider works unless its functionality has been genuinely tested.
+
+## 1. INSPECT THE PROJECT FIRST
+
+Read:
+
+* `AGENTS.md`
+* `docs/ARCHITECTURE.md`
+* `docs/TECH_STACK.md`
+* `docs/UI_UX_DESIGN.md`
+* `docs/AI_PIPELINE.md`
+* `docs/DATA_MODEL_AND_API.md`
+* `docs/TESTING_SECURITY_AND_DEMO.md`
+* `docs/PROJECT_STATUS.md`
+* `docs/AUTONOMOUS_EXECUTION_STATUS.md`, if present.
+
+Inspect the existing document-processing pipeline, PyMuPDF extraction, RapidOCR integration, page-level evidence storage, candidate field extraction, validation engine, anomaly detection, registry verification, reports, authentication, and frontend document viewer.
+
+Verify which features actually exist. Complete missing prerequisites where necessary without rebuilding working functionality.
+
+Preserve existing data, migrations, API contracts, and user changes.
+
+## 2. OBJECTIVE
+
+Extend VerityAI to support multilingual institutional documents commonly encountered in Indian regulatory workflows.
+
+The system should help reviewers process documents containing English and supported Indian languages, including mixed-language documents.
+
+Prioritize practical prototype support for:
+
+* English.
+* Hindi.
+* Other Indian languages only when a compatible, tested OCR or language-processing capability is available.
+
+Do not claim universal support for every Indian language.
+
+Support language detection, multilingual text extraction, normalized candidate fields, source-linked evidence, and reviewer-friendly presentation.
+
+**Preserve the original document text. Translation or normalization must never silently replace the original evidence.**
+
+## 3. LANGUAGE DETECTION
+
+Implement a language-identification service that can classify extracted text at document or page level when sufficient evidence exists.
+
+Requirements:
+
+* Distinguish detected language from configured document expectations.
+* Support mixed-language pages where practical.
+* Return an explicit unknown or uncertain state when the available text is insufficient.
+* Avoid treating a few names, identifiers, numbers, or short fragments as reliable language evidence.
+* Record the detection method and relevant metadata.
+* Keep the service modular so additional language detectors can be added later.
+
+Do not fabricate language confidence scores.
+
+If a genuine confidence score is unavailable, omit it or explicitly mark it unavailable.
+
+## 4. MULTILINGUAL OCR AND TEXT EXTRACTION
+
+Extend the existing extraction architecture without breaking its current digital-PDF and OCR fallback behavior.
+
+Requirements:
+
+* Continue using PyMuPDF for digital PDF text extraction where appropriate.
+* Reuse the existing OCR engine when it genuinely supports the target script.
+* Inspect the installed OCR engine and available language models before enabling a language.
+* Support scanned PDFs and images in supported languages.
+* Handle mixed-script pages where feasible.
+* Preserve page order and page-level text.
+* Store extraction method and processing status.
+* Handle unsupported scripts, malformed files, empty pages, and OCR failures safely.
+* Avoid repeated OCR when valid extraction results already exist.
+
+If the current RapidOCR configuration cannot reliably process a target language, implement an appropriate optional OCR adapter or report that language as unsupported.
+
+Do not label a language as supported merely because its text can be uploaded.
+
+Do not download large models or add expensive dependencies without evaluating compatibility and resource requirements.
+
+## 5. ORIGINAL TEXT AND NORMALIZED TEXT
+
+Preserve distinct representations for:
+
+1. Original extracted text.
+2. Normalized text used for matching.
+3. Candidate structured field values.
+4. Optional translated text.
+5. Human-reviewed corrections.
+
+Normalization must be language-aware where necessary.
+
+Handle:
+
+* Unicode normalization.
+* Devanagari and other supported scripts.
+* Whitespace and line breaks.
+* Common OCR character confusions.
+* Numeral normalization where safe.
+* Mixed Latin and native-script identifiers.
+* Punctuation and separators.
+
+Do not discard diacritics, meaningful characters, or identifier distinctions without an explicit reason.
+
+Preserve original values for evidence and auditability.
+
+Do not automatically replace ambiguous OCR characters with guessed values.
+
+## 6. MULTILINGUAL FIELD EXTRACTION
+
+Extend the existing candidate-field extraction pipeline.
+
+Support configured multilingual aliases for applicable fields, such as:
+
+* Institution name.
+* Institution identifier.
+* Application reference.
+* Academic year.
+* Intake or capacity.
+* Dates.
+* Registration identifiers.
+* Issuing authority.
+
+Use explicit dictionaries, configurable patterns, and language-specific parsers where practical.
+
+Do not assume that a particular translated label is universally used across Indian institutions.
+
+Allow aliases to be configured and tested.
+
+Each candidate field must retain:
+
+* Original extracted value.
+* Normalized value, if available.
+* Language metadata, if known.
+* Source document ID.
+* Page number.
+* Extraction method.
+* Confidence only when genuinely available.
+* Review status where applicable.
+
+Do not invent missing field values.
+
+## 7. OPTIONAL TRANSLATION ADAPTER
+
+Create a modular translation interface only if it materially helps reviewer comprehension.
+
+The core application must continue working without an external translation provider.
+
+Requirements:
+
+* Preserve the original text.
+* Mark translated content clearly as a translation.
+* Identify the provider and translation timestamp when available.
+* Handle unavailable providers and translation failures.
+* Never treat translated text as the authoritative source.
+* Never silently overwrite extracted evidence.
+* Avoid sending sensitive documents to external providers unless explicitly configured and permitted.
+* Treat extracted document contents as untrusted input.
+* Do not fabricate translation quality or confidence metrics.
+
+If no real translation provider is configured, display the translation capability as unavailable or not configured.
+
+Do not build a fake translation feature that simply copies the original text and labels it translated.
+
+## 8. VALIDATION AND ANOMALY DETECTION INTEGRATION
+
+Integrate multilingual candidate fields with the existing deterministic validation and anomaly-detection services.
+
+Requirements:
+
+* Preserve the existing rule engine.
+* Use explicit, tested normalization before comparisons.
+* Compare identifiers carefully across scripts and numeral systems.
+* Avoid declaring mismatches solely because equivalent text uses different scripts or harmless formatting.
+* Do not perform unsafe transliteration that changes identifier meaning.
+* Distinguish a genuine mismatch from uncertain OCR.
+* Flag ambiguous comparisons for human review.
+* Preserve source document and page evidence.
+
+For institution-name comparisons, use transparent normalization and, if justified, a configurable similarity strategy.
+
+Do not treat a fuzzy name match as definitive proof of institutional identity.
+
+Do not automatically approve or reject an application because of multilingual processing results.
+
+## 9. DATA MODEL AND MIGRATIONS
+
+Inspect the existing schema before changing it.
+
+Add only the metadata required to represent:
+
+* Detected language.
+* Extraction language or script configuration.
+* Language-processing method.
+* Optional translation records.
+* Normalization metadata.
+* Processing warnings.
+* Reviewer corrections, where appropriate.
+
+Reuse existing page and processing-run records whenever possible.
+
+Use SQLAlchemy 2.x and Alembic.
+
+Preserve historical extraction evidence where appropriate.
+
+Do not destructively recreate existing tables or erase previously extracted text.
+
+## 10. API ENDPOINTS
+
+Follow `docs/DATA_MODEL_AND_API.md` and existing API conventions.
+
+Use `/api/v1/`.
+
+Implement equivalent endpoints where necessary for:
+
+* Retrieving language metadata.
+* Retrieving multilingual extraction details.
+* Requesting supported-language reprocessing.
+* Retrieving normalized candidate fields.
+* Requesting optional translation.
+* Recording authorized human corrections.
+
+Suggested endpoint shapes:
+
+* `GET /api/v1/documents/{document_id}/languages`
+* `GET /api/v1/documents/{document_id}/extracted-fields`
+* `POST /api/v1/documents/{document_id}/reprocess`
+* `POST /api/v1/documents/{document_id}/translate`
+
+Adapt these to the existing API contract. Do not duplicate existing endpoints.
+
+Validate supported languages, request sizes, identifiers, and permissions.
+
+Return honest errors when a requested language or provider is unsupported.
+
+Protect document content using existing authentication and authorization.
+
+## 11. FRONTEND INTEGRATION
+
+Extend the existing document viewer and application scrutiny workspace.
+
+Provide:
+
+* Detected language labels.
+* Page-level original extracted text.
+* Script-aware text rendering.
+* Clear extraction warnings.
+* Normalized candidate-field views.
+* Optional translated text, when genuinely available.
+* A visible distinction between original and translated content.
+* Links to source documents and pages.
+* Review indicators for uncertain extraction.
+* A clear unsupported-language state.
+
+Ensure appropriate Unicode font support and readable rendering for Hindi and other enabled scripts.
+
+Use responsive layouts and accessible controls.
+
+Preserve the existing VerityAI visual design:
+
+* Lavender `#CBB3E8`.
+* Pale purple `#F3EEFC` and `#FAF8FF`.
+* Primary purple `#7450D8`.
+* Tomato red `#F04438` and `#E34234`.
+* Deep navy `#171B45`.
+* Inter typography.
+
+Do not invent translation results, language confidence scores, or OCR accuracy percentages.
+
+## 12. SECURITY, PERFORMANCE, AND PRIVACY
+
+Ensure:
+
+* Document access remains protected.
+* Uploaded content is treated as untrusted.
+* OCR and processing have appropriate resource limits.
+* Large PDFs cannot cause unbounded processing.
+* Optional providers use timeouts and bounded requests.
+* Sensitive document content is not sent externally without explicit configuration and permission.
+* Language metadata and translations do not leak data across applications.
+* Temporary files are cleaned up.
+* Logs do not unnecessarily expose document contents.
+
+Do not add external network dependencies to the core processing path.
+
+## 13. TESTING — MANDATORY
+
+Add tests for:
+
+* English digital PDFs.
+* Hindi digital PDFs where supported.
+* Scanned documents in genuinely supported languages.
+* Mixed-script documents.
+* Unicode normalization.
+* Native-script numerals.
+* Identifiers containing Latin and native-script characters.
+* Unknown language detection.
+* Insufficient text for language identification.
+* Unsupported languages.
+* Malformed documents.
+* Empty and low-quality OCR output.
+* Multilingual candidate-field extraction.
+* Cross-language field comparison.
+* False mismatch prevention.
+* Uncertain extraction requiring review.
+* Translation-provider unavailability.
+* Prevention of false translation output.
+* Access-control enforcement.
+* Processing idempotency.
+* Database migration behavior.
+* Existing extraction, validation, anomaly, and report regressions.
+
+Use synthetic documents and fixtures.
+
+Tests must not depend on external translation APIs or paid AI services.
+
+Run the complete backend test suite and frontend production build. Fix regressions introduced by this phase.
+
+Report actual results only.
+
+## 14. DOCUMENTATION AND GIT
+
+Update:
+
+* `docs/PROJECT_STATUS.md`
+* `docs/AI_PIPELINE.md`
+* `docs/DATA_MODEL_AND_API.md`
+* `docs/ARCHITECTURE.md`
+* `docs/TESTING_SECURITY_AND_DEMO.md`
+* `docs/AUTONOMOUS_EXECUTION_STATUS.md`, if present.
+
+Document:
+
+* Languages genuinely supported.
+* OCR engine and model limitations.
+* Detection and normalization behavior.
+* Translation-provider configuration.
+* Privacy safeguards.
+* API changes.
+* Database migrations.
+* Test results.
+* Known limitations.
+
+Follow `AGENTS.md` for Git operations. Preserve existing history and user changes. Create a focused milestone commit only if permitted and after the relevant checks pass.
+
+## 15. DEFINITION OF DONE
+
+Phase 12 is complete only when:
+
+1. Language detection behaves correctly for supported inputs.
+2. Supported multilingual documents can be processed using genuine compatible extraction capabilities.
+3. Original extracted text is preserved.
+4. Normalized fields remain traceable to their source pages.
+5. Existing validation and anomaly detection can use multilingual fields safely.
+6. Unsupported languages and uncertain OCR are represented honestly.
+7. Optional translation works only when a genuine provider is available.
+8. The frontend presents multilingual evidence clearly.
+9. Security, privacy, and processing limits are maintained.
+10. Existing functionality remains operational.
+11. Backend tests and frontend production build pass.
+12. Documentation and the execution ledger are updated.
+13. A Git checkpoint is created if permitted.
+
+## 16. FINAL REPORT
+
+Report:
+
+* Languages actually supported and tested.
+* OCR engines and adapters used.
+* Normalization and field-extraction features implemented.
+* Translation-provider status.
+* Database and API changes.
+* Frontend changes.
+* Actual test results.
+* Frontend build result.
+* Git commit hash, if created.
+* Remaining limitations.
+
+Begin by inspecting the actual repository. Implement Phase 12 end-to-end, verify every supported language honestly, and report only confirmed results.
+
+
+
+
+
+
+
+# PHASE 13 — INSTITUTIONAL DOSSIER HISTORY & VERSIONING
+
+## Project: VerityAI / EntityLocker — SIH 2026
+
+Act as a senior software architect, database engineer, document-management specialist, auditability engineer, and React/TypeScript developer.
+
+Implement Phase 13 end-to-end in the existing VerityAI repository. Inspect the actual code, reuse existing functionality, implement the required features, run tests, fix regressions, update documentation, and create a Git checkpoint if permitted.
+
+Work autonomously on routine tasks. Do not stop after producing a plan. Never claim historical records are immutable or tamper-proof unless the implementation genuinely provides those guarantees.
+
+## 1. INSPECT THE PROJECT FIRST
+
+Read:
+
+* `AGENTS.md`
+* `docs/ARCHITECTURE.md`
+* `docs/TECH_STACK.md`
+* `docs/UI_UX_DESIGN.md`
+* `docs/AI_PIPELINE.md`
+* `docs/DATA_MODEL_AND_API.md`
+* `docs/TESTING_SECURITY_AND_DEMO.md`
+* `docs/PROJECT_STATUS.md`
+* `docs/AUTONOMOUS_EXECUTION_STATUS.md`, if present.
+
+Inspect the actual implementations of:
+
+* Application and institution records.
+* Document storage and upload.
+* Document extraction and page-level evidence.
+* Validation rules and results.
+* Anomaly findings and review outcomes.
+* Registry verification, if implemented.
+* Workflow state transitions.
+* Authentication and authorization.
+* Audit events.
+* Scrutiny report generation.
+* Multilingual extraction, if implemented.
+
+Verify the actual repository state. Complete any missing prerequisite that directly blocks this phase without rebuilding completed functionality.
+
+Preserve existing data, migrations, API contracts, Git history, and user changes.
+
+## 2. OBJECTIVE
+
+Implement a traceable version-history system for institutional applications and their supporting scrutiny evidence.
+
+Authorized users should be able to determine:
+
+* What changed.
+* When it changed.
+* Who performed the change, when authenticated identity is available.
+* Which application or document version was affected.
+* Which validation results and findings correspond to a particular version.
+* Whether a previous scrutiny report is outdated.
+* How the application evolved throughout its review lifecycle.
+
+The goal is **reliable historical traceability**, not an unsupported claim of legal-grade immutability.
+
+## 3. APPLICATION VERSIONING
+
+Inspect the current application model and update operations.
+
+Implement version tracking for meaningful application changes, such as:
+
+* Institution metadata.
+* Application category and academic year.
+* Declared intake and other relevant declared fields.
+* Supporting-document associations.
+* Submission and workflow transitions.
+* Deficiency responses and corrections.
+* Reviewer decisions.
+
+Requirements:
+
+* Assign a monotonically increasing version number per application, or use an equally clear documented versioning strategy.
+* Capture the relevant changed fields.
+* Record the timestamp.
+* Record the actor where available.
+* Associate the change with the relevant application.
+* Preserve previous versions.
+* Avoid creating duplicate versions for unchanged data.
+* Ensure concurrent updates cannot silently overwrite each other.
+* Use database transactions for consistent version creation.
+
+Do not version every read request.
+
+Do not fabricate historical records for changes that were never recorded.
+
+## 4. DOCUMENT VERSIONING
+
+Extend the existing secure document workflow to support document revisions.
+
+Requirements:
+
+* Preserve the original uploaded document.
+* Allow a new revision to be associated with an existing logical document where appropriate.
+* Preserve the relationship between an application, logical document, and individual revisions.
+* Record content hashes, upload timestamps, and the authenticated uploader where available.
+* Maintain the existing upload size, MIME, magic-byte, and storage-path protections.
+* Avoid overwriting the original file during revision uploads.
+* Distinguish a new revision from an unrelated document.
+* Preserve the extraction and processing history associated with each revision.
+
+Use SHA-256 hashes or the existing content-hash mechanism to identify identical file contents.
+
+Identical content should not automatically create unnecessary duplicate revisions.
+
+Document how revision numbering and the current revision are determined.
+
+## 5. VERSION-SPECIFIC VALIDATION AND FINDINGS
+
+Ensure historical validation results and anomaly findings remain associated with the correct source versions.
+
+When an application or supporting document changes:
+
+* Identify which previous results may be stale.
+* Mark affected current results as requiring reevaluation where appropriate.
+* Preserve historical results.
+* Do not silently rewrite historical evidence.
+* Do not treat a result calculated against an older document revision as a result for the latest revision.
+* Record the source application version and document revision when supported by the architecture.
+
+Reevaluation must use the existing validation and analysis services.
+
+Do not duplicate their business logic.
+
+Clearly distinguish:
+
+* Current results.
+* Historical results.
+* Superseded results.
+* Results requiring reevaluation.
+
+## 6. REPORT VERSIONING
+
+Integrate versioning with the existing scrutiny dossier report generator.
+
+Requirements:
+
+* Associate each generated report with the application version and relevant document revisions used to produce it.
+* Record the report-generation timestamp.
+* Preserve previously generated reports where retention policy allows.
+* Identify whether a report reflects the latest application and evidence versions.
+* Clearly label historical reports.
+* Avoid silently replacing a previously generated report with a new one.
+* Ensure report downloads respect existing access controls.
+
+If a report references source records that have since changed, make its historical status clear.
+
+Do not claim that a report is a signed or immutable official certificate.
+
+## 7. HISTORY AND COMPARISON SERVICE
+
+Implement a dedicated service for retrieving version history and comparing versions.
+
+Provide:
+
+* Chronological application history.
+* Document revision history.
+* Field-level application differences.
+* Document additions and removals.
+* Workflow-state changes.
+* Validation-result changes.
+* Anomaly-status changes.
+* Reviewer-decision history.
+* Report-generation history.
+
+Comparison output should identify:
+
+* Previous value.
+* Current value.
+* Change timestamp.
+* Actor, when available.
+* Relevant version identifiers.
+* Associated evidence or event references.
+
+Avoid exposing unnecessary personal information.
+
+For binary documents, compare content hashes and metadata rather than attempting to display meaningless binary diffs.
+
+## 8. DATABASE DESIGN AND MIGRATIONS
+
+Inspect the current schema before introducing new tables.
+
+Reuse the existing audit-event and processing-history models wherever appropriate.
+
+Add the minimum required structures for:
+
+* Application versions.
+* Document revisions.
+* Version relationships.
+* Source-version references on validation or analysis results, where needed.
+* Report-version metadata.
+* Change summaries.
+
+Use SQLAlchemy 2.x and Alembic.
+
+Requirements:
+
+* Preserve existing records.
+* Maintain foreign-key integrity.
+* Use appropriate indexes.
+* Support transactional version creation.
+* Handle migration upgrades safely.
+* Provide reversibility where practical.
+* Avoid storing duplicate full documents or extracted text unnecessarily.
+
+Do not destructively recreate existing database tables.
+
+Do not pretend that preexisting records have a complete historical version history if they were never versioned.
+
+Document the baseline-version strategy for records created before this feature.
+
+## 9. API ENDPOINTS
+
+Follow `docs/DATA_MODEL_AND_API.md` and existing route conventions.
+
+Use `/api/v1/`.
+
+Implement equivalent functionality where needed for:
+
+* Application version history.
+* Application version details.
+* Version-to-version comparisons.
+* Document revision history.
+* Document revision metadata.
+* Historical validation results.
+* Historical anomaly findings.
+* Report history.
+* Historical report downloads.
+
+Suggested route patterns:
+
+* `GET /api/v1/applications/{application_id}/versions`
+* `GET /api/v1/applications/{application_id}/versions/{version_number}`
+* `GET /api/v1/applications/{application_id}/versions/compare`
+* `GET /api/v1/documents/{document_id}/versions`
+* `GET /api/v1/applications/{application_id}/reports`
+
+Adapt routes to the existing contract and avoid duplicate endpoints.
+
+Requirements:
+
+* Validate all identifiers.
+* Apply authentication and authorization.
+* Restrict access to records the current user may view.
+* Use pagination for large histories.
+* Return consistent errors.
+* Do not expose internal storage paths or secrets.
+
+## 10. FRONTEND INTEGRATION
+
+Extend the existing application scrutiny workspace with a History and Versions experience.
+
+Display:
+
+* Application version number.
+* Version timestamp.
+* Actor where available.
+* Changed fields.
+* Document revisions.
+* Workflow transitions.
+* Validation and anomaly history.
+* Reviewer decisions.
+* Historical scrutiny reports.
+* Indicators that previous results are stale or superseded.
+
+Allow authorized reviewers to compare two application versions.
+
+Use readable field-level differences rather than dumping raw JSON.
+
+Make it clear which information is current and which belongs to a previous version.
+
+Add revision history to the document inspection experience where appropriate.
+
+Preserve the existing VerityAI design system:
+
+* Lavender `#CBB3E8`.
+* Pale purple `#F3EEFC` and `#FAF8FF`.
+* Primary purple `#7450D8`.
+* Tomato red `#F04438` and `#E34234`.
+* Deep navy `#171B45`.
+* Inter typography.
+
+Do not introduce fabricated historical events or pretend that unrecorded changes can be reconstructed.
+
+## 11. SECURITY AND INTEGRITY
+
+Ensure:
+
+* Only authorized users can access version history.
+* Historical documents retain existing access controls.
+* Users cannot modify historical records through ordinary update endpoints.
+* Revision uploads cannot overwrite previous files.
+* Version comparisons do not expose other applications' data.
+* Historical reports are protected.
+* Audit logs do not expose unnecessary sensitive content.
+
+Where the existing audit architecture permits, make recorded history append-only through normal application operations.
+
+If administrative database access could modify historical records, do not claim the records are tamper-proof.
+
+Do not introduce complex cryptographic integrity infrastructure unless justified by the actual requirements.
+
+## 12. TESTING — MANDATORY
+
+Add tests for:
+
+* Initial application version creation.
+* Version increment after meaningful changes.
+* No duplicate version for unchanged data.
+* Field-level change history.
+* Concurrent update handling.
+* Document revision creation.
+* Duplicate content detection.
+* Preservation of original uploaded files.
+* Revision-specific extraction results.
+* Historical validation and anomaly results.
+* Stale-result detection after source changes.
+* Historical report generation and retrieval.
+* Report freshness indicators.
+* Version comparison correctness.
+* Unauthorized history access.
+* Cross-application access prevention.
+* Database migration behavior.
+* Existing upload, validation, workflow, report, and authentication regressions.
+
+Use synthetic fixtures and temporary test databases.
+
+Run the complete backend test suite and frontend production build. Fix regressions introduced by the implementation.
+
+Report actual results only.
+
+## 13. DOCUMENTATION AND GIT
+
+Update:
+
+* `docs/PROJECT_STATUS.md`
+* `docs/ARCHITECTURE.md`
+* `docs/DATA_MODEL_AND_API.md`
+* `docs/TESTING_SECURITY_AND_DEMO.md`
+* `docs/AUTONOMOUS_EXECUTION_STATUS.md`, if present.
+
+Document:
+
+* Application versioning strategy.
+* Document revision semantics.
+* Historical result handling.
+* Report-version relationships.
+* Baseline behavior for existing records.
+* API changes.
+* Access-control behavior.
+* Test results.
+* Known limitations.
+
+Follow `AGENTS.md` for Git operations.
+
+Preserve existing history and user changes. Create a focused milestone commit only if permitted and after relevant checks pass.
+
+## 14. DEFINITION OF DONE
+
+Phase 13 is complete only when:
+
+1. Meaningful application changes produce traceable versions.
+2. Document revisions preserve previous files and metadata.
+3. Validation and anomaly results reference the correct source versions where supported.
+4. Stale results are identified appropriately.
+5. Historical scrutiny reports can be retrieved securely.
+6. Version comparison provides accurate field-level differences.
+7. The frontend presents current and historical information clearly.
+8. Access controls prevent unauthorized history access.
+9. Existing records are preserved without fabricated historical data.
+10. Backend tests and frontend production build pass.
+11. Documentation and the execution ledger are updated.
+12. A Git checkpoint is created if permitted.
+
+## 15. FINAL REPORT
+
+Report:
+
+* Application versioning implemented.
+* Document revision behavior.
+* Historical validation and anomaly handling.
+* Report-version integration.
+* Database migrations.
+* API endpoints.
+* Frontend changes.
+* Actual test results.
+* Frontend build result.
+* Git commit hash, if created.
+* Remaining limitations.
+
+Begin by inspecting the actual repository. Implement Phase 13 end-to-end and report only verified outcomes.
+
+
+
+
+# PHASE 14 — EXTERNAL REGULATORY PORTAL INTEROPERABILITY
+
+## Project: VerityAI / EntityLocker — SIH 2026
+
+Act as a senior integration architect, API security engineer, regulatory-systems specialist, backend developer, and React/TypeScript engineer.
+
+Implement Phase 14 end-to-end in the existing VerityAI repository. Inspect the actual code, reuse existing functionality, implement required features, run tests, fix regressions, update documentation, and create a Git checkpoint if permitted.
+
+Work autonomously on routine tasks. Do not stop after creating a plan. Never claim that an external portal is integrated unless the integration has genuinely been configured and verified.
+
+## 1. INSPECT THE PROJECT FIRST
+
+Read:
+
+* `AGENTS.md`
+* `docs/ARCHITECTURE.md`
+* `docs/TECH_STACK.md`
+* `docs/UI_UX_DESIGN.md`
+* `docs/AI_PIPELINE.md`
+* `docs/DATA_MODEL_AND_API.md`
+* `docs/TESTING_SECURITY_AND_DEMO.md`
+* `docs/PROJECT_STATUS.md`
+* `docs/AUTONOMOUS_EXECUTION_STATUS.md`, if present.
+
+Inspect the current registry-provider architecture, registry verification, application workflow, authentication, authorization, document processing, validation, anomaly detection, version history, reports, and audit logging.
+
+Verify which previous-phase features actually exist. Complete necessary prerequisites without rebuilding working functionality.
+
+Preserve existing data, migrations, API contracts, Git history, and user changes.
+
+## 2. OBJECTIVE
+
+Implement a secure, extensible interoperability layer that enables VerityAI to exchange authorized data with external regulatory or institutional systems.
+
+The architecture should support future integrations with relevant systems, potentially including:
+
+* AICTE-related institutional systems.
+* Authorized institutional registries.
+* State-level institutional or land-record systems, where access is permitted.
+* Other approved verification providers.
+
+**The current prototype is not assumed to have access to any official portal, production API, credentials, or institutional dataset.**
+
+Do not bypass authentication, scrape restricted systems, reverse-engineer protected APIs, or claim access that does not exist.
+
+The implementation must provide a functional integration architecture and a testable local demonstration without requiring production credentials.
+
+## 3. PROVIDER ADAPTER ARCHITECTURE
+
+Create or extend a provider-adapter architecture compatible with the registry functionality implemented in Phase 11.
+
+Each provider should implement a documented interface appropriate to its capabilities.
+
+Support:
+
+* Provider identification.
+* Capability discovery.
+* Request and response validation.
+* Institution or application lookup.
+* Reference-record retrieval.
+* Verification-result normalization.
+* Source provenance.
+* Retrieval timestamps.
+* Provider health or availability status.
+* Structured error handling.
+* Timeouts and bounded retries.
+
+Reuse the existing registry-provider abstractions if present.
+
+Do not create a competing integration framework that duplicates Phase 11.
+
+Separate provider-specific request formats from VerityAI's internal data model.
+
+## 4. PROVIDER TYPES
+
+Support three clearly distinguished provider categories.
+
+### A. Local demonstration provider
+
+Implement or reuse a synthetic local provider that works without external network access.
+
+It must support realistic test scenarios:
+
+* Successful match.
+* Mismatch.
+* Missing record.
+* Ambiguous result.
+* Provider error.
+* Incomplete reference data.
+
+Clearly label its records and results as synthetic demonstration data.
+
+### B. Configurable external API provider
+
+Implement a generic external REST API adapter where the project architecture supports it.
+
+Requirements:
+
+* Configurable base URL from trusted application configuration.
+* HTTPS required for production integrations.
+* TLS certificate verification enabled.
+* Connection and response timeouts.
+* Bounded response sizes.
+* Input and output schema validation.
+* Safe authentication configuration.
+* Redacted request and response logging.
+* Structured provider errors.
+* Explicit capability configuration.
+
+Do not permit ordinary users to supply arbitrary URLs that the backend fetches.
+
+Prevent server-side request forgery by restricting outbound destinations to explicitly configured, trusted endpoints. Reject loopback, private, link-local, and metadata-service destinations for public external providers unless an explicitly trusted internal deployment configuration authorizes the intended destination.
+
+Validate redirects and DNS resolution as appropriate to the deployment environment.
+
+Never disable TLS verification to make an integration work.
+
+### C. Future official-provider adapter
+
+Define clear interfaces and configuration requirements for future authorized official integrations.
+
+Do not invent official API endpoints, authentication schemes, response formats, or credentials.
+
+If the actual official API specification is unavailable, implement the adapter interface and document the exact missing requirements.
+
+Do not report this provider as connected.
+
+## 5. CONFIGURATION AND SECRET MANAGEMENT
+
+Implement environment-based configuration for external providers.
+
+Requirements:
+
+* No secrets in source code.
+* No production credentials in committed files.
+* No credentials in frontend bundles.
+* No credentials returned through APIs.
+* No credentials in logs or audit messages.
+* Clear example configuration containing placeholders only.
+* Explicit provider enablement.
+* Explicit trusted endpoint configuration.
+* Fail-safe behavior when configuration is incomplete.
+
+Do not create external accounts, request paid services, or expose the application publicly.
+
+The system must continue working when every external provider is disabled.
+
+## 6. REQUEST AND RESPONSE NORMALIZATION
+
+Create a normalized internal representation for external verification responses.
+
+Capture relevant information such as:
+
+* Provider identifier.
+* Provider record identifier.
+* Verification status.
+* Returned institution identifiers.
+* Institution name and supported metadata.
+* Source timestamp.
+* Retrieval timestamp.
+* Provenance.
+* Error or unresolved reason.
+* Relevant evidence references.
+
+Reuse existing registry-verification models wherever appropriate.
+
+Distinguish:
+
+* Verified response from an authenticated configured provider.
+* Synthetic demonstration result.
+* Cached result.
+* Stale result.
+* Incomplete response.
+* Provider unavailable.
+* Unverified external assertion.
+
+Do not treat receiving a response from an external endpoint as proof that its contents are authoritative.
+
+Document how the trustworthiness of a provider is established and configured.
+
+## 7. SYNCHRONIZATION AND DATA FRESHNESS
+
+Implement controlled synchronization or lookup workflows appropriate to the existing architecture.
+
+Requirements:
+
+* Avoid unnecessary repeated requests.
+* Record when data was retrieved.
+* Distinguish fresh data from stale cached data.
+* Make cache freshness configurable if caching is implemented.
+* Avoid presenting stale results as current verification.
+* Handle rate limiting.
+* Handle provider timeouts and temporary failures.
+* Avoid unbounded retry loops.
+* Preserve historical results where required by the versioning architecture.
+
+Do not introduce a complex distributed queue unless actual workload requirements justify it.
+
+If asynchronous synchronization is needed, use a maintainable mechanism compatible with the existing project.
+
+## 8. REGISTRY AND APPLICATION WORKFLOW INTEGRATION
+
+Connect external-provider results to the existing:
+
+* Application records.
+* Institution records.
+* Registry-verification results.
+* Deterministic validation engine.
+* Anomaly findings.
+* Workflow orchestration.
+* Evidence traceability.
+* Application version history.
+* Scrutiny reports.
+* Audit events.
+
+Reuse existing services rather than duplicating verification logic.
+
+When an external result conflicts with an application declaration:
+
+* Preserve both values.
+* Record the source and retrieval timestamp.
+* Explain the discrepancy.
+* Mark uncertain cases for human review.
+* Do not automatically reject the application.
+
+When a provider is unavailable, distinguish that condition from a genuine verification mismatch.
+
+Do not allow an external response to silently override declared application data or historical evidence.
+
+## 9. API ENDPOINTS
+
+Follow `docs/DATA_MODEL_AND_API.md` and existing conventions.
+
+Use `/api/v1/`.
+
+Implement equivalent endpoints where needed for:
+
+* Listing configured providers.
+* Retrieving provider status.
+* Triggering an authorized lookup.
+* Retrieving external verification results.
+* Viewing synchronization history.
+* Inspecting provider capability metadata.
+
+Suggested route patterns:
+
+* `GET /api/v1/integrations/providers`
+* `GET /api/v1/integrations/providers/{provider_id}`
+* `GET /api/v1/integrations/providers/{provider_id}/status`
+* `POST /api/v1/applications/{application_id}/external-verification`
+* `GET /api/v1/applications/{application_id}/external-verification`
+* `GET /api/v1/integrations/history`
+
+Adapt the routes to the actual project contract.
+
+Do not expose credentials, internal network details, or secret configuration.
+
+Enforce authentication and role-based permissions for administrative and verification actions.
+
+Avoid duplicate endpoints.
+
+## 10. FRONTEND INTEGRATION
+
+Integrate provider status and external verification into the existing VerityAI interface.
+
+Within the application scrutiny workspace, display:
+
+* Provider name.
+* Provider type.
+* Verification status.
+* Retrieval timestamp.
+* Source provenance.
+* Freshness information.
+* Returned identifiers and values.
+* Differences from declared information.
+* Provider errors.
+* Required reviewer actions.
+
+For unavailable or unconfigured providers, display an honest status.
+
+For synthetic providers, display a clear demonstration-data label.
+
+Add provider administration controls only for authorized users and only for functionality that genuinely exists.
+
+Never display a green success state merely because an external request was initiated.
+
+Preserve the existing lavender, pale-purple, tomato-red, deep-navy, white, and Inter design system.
+
+## 11. SECURITY AND AUDITABILITY
+
+Implement appropriate protections for outbound integration requests.
+
+Ensure:
+
+* Trusted endpoints are explicitly configured.
+* Production integrations require HTTPS.
+* TLS verification remains enabled.
+* SSRF protections are applied.
+* Response sizes are bounded.
+* Timeouts and retries are limited.
+* Credentials are redacted.
+* External content is treated as untrusted input.
+* External responses cannot inject executable content.
+* Provider errors do not expose internal infrastructure.
+* Users cannot access another application's verification results.
+
+Record meaningful events for:
+
+* Verification initiated.
+* Verification completed.
+* Provider unavailable.
+* Synchronization failed.
+* Provider configuration changed.
+* Reference data updated.
+
+Do not store complete sensitive external responses in audit logs unnecessarily.
+
+## 12. TESTING — MANDATORY
+
+Add tests covering:
+
+* Local synthetic provider.
+* Successful external-provider mock response.
+* Mismatch and missing record.
+* Ambiguous response.
+* Malformed response.
+* Timeout.
+* Connection failure.
+* HTTP error.
+* Rate limiting.
+* Oversized response.
+* Invalid endpoint configuration.
+* SSRF rejection.
+* Redirect handling.
+* TLS configuration requirements.
+* Credential redaction.
+* Stale and cached results.
+* Provider disabled.
+* Missing credentials.
+* Authentication and authorization.
+* Cross-application access restrictions.
+* Audit-event creation.
+* Historical result preservation.
+* Database migrations.
+* Existing registry, validation, workflow, and report regressions.
+
+Use mock HTTP servers, mocked transports, or deterministic fixtures.
+
+The core test suite must not depend on external regulatory portals or production credentials.
+
+Run the complete backend test suite and frontend production build. Fix regressions introduced by the implementation.
+
+Report actual results only.
+
+## 13. DOCUMENTATION AND GIT
+
+Update:
+
+* `docs/PROJECT_STATUS.md`
+* `docs/ARCHITECTURE.md`
+* `docs/DATA_MODEL_AND_API.md`
+* `docs/TESTING_SECURITY_AND_DEMO.md`
+* `docs/AUTONOMOUS_EXECUTION_STATUS.md`, if present.
+
+Document:
+
+* Provider architecture.
+* Supported capabilities.
+* Configuration variables.
+* Authentication requirements.
+* Security restrictions.
+* Data-freshness semantics.
+* Synthetic-provider limitations.
+* Official integration prerequisites.
+* Actual tests and results.
+
+Follow `AGENTS.md` for Git operations. Preserve existing history and user changes. Create a focused milestone commit only if permitted and after relevant checks pass.
+
+## 14. DEFINITION OF DONE
+
+Phase 14 is complete only when:
+
+1. The existing registry architecture supports the interoperability layer.
+2. The local demonstration provider works end-to-end.
+3. The generic external-provider adapter is implemented and testable where appropriate.
+4. External endpoints are securely configured.
+5. Responses are validated and normalized.
+6. Provider failures and stale data are represented honestly.
+7. Results integrate with the existing scrutiny workflow.
+8. Sensitive operations enforce authorization.
+9. Audit events and provenance are preserved.
+10. The application works when external providers are disabled.
+11. Backend tests and frontend production build pass.
+12. Documentation and the execution ledger are updated.
+13. A Git checkpoint is created if permitted.
+
+## 15. FINAL REPORT
+
+Report:
+
+* Integration architecture.
+* Providers actually implemented.
+* Whether external connectivity was genuinely tested.
+* Configuration requirements.
+* Security controls implemented.
+* Database and API changes.
+* Frontend changes.
+* Actual test results.
+* Frontend build result.
+* Git commit hash, if created.
+* Remaining official-integration prerequisites.
+
+Begin by inspecting the repository. Implement Phase 14 end-to-end and report only verified outcomes.
+
+
+
+
+
+
+# PHASE 15 — FINAL PILOT DEMONSTRATION & EVALUATION PACKAGE
+
+## Project: VerityAI / EntityLocker — Smart India Hackathon 2026
+
+Act as a senior software architect, QA lead, DevOps engineer, UX reviewer, technical writer, and hackathon demonstration specialist.
+
+Your mission is to prepare the existing VerityAI project for a reliable, professional, evidence-backed SIH 2026 demonstration.
+
+**This is the final planned implementation phase.** Inspect the actual repository, validate existing functionality, resolve remaining issues within scope, prepare a repeatable demonstration, generate the required documentation and evaluation artifacts, and perform a final integration audit.
+
+Work autonomously on routine tasks. Do not stop after creating a plan. Do not claim features, tests, integrations, or deployment capabilities that have not been verified.
+
+Do not rebuild the application from scratch.
+
+---
+
+## 1. INSPECT THE COMPLETE PROJECT
+
+Read and follow:
+
+* `AGENTS.md`
+* `docs/ARCHITECTURE.md`
+* `docs/TECH_STACK.md`
+* `docs/UI_UX_DESIGN.md`
+* `docs/AI_PIPELINE.md`
+* `docs/DATA_MODEL_AND_API.md`
+* `docs/IMPLEMENTATION_PLAN.md`
+* `docs/TESTING_SECURITY_AND_DEMO.md`
+* `docs/PROJECT_STATUS.md`
+* `docs/AUTONOMOUS_EXECUTION_STATUS.md`, if present.
+
+Inspect:
+
+* The complete source tree.
+* Backend routes, services, models, and migrations.
+* Frontend routes, pages, components, and API integration.
+* Authentication and authorization.
+* Document upload, extraction, and OCR.
+* Deterministic validation.
+* Anomaly detection.
+* Registry verification and external-provider adapters, if implemented.
+* Multilingual processing, if implemented.
+* Application and document versioning, if implemented.
+* Workflow orchestration.
+* Scrutiny reports.
+* Audit events.
+* Automated tests.
+* Environment configuration.
+* Git status and history.
+
+Verify actual capabilities rather than relying on historical reports.
+
+If earlier phases are incomplete, identify and prioritize the missing requirements that materially affect the final demonstration.
+
+Preserve existing user changes, database records, API contracts, and Git history.
+
+---
+
+## 2. FINAL INTEGRATION AUDIT
+
+Verify that the complete application operates as one coherent system.
+
+The intended demonstration workflow is:
+
+1. An authorized user signs in, if authentication is implemented.
+2. An institution or authorized operator creates an application.
+3. Supporting documents are uploaded.
+4. Documents are stored securely.
+5. Digital text extraction or OCR processes the documents.
+6. Extracted text and candidate fields become available for inspection.
+7. Deterministic validation evaluates applicable configured rules.
+8. Anomaly detection identifies supported inconsistencies.
+9. Registry verification runs against the configured provider, if available.
+10. The application enters the appropriate scrutiny workflow.
+11. A reviewer inspects evidence and unresolved findings.
+12. The reviewer records an authorized action.
+13. The system records the action in the audit trail.
+14. A scrutiny report is generated and downloaded.
+15. Historical versions and report freshness are displayed where implemented.
+
+Verify every applicable step.
+
+Do not pretend that an optional feature works if it has not been implemented or configured.
+
+If a feature is not available, document it and ensure the rest of the demonstration still works.
+
+---
+
+## 3. FIX CRITICAL AND HIGH-PRIORITY DEFECTS
+
+Perform a targeted final review for:
+
+* Broken application startup.
+* Broken frontend navigation.
+* Failed API requests.
+* Database migration failures.
+* Authentication or authorization bypasses.
+* Upload and document-preview failures.
+* OCR or processing failures.
+* Incorrect validation results.
+* Broken anomaly review.
+* Invalid workflow transitions.
+* Failed report downloads.
+* Missing audit events.
+* Cross-application data exposure.
+* Missing configuration.
+* Unhandled errors.
+* Misleading UI states.
+* Existing tests that fail because of implementation defects.
+
+Prioritize defects that would prevent a reviewer or judge from completing the core demonstration.
+
+Fix defects within scope and rerun relevant tests.
+
+Do not hide errors, disable security controls, remove legitimate tests, or hardcode successful outcomes to make the demonstration look complete.
+
+If a defect cannot be resolved safely, document the exact blocker and its impact.
+
+---
+
+## 4. REPEATABLE SYNTHETIC DEMONSTRATION DATA
+
+Prepare a reproducible demo-data setup using synthetic institutional records and documents.
+
+The demonstration should cover realistic scenarios, including:
+
+* An application with complete supporting documents.
+* An application with a missing required document.
+* A document that needs OCR processing.
+* A validation failure supported by actual evidence.
+* An ambiguous or inconsistent field requiring human review.
+* A document-processing failure or unsupported file, where appropriate.
+* A registry mismatch or unavailable-provider scenario, if registry verification exists.
+* A completed reviewer action.
+* A generated scrutiny report.
+
+Use realistic but fictional institutions, identifiers, and documents.
+
+Clearly label synthetic records as demonstration data.
+
+Requirements:
+
+* Use the existing seed and fixture conventions where possible.
+* Make demo-data setup repeatable.
+* Avoid creating duplicate records on repeated runs.
+* Never overwrite or delete existing user data.
+* Use isolated databases or explicitly safe demo environments.
+* Keep credentials out of source control.
+* Do not fabricate validation results independently of the actual validation engine.
+
+The demonstration scenarios must be produced by the same application logic used in ordinary operation.
+
+---
+
+## 5. DEMONSTRATION READINESS CHECK
+
+Create an automated or repeatable readiness check appropriate to the existing architecture.
+
+Verify:
+
+* Required environment configuration.
+* Backend startup.
+* Database connectivity.
+* Migration state.
+* Frontend build.
+* Health endpoints.
+* Availability of demo records.
+* Document-storage permissions.
+* Processing prerequisites.
+* Report-generation dependencies.
+* Authentication setup, if implemented.
+* Optional AI-provider configuration.
+* Optional external registry-provider configuration.
+
+Clearly distinguish:
+
+* Required dependencies.
+* Optional integrations.
+* Configured capabilities.
+* Unavailable capabilities.
+
+Do not mark an optional provider as connected merely because configuration variables exist.
+
+Do not expose secrets in readiness output.
+
+A failed optional integration must not prevent core local functionality from working unless the architecture genuinely requires it.
+
+---
+
+## 6. JUDGE-FRIENDLY USER EXPERIENCE
+
+Review the application from the perspective of a judge seeing it for the first time.
+
+Ensure the interface makes the following clear:
+
+* What VerityAI does.
+* Which institutional problem it addresses.
+* How documents enter the system.
+* How OCR and extraction work.
+* How validation rules are evaluated.
+* How inconsistencies are identified.
+* How reviewers inspect evidence.
+* How human decisions are recorded.
+* How reports support scrutiny.
+
+Review the Overview, Applications, Scrutiny Queue, Documents, Validation Rules, Institutions, and Audit Trail views.
+
+Improve confusing labels, broken navigation, empty states, error messages, and loading behavior.
+
+Preserve the existing VerityAI design system:
+
+* Lavender `#CBB3E8`.
+* Pale purple `#F3EEFC` and `#FAF8FF`.
+* Primary purple `#7450D8`.
+* Tomato red `#F04438` and `#E34234`.
+* Deep navy `#171B45`.
+* Inter typography.
+
+Keep the interface professional, responsive, accessible, and appropriate for an institutional scrutiny platform.
+
+Reference screenshots remain visual inspiration only.
+
+Do not add fake statistics, artificial compliance percentages, simulated successful integrations, or unsupported AI claims.
+
+---
+
+## 7. FINAL QUALITY ASSURANCE
+
+Run the full available verification suite.
+
+### Backend
+
+* Execute the complete automated test suite.
+* Verify application startup.
+* Verify health endpoints.
+* Verify database initialization and migrations.
+* Verify document upload and extraction.
+* Verify deterministic validation.
+* Verify anomaly detection.
+* Verify workflow transitions.
+* Verify authentication and authorization.
+* Verify report generation and downloads.
+* Verify audit-event persistence.
+* Verify regression-sensitive endpoints.
+
+### Frontend
+
+* Run TypeScript checks.
+* Run the production build.
+* Run available frontend tests.
+* Verify important routes and API interactions.
+* Check for console errors if browser automation is available.
+
+### Security
+
+* Verify unauthorized access is rejected.
+* Verify document and report access restrictions.
+* Verify secrets are not exposed.
+* Verify upload and storage protections.
+* Verify that synthetic data is clearly distinguished from official data.
+
+### Database
+
+* Verify migration consistency.
+* Verify foreign-key integrity.
+* Verify fresh database initialization.
+* Verify safe repeat seeding.
+* Verify that existing data is preserved.
+
+Record exact results.
+
+If a check is unavailable, state why and perform alternative verification where appropriate.
+
+Never claim that a browser-based test, external integration, or security audit occurred unless it actually did.
+
+---
+
+## 8. PERFORMANCE AND RELIABILITY
+
+Perform a targeted review of the most important user-facing workflows.
+
+Where practical:
+
+* Measure API response times.
+* Identify slow or repeated database queries.
+* Avoid unnecessary OCR reruns.
+* Avoid duplicate validation and analysis requests.
+* Ensure large documents are handled within configured limits.
+* Ensure reports generate reliably.
+* Verify error states are recoverable.
+* Avoid unbounded polling and retries.
+
+Do not invent performance benchmarks.
+
+Do not introduce complex infrastructure without a demonstrated need.
+
+Document any remaining performance limitations.
+
+---
+
+## 9. DOCUMENTATION PACKAGE
+
+Ensure the project contains an accurate, organized documentation package.
+
+Update:
+
+* `README.md`
+* `docs/PROJECT_STATUS.md`
+* `docs/ARCHITECTURE.md`
+* `docs/TECH_STACK.md`
+* `docs/UI_UX_DESIGN.md`
+* `docs/AI_PIPELINE.md`
+* `docs/DATA_MODEL_AND_API.md`
+* `docs/TESTING_SECURITY_AND_DEMO.md`
+* `docs/AUTONOMOUS_EXECUTION_STATUS.md`, if present.
+
+Add other documentation files only where they provide real value.
+
+The README should explain:
+
+* Project purpose.
+* Problem being addressed.
+* Core capabilities.
+* Architecture.
+* Technology stack.
+* Prerequisites.
+* Configuration.
+* Development startup.
+* Database setup and migrations.
+* Demo-data setup.
+* Test execution.
+* Security considerations.
+* Known limitations.
+
+Do not include secrets or real institutional personal data.
+
+Ensure setup instructions match the actual repository and can be followed by another developer.
+
+---
+
+## 10. FINAL DEMONSTRATION SCRIPT
+
+Create:
+
+`docs/DEMO_SCRIPT.md`
+
+Write a concise, practical demonstration script that can be followed during the SIH presentation.
+
+Include:
+
+* Opening problem statement.
+* Proposed solution.
+* Application intake.
+* Document upload.
+* OCR/extraction demonstration.
+* Deterministic validation.
+* Anomaly detection.
+* Evidence inspection.
+* Human-review workflow.
+* Report generation.
+* Security and auditability highlights.
+* Limitations and honest claims.
+* Suggested closing statement.
+
+For each demonstration step, specify:
+
+* What the presenter should show.
+* What action the application performs.
+* What result should appear when the system behaves as expected.
+* What to do if an optional integration is unavailable.
+
+Keep the script aligned with features that genuinely exist.
+
+Do not present synthetic registry data as official data or heuristic anomaly detection as proof of fraud.
+
+---
+
+## 11. FINAL EVALUATION PACKAGE
+
+Create:
+
+`docs/EVALUATION_PACKAGE.md`
+
+Include:
+
+1. Executive summary.
+2. Problem statement.
+3. Proposed solution.
+4. Target users.
+5. Key capabilities.
+6. System architecture.
+7. Technology stack.
+8. AI and document-processing pipeline.
+9. Deterministic validation approach.
+10. Evidence traceability.
+11. Security and access controls.
+12. Human-review model.
+13. Test methodology and actual results.
+14. Demonstration scenarios.
+15. Known limitations.
+16. Future scope.
+
+Distinguish implemented features from planned features.
+
+Do not invent evaluation scores, judge feedback, deployment results, performance improvements, or external integrations.
+
+If a result has not been measured, state that it has not been measured.
+
+The package should help a technical evaluator understand what has actually been built and how it can be verified.
+
+---
+
+## 12. OPTIONAL PRESENTATION AND VIDEO MATERIALS
+
+If the repository already contains presentation or video-generation tooling, use it where appropriate to prepare demonstration materials.
+
+Otherwise, create useful source materials such as:
+
+* A slide-by-slide presentation outline.
+* A concise narration script.
+* A feature-demonstration checklist.
+* Suggested screenshots to capture.
+* A list of evidence needed to support technical claims.
+
+Do not claim that a video, slide deck, or screenshot was generated unless the artifact genuinely exists.
+
+Do not add unnecessary dependencies merely to generate decorative materials.
+
+Prioritize the working software, reproducible demonstration, and accurate technical documentation.
+
+---
+
+## 13. FINAL GIT AND REPOSITORY REVIEW
+
+Follow `AGENTS.md`.
+
+Inspect the final Git status.
+
+Ensure:
+
+* No secrets are committed.
+* No uploaded private documents are committed.
+* No local databases or generated artifacts are committed unless explicitly required.
+* No user changes are discarded.
+* Migrations and dependency files are consistent.
+* Documentation reflects the actual implementation.
+* Relevant changes are committed only if permitted.
+
+Preserve all existing history.
+
+Do not force-push, reset the repository, or perform destructive cleanup.
+
+Create a final milestone commit only if permitted and after verification passes.
+
+Record the final commit hash if created.
+
+---
+
+## 14. EXECUTION LEDGER
+
+If `docs/AUTONOMOUS_EXECUTION_STATUS.md` exists, update it with the Phase 15 outcome and final integration-audit results.
+
+If it does not exist, create it with the statuses of Phases 6–15.
+
+For every phase, record:
+
+* Phase title.
+* Verified implementation status.
+* Relevant tests.
+* Git checkpoint.
+* Remaining blockers.
+
+Do not mark Phases 11–14 as complete merely because their prompts exist.
+
+Verify their actual implementation before declaring completion.
+
+If the autonomous execution ledger contains stale or contradictory statuses, reconcile it against the actual source code, test results, and Git history.
+
+---
+
+## 15. DEFINITION OF DONE
+
+Phase 15 is complete only when:
+
+1. The actual application has undergone a final integration review.
+2. Critical demonstration-blocking defects have been addressed or documented.
+3. A reproducible synthetic demonstration workflow exists.
+4. Demo setup does not overwrite existing user data.
+5. The backend test suite has been executed.
+6. The frontend production build succeeds.
+7. Important workflows have been verified to the extent supported by available tools.
+8. Security and data-access behavior have been checked.
+9. The README and project documentation reflect the actual implementation.
+10. `docs/DEMO_SCRIPT.md` exists and matches the working product.
+11. `docs/EVALUATION_PACKAGE.md` exists and contains evidence-backed information.
+12. The execution ledger accurately records Phases 6–15.
+13. Known limitations are explicitly documented.
+14. The final Git status and commit state have been reviewed.
+15. A final verification report has been produced.
+
+Do not declare full project completion if any mandatory requirement remains unverified.
+
+---
+
+## 16. FINAL REPORT
+
+After completing Phase 15, provide a concise but complete final report covering:
+
+* Overall project status.
+* Phase 6–15 completion status based on verified evidence.
+* Core end-to-end capabilities.
+* Backend test results.
+* Frontend build results.
+* Database and migration checks.
+* Security verification.
+* Demo-data readiness.
+* Documentation files created or updated.
+* Git commit hash, if created.
+* Known limitations.
+* Any external integrations that remain unconfigured.
+* Any requirements that remain blocked or incomplete.
+
+Distinguish actual results from assumptions.
+
+Do not claim production readiness solely because the application builds and tests pass.
+
+Begin by inspecting the actual repository and its authoritative instructions. Complete the final pilot-demonstration and evaluation package, verify the system, update the execution ledger, and report the verified outcome.
+

@@ -10,6 +10,7 @@ from app.models.document_page import DocumentPage
 from app.models.validation import ValidationRule, ValidationRun, RuleResult
 from app.models.finding import ExtractedField, Finding, FindingEvidence
 from app.models.report import ScrutinyReport
+from app.models.registry import RegistryRecord, RegistryVerificationRun, RegistryVerificationResult
 
 __all__ = [
     "Base",
@@ -28,5 +29,8 @@ __all__ = [
     "Finding",
     "FindingEvidence",
     "ScrutinyReport",
+    "RegistryRecord",
+    "RegistryVerificationRun",
+    "RegistryVerificationResult",
 ]
 

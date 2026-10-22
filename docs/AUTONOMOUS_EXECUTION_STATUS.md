@@ -3,7 +3,7 @@
 **Project:** VerityAI / EntityLocker (Smart India Hackathon 2026, Smart Automation Track)  
 **Control Directive:** Master Autonomous Execution Directive (Phases 6–15)  
 **Last Updated:** 2026-10-22  
-**Current Active Phase:** All defined phases in `prompt.md` (Phases 6–10) COMPLETED (Phases 11–15 BLOCKED: No prompt provided)
+**Current Active Phase:** Phase 12 — Advanced Multilingual Document Scrutiny (Phase 11 COMPLETED)
 
 ---
 
@@ -21,11 +21,11 @@
 | **Phase 8** | End-to-End Workflow Orchestration | `prompt.md` L817–1242 | `COMPLETED` | 81 passed (6 workflow) | `b74a2bf` | State machine, multi-dimensional readiness, scrutiny queue, pipeline stepper |
 | **Phase 9** | Explainable AI, Reviewer Decision Support & Reports | `prompt.md` L1243–1630 | `COMPLETED` | 86 passed (5 reports) | `c67ea8c` | PyMuPDF multi-page PDF & JSON dossiers, decision support summary, evidence trace |
 | **Phase 10** | Security Hardening, Performance & Production Readiness | `prompt.md` L1631–2052 | `COMPLETED` | 92 passed (6 security) | `7f5b2f1` | Security headers, sanitized errors, CSRF protection, safe environment defaults, DB health probe |
-| **Phase 11** | Extended Verification & Registry Integration | `prompt.md` | `BLOCKED` | N/A | N/A | Prompt not present in `prompt.md` (ends at L2052) |
-| **Phase 12** | Advanced Multi-Lingual Document Scrutiny | `prompt.md` | `BLOCKED` | N/A | N/A | Prompt not present in `prompt.md` (ends at L2052) |
-| **Phase 13** | Institutional Dossier History & Versioning | `prompt.md` | `BLOCKED` | N/A | N/A | Prompt not present in `prompt.md` (ends at L2052) |
-| **Phase 14** | External Regulatory Portal Interoperability | `prompt.md` | `BLOCKED` | N/A | N/A | Prompt not present in `prompt.md` (ends at L2052) |
-| **Phase 15** | Final Pilot Demonstration & Evaluation Package | `prompt.md` | `BLOCKED` | N/A | N/A | Prompt not present in `prompt.md` (ends at L2052) |
+| **Phase 11** | Extended Verification & Registry Integration | `prompt.md` L2053–2350 | `COMPLETED` | 101 passed (9 registry) | Pending | Registry provider adapter, Synthetic AISHE, official stub, safe CSV/JSON import, deterministic comparison, discrepancy resolution |
+| **Phase 12** | Advanced Multilingual Document Scrutiny | `prompt.md` L2351–2760 | `IN_PROGRESS` | Pending | TBD | Multilingual extraction, Hindi/English detection, script normalization |
+| **Phase 13** | Institutional Dossier History & Versioning | `prompt.md` | `NOT_STARTED` | N/A | N/A | Application/document versioning, diffs, report versions |
+| **Phase 14** | External Regulatory Portal Interoperability | `prompt.md` | `NOT_STARTED` | N/A | N/A | External portal adapters, TLS, SSRF protection |
+| **Phase 15** | Final Pilot Demonstration & Evaluation Package | `prompt.md` | `NOT_STARTED` | N/A | N/A | Demo workflows, evaluation suite, judge packaging |
 
 ---
 
@@ -56,11 +56,13 @@
   - Endpoints (`backend/app/api/v1/endpoints/reports.py`): `GET /applications/{id}/review-summary`, `GET /applications/{id}/evidence`, `POST /applications/{id}/reports`, `GET /applications/{id}/reports`, `GET /reports/{id}/download` with security headers (`X-Content-Type-Options: nosniff`, `Cache-Control: no-store`).
   - Frontend Scrutiny Dossier tab & controls in `ApplicationDetailWorkspace.tsx` and client methods in `client.ts`.
   - Automated tests: 5 tests in `backend/tests/test_reports.py`. Total test suite: 86 passed, 0 failures. Vite production build passed cleanly.
-* **2026-10-22 10:30:** Phase 10 implementation:
-  - Production security headers middleware in `backend/app/main.py`: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-XSS-Protection: 1; mode=block`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`.
-  - Safe unhandled exception handler in `backend/app/main.py` eliminating internal stack trace exposure.
-  - Safe production/development environment configuration defaults in `backend/app/core/config.py`.
-  - Automated security tests in `backend/tests/test_security_hardening.py` (security headers, path traversal, cookie CSRF defense, unauthorized dossier download, DB health probe, env secret exclusions). Full test suite: 92 passed, 0 failures.
-  - Frontend production build verified (`npm run build` passed with 0 errors).
-  - All requested phases in `prompt.md` (Phases 6–10) fully implemented, integrated, and verified. Phases 11–15 recorded as blocked due to missing prompt specifications.
+* **2026-10-22 11:25:** Phase 11 implementation:
+  - Database models `RegistryRecord`, `RegistryVerificationRun`, `RegistryVerificationResult` in `backend/app/models/registry.py`.
+  - Alembic migration `89a1b2c3d4e5_add_registry_verification_tables.py` applied cleanly.
+  - Abstract registry provider architecture (`BaseRegistryProvider`) with `SyntheticAISHEProvider` and `OfficialAICTEProviderStub` reporting explicit status in `backend/app/services/registry.py`.
+  - Legal name normalization algorithm, safe CSV/JSON import with batch validation, transactional integrity, and repeat import deduplication.
+  - Deterministic verification engine comparing identifiers, normalized names, registration status, approved intake capacity ceilings, and jurisdiction states.
+  - REST endpoints (`/api/v1/registry/providers`, `/registry/imports`, `/registry/records`, `/applications/{id}/registry-verification`, `/registry-verification/{id}/resolve`).
+  - Frontend Scrutiny Workspace "Registry Verification" tab with provider selector, synthetic advisory disclaimer, overall outcome card, itemized results table, and Reviewer Adjudication modal dialog.
+  - 9 automated unit/integration tests in `backend/tests/test_registry.py`. Full test suite: **101 passed, 0 failures**. Frontend production build passed cleanly (`vite build` in 4.45s).
 

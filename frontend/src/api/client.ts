@@ -1364,5 +1364,113 @@ export function getReportDownloadUrl(reportId: string): string {
   return `/api/v1/reports/${reportId}/download`;
 }
 
+// ---------------------------------------------------------------------------
+// Phase 11 — Extended Verification & Registry Integration
+// ---------------------------------------------------------------------------
+
+export interface RegistryProviderInfo {
+  provider_code: string;
+  provider_name: string;
+  description: string;
+  is_synthetic: boolean;
+  is_available: boolean;
+  status: string;
+  statutory_authority: string;
+  requires_network: boolean;
+  notes?: string | null;
+}
+
+export interface RegistryVerificationResultItem {
+  id: string;
+  run_id: string;
+  check_type: string;
+  status: 'MATCH' | 'MISMATCH' | 'NOT_FOUND' | 'AMBIGUOUS' | 'STALE_REFERENCE' | 'INSUFFICIENT_DATA';
+  application_value?: string | null;
+  registry_value?: string | null;
+  explanation: string;
+  discrepancy_details?: Record<string, any> | null;
+  requires_human_review: boolean;
+  resolved_by_id?: string | null;
+  resolution_status: 'UNRESOLVED' | 'ACCEPTED' | 'WAIVED' | 'FLAGGED';
+  resolution_notes?: string | null;
+  resolved_at?: string | null;
+}
+
+export interface RegistryVerificationRunItem {
+  id: string;
+  application_id: string;
+  provider_code: string;
+  overall_status: 'MATCH' | 'MISMATCH' | 'NOT_FOUND' | 'AMBIGUOUS' | 'STALE_REFERENCE' | 'INSUFFICIENT_DATA' | 'PROVIDER_UNAVAILABLE';
+  summary?: string | null;
+  reference_record_id?: string | null;
+  executed_by_id?: string | null;
+  executed_at: string;
+  results: RegistryVerificationResultItem[];
+}
+
+export async function fetchRegistryProviders(): Promise<RegistryProviderInfo[]> {
+  const response = await fetch('/api/v1/registry/providers', {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to fetch registry providers (${response.status})`);
+  }
+  return response.json();
+}
+
+export async function triggerRegistryVerification(
+  applicationId: string,
+  providerCode: string = 'SYNTHETIC_AISHE'
+): Promise<RegistryVerificationRunItem> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/registry-verification`, {
+    method: 'POST',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+    body: JSON.stringify({ provider_code: providerCode }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to trigger registry verification (${response.status})`);
+  }
+  return response.json();
+}
+
+export async function fetchApplicationRegistryRuns(applicationId: string): Promise<RegistryVerificationRunItem[]> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/registry-verification`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to fetch registry verification runs (${response.status})`);
+  }
+  return response.json();
+}
+
+export async function resolveRegistryDiscrepancy(
+  resultId: string,
+  resolutionStatus: string,
+  resolutionNotes: string
+): Promise<RegistryVerificationResultItem> {
+  const response = await fetch(`/api/v1/registry-verification/${resultId}/resolve`, {
+    method: 'PATCH',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+    body: JSON.stringify({
+      resolution_status: resolutionStatus,
+      resolution_notes: resolutionNotes,
+    }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to resolve registry discrepancy (${response.status})`);
+  }
+  return response.json();
+}
+
 
 

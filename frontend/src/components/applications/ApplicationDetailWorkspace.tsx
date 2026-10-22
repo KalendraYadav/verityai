@@ -22,6 +22,7 @@ import {
   CheckCircle,
   Filter,
   Sparkles,
+  Database,
 } from 'lucide-react';
 import {
   fetchApplicationDetail,
@@ -42,6 +43,10 @@ import {
   generateReport,
   fetchApplicationReports,
   getReportDownloadUrl,
+  fetchRegistryProviders,
+  triggerRegistryVerification,
+  fetchApplicationRegistryRuns,
+  resolveRegistryDiscrepancy,
   type ApplicationDetailResponse,
   type DocumentListItem,
   type AuditEventItem,
@@ -53,6 +58,9 @@ import {
   type ApplicationReadinessData,
   type ReviewSummaryResponse,
   type ScrutinyReportResponse,
+  type RegistryProviderInfo,
+  type RegistryVerificationRunItem,
+  type RegistryVerificationResultItem,
 } from '../../api/client';
 import { DocumentUploadModal } from '../documents/DocumentUploadModal';
 
@@ -105,14 +113,26 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
   const [reportMessage, setReportMessage] = useState<string | null>(null);
   const [reportError, setReportError] = useState<string | null>(null);
 
-  const [activeSubTab, setActiveSubTab] = useState<'documents' | 'validation' | 'anomalies' | 'requirements' | 'audit' | 'institution' | 'reports'>('documents');
+  const [activeSubTab, setActiveSubTab] = useState<'documents' | 'validation' | 'anomalies' | 'requirements' | 'audit' | 'institution' | 'reports' | 'registry'>('documents');
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+
+  // Phase 11: Extended Verification & Registry Integration
+  const [registryRuns, setRegistryRuns] = useState<RegistryVerificationRunItem[]>([]);
+  const [registryProviders, setRegistryProviders] = useState<RegistryProviderInfo[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState<string>('SYNTHETIC_AISHE');
+  const [verifyingRegistry, setVerifyingRegistry] = useState(false);
+  const [registryMessage, setRegistryMessage] = useState<string | null>(null);
+  const [resolutionModalOpen, setResolutionModalOpen] = useState(false);
+  const [targetResult, setTargetResult] = useState<RegistryVerificationResultItem | null>(null);
+  const [resolutionStatus, setResolutionStatus] = useState<'ACCEPTED' | 'WAIVED' | 'FLAGGED'>('ACCEPTED');
+  const [resolutionNotes, setResolutionNotes] = useState('');
+  const [resolving, setResolving] = useState(false);
 
   async function loadWorkspaceData() {
     setLoading(true);
     setError(null);
     try {
-      const [appData, docsData, auditData, catsData, valData, analysisRes, wfData, readyData, revSum, repList] = await Promise.all([
+      const [appData, docsData, auditData, catsData, valData, analysisRes, wfData, readyData, revSum, repList, regRuns, regProviders] = await Promise.all([
         fetchApplicationDetail(applicationId),
         fetchApplicationDocuments(applicationId, 1, 100),
         fetchApplicationAudit(applicationId),
@@ -123,6 +143,8 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
         fetchApplicationReadiness(applicationId).catch(() => null),
         fetchReviewSummary(applicationId).catch(() => null),
         fetchApplicationReports(applicationId).catch(() => []),
+        fetchApplicationRegistryRuns(applicationId).catch(() => []),
+        fetchRegistryProviders().catch(() => []),
       ]);
       setApplication(appData);
       setDocuments(docsData.data);
@@ -146,11 +168,53 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
       if (repList) {
         setReportsList(repList);
       }
+      if (regRuns) {
+        setRegistryRuns(regRuns);
+      }
+      if (regProviders) {
+        setRegistryProviders(regProviders);
+      }
     } catch (err: any) {
       console.error('Failed to load application detail workspace', err);
       setError(err.message || 'Failed to load application workspace');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleTriggerRegistryVerification() {
+    setVerifyingRegistry(true);
+    setRegistryMessage(null);
+    try {
+      const run = await triggerRegistryVerification(applicationId, selectedProvider);
+      setRegistryRuns((prev) => [run, ...prev]);
+      setRegistryMessage(`Verification completed: Status is ${run.overall_status}.`);
+      setActiveSubTab('registry');
+    } catch (err: any) {
+      setRegistryMessage(`Registry verification failed: ${err.message}`);
+    } finally {
+      setVerifyingRegistry(false);
+    }
+  }
+
+  async function handleResolveDiscrepancy() {
+    if (!targetResult) return;
+    setResolving(true);
+    try {
+      const updated = await resolveRegistryDiscrepancy(targetResult.id, resolutionStatus, resolutionNotes);
+      setRegistryRuns((prev) =>
+        prev.map((run) => ({
+          ...run,
+          results: run.results.map((r) => (r.id === updated.id ? updated : r)),
+        }))
+      );
+      setResolutionModalOpen(false);
+      setTargetResult(null);
+      setResolutionNotes('');
+    } catch (err: any) {
+      alert(`Failed to resolve discrepancy: ${err.message}`);
+    } finally {
+      setResolving(false);
     }
   }
 
@@ -854,6 +918,20 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
           >
             <Download className="w-4 h-4 text-[#7450D8]" />
             <span>Scrutiny Dossier & Reports {reportsList.length > 0 ? `(${reportsList.length})` : ''}</span>
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('registry')}
+            className={`py-3.5 text-xs sm:text-sm font-bold border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+              activeSubTab === 'registry'
+                ? 'border-[#7450D8] text-[#7450D8]'
+                : 'border-transparent text-[#5F6485] hover:text-[#171B45]'
+            }`}
+          >
+            <Database className="w-4 h-4 text-[#7450D8]" />
+            <span>
+              Registry Verification {registryRuns.length > 0 ? `(${registryRuns[0].overall_status})` : ''}
+            </span>
           </button>
         </div>
 
@@ -2106,7 +2184,285 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             </div>
           </div>
         )}
+
+        {/* Tab: Registry Verification (Phase 11) */}
+        {activeSubTab === 'registry' && (
+          <div className="p-4 sm:p-6 space-y-6">
+            {/* Statutory Disclaimer & Synthetic Advisory */}
+            <div className="p-4 rounded-2xl bg-[#FFF6ED] border border-[#FECDCA] text-xs space-y-2">
+              <div className="flex items-center gap-2 text-[#C4320A] font-bold">
+                <AlertTriangle className="w-4 h-4 text-[#F04438]" />
+                <span>Simulated Reference Data & Autonomous Verification Notice</span>
+              </div>
+              <p className="text-[#5F6485] leading-relaxed">
+                Verification operates against authorized reference datasets and synthetic demonstration fixtures (e.g. AISHE accreditation, sanctioned intake ceilings). In accordance with SIH 2026 prototype specifications, official AICTE production portal APIs are not connected. No result constitutes legal certification.
+              </p>
+            </div>
+
+            {/* Provider Trigger Bar */}
+            <div className="p-4 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#171B45] flex items-center gap-2">
+                  <Database className="w-4 h-4 text-[#7450D8]" />
+                  Regulatory Verification Engine
+                </h4>
+                <p className="text-xs text-[#5F6485]">
+                  Compare institutional identifiers, legal names, intake capacity, and status against reference records.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 flex-wrap">
+                <select
+                  value={selectedProvider}
+                  onChange={(e) => setSelectedProvider(e.target.value)}
+                  className="text-xs bg-[#FAF9FC] border border-[#DCD0F7] rounded-xl px-3 py-2 text-[#171B45] font-medium focus:outline-none focus:border-[#7450D8]"
+                >
+                  {registryProviders.map((p) => (
+                    <option key={p.provider_code} value={p.provider_code}>
+                      {p.provider_name} {p.is_available ? '(Active)' : '(Unavailable)'}
+                    </option>
+                  ))}
+                  {registryProviders.length === 0 && (
+                    <option value="SYNTHETIC_AISHE">Synthetic AISHE Registry (Active)</option>
+                  )}
+                </select>
+
+                <button
+                  onClick={handleTriggerRegistryVerification}
+                  disabled={verifyingRegistry}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#7450D8] text-white font-bold text-xs hover:bg-[#6039C8] transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${verifyingRegistry ? 'animate-spin' : ''}`} />
+                  <span>{verifyingRegistry ? 'Verifying...' : 'Execute Registry Verification'}</span>
+                </button>
+              </div>
+            </div>
+
+            {registryMessage && (
+              <div className="p-3 rounded-xl bg-[#F3EEFC] border border-[#DCD0F7] text-xs text-[#7450D8] font-medium">
+                {registryMessage}
+              </div>
+            )}
+
+            {/* Latest Verification Outcome */}
+            {registryRuns.length > 0 ? (
+              <div className="space-y-4">
+                {/* Overall Run Card */}
+                <div className="p-5 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#EEEAF5] pb-3">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-[#8589A6] uppercase tracking-wider">Overall Outcome:</span>
+                        <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold border ${
+                          registryRuns[0].overall_status === 'MATCH'
+                            ? 'bg-[#ECFDF3] text-[#027A48] border-[#A6F4C5]'
+                            : registryRuns[0].overall_status === 'MISMATCH' || registryRuns[0].overall_status === 'NOT_FOUND'
+                            ? 'bg-[#FEF3F2] text-[#B42318] border-[#FECDCA]'
+                            : 'bg-[#FFF6ED] text-[#C4320A] border-[#FECDCA]'
+                        }`}>
+                          {registryRuns[0].overall_status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#5F6485]">{registryRuns[0].summary}</p>
+                    </div>
+
+                    <div className="text-right text-[11px] text-[#8589A6]">
+                      <span>Executed: {formatDate(registryRuns[0].executed_at)}</span>
+                      <p className="font-mono text-[10px] text-[#5F6485]">Provider: {registryRuns[0].provider_code}</p>
+                    </div>
+                  </div>
+
+                  {/* Results Breakdown Table */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="border-b border-[#EEEAF5] bg-[#FAF9FC] text-[#8589A6] font-semibold text-[11px]">
+                          <th className="py-2.5 px-3">CHECK TYPE</th>
+                          <th className="py-2.5 px-3">OUTCOME</th>
+                          <th className="py-2.5 px-3">APPLICATION VALUE</th>
+                          <th className="py-2.5 px-3">REGISTRY REFERENCE</th>
+                          <th className="py-2.5 px-3">EXPLANATION</th>
+                          <th className="py-2.5 px-3 text-right">REVIEW</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#F0EDF7]">
+                        {registryRuns[0].results.map((r) => (
+                          <tr key={r.id} className="hover:bg-[#FAF9FD]">
+                            <td className="py-3 px-3 font-mono font-bold text-[#171B45]">
+                              {r.check_type}
+                            </td>
+                            <td className="py-3 px-3">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                                r.status === 'MATCH'
+                                  ? 'bg-[#ECFDF3] text-[#027A48] border-[#A6F4C5]'
+                                  : r.status === 'MISMATCH' || r.status === 'NOT_FOUND'
+                                  ? 'bg-[#FEF3F2] text-[#B42318] border-[#FECDCA]'
+                                  : 'bg-[#FFF6ED] text-[#C4320A] border-[#FECDCA]'
+                              }`}>
+                                {r.status}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 font-medium text-[#171B45]">
+                              {r.application_value || '—'}
+                            </td>
+                            <td className="py-3 px-3 font-medium text-[#171B45]">
+                              {r.registry_value || '—'}
+                            </td>
+                            <td className="py-3 px-3 text-[#5F6485] max-w-xs">
+                              {r.explanation}
+                              {r.resolution_status !== 'UNRESOLVED' && (
+                                <div className="mt-1 text-[10px] text-[#027A48] font-bold">
+                                  Resolved: {r.resolution_status} ({r.resolution_notes})
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-3 px-3 text-right">
+                              {r.requires_human_review && r.resolution_status === 'UNRESOLVED' ? (
+                                <button
+                                  onClick={() => {
+                                    setTargetResult(r);
+                                    setResolutionStatus('ACCEPTED');
+                                    setResolutionNotes('');
+                                    setResolutionModalOpen(true);
+                                  }}
+                                  className="px-2.5 py-1 rounded bg-[#FAF8FF] border border-[#DCD0F7] hover:bg-[#F3EEFC] text-[#7450D8] font-bold text-[11px] transition-all cursor-pointer"
+                                >
+                                  Adjudicate
+                                </button>
+                              ) : r.resolution_status !== 'UNRESOLVED' ? (
+                                <span className="text-[10px] text-[#027A48] font-bold">
+                                  {r.resolution_status}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-[#8589A6]">OK</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Historical Verification Runs */}
+                {registryRuns.length > 1 && (
+                  <div className="p-4 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs space-y-3">
+                    <h5 className="text-xs font-bold uppercase tracking-wider text-[#171B45]">
+                      Verification History ({registryRuns.length - 1} prior runs)
+                    </h5>
+                    <div className="divide-y divide-[#EEEAF5] text-xs">
+                      {registryRuns.slice(1).map((hr) => (
+                        <div key={hr.id} className="py-2.5 flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <span className="font-mono font-bold text-[#171B45]">{hr.provider_code}</span>
+                            <p className="text-[#8589A6] text-[11px]">{hr.summary}</p>
+                          </div>
+                          <div className="text-right">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                              hr.overall_status === 'MATCH' ? 'bg-[#ECFDF3] text-[#027A48]' : 'bg-[#FEF3F2] text-[#B42318]'
+                            }`}>
+                              {hr.overall_status}
+                            </span>
+                            <p className="text-[10px] text-[#8589A6] mt-0.5">{formatDate(hr.executed_at)}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-12 text-center rounded-2xl bg-white border border-[#E9E6F2] space-y-3">
+                <Database className="w-10 h-10 text-[#8589A6] mx-auto" />
+                <h4 className="text-sm font-bold text-[#171B45]">No Registry Verification Runs Yet</h4>
+                <p className="text-xs text-[#5F6485] max-w-md mx-auto">
+                  Click "Execute Registry Verification" above to check the institution's accreditation, AISHE code, intake quota, and legal name against reference regulatory records.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Discrepancy Resolution Modal */}
+      {resolutionModalOpen && targetResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl border border-[#E9E6F2] shadow-xl w-full max-w-lg p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#EEEAF5] pb-3">
+              <h4 className="text-sm font-bold text-[#171B45] flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-[#7450D8]" />
+                Reviewer Discrepancy Adjudication
+              </h4>
+              <button
+                onClick={() => setResolutionModalOpen(false)}
+                className="text-[#8589A6] hover:text-[#171B45] cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              <div className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E9E6F2] space-y-1">
+                <span className="font-bold text-[#171B45]">{targetResult.check_type}</span>
+                <p className="text-[#5F6485]">{targetResult.explanation}</p>
+                <div className="grid grid-cols-2 gap-2 pt-1 font-mono text-[11px]">
+                  <div>Declared: <span className="font-bold text-[#171B45]">{targetResult.application_value || 'None'}</span></div>
+                  <div>Reference: <span className="font-bold text-[#171B45]">{targetResult.registry_value || 'None'}</span></div>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-[#5F6485]">Adjudication Decision</label>
+                <div className="flex gap-2">
+                  {(['ACCEPTED', 'WAIVED', 'FLAGGED'] as const).map((st) => (
+                    <button
+                      key={st}
+                      type="button"
+                      onClick={() => setResolutionStatus(st)}
+                      className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                        resolutionStatus === st
+                          ? 'bg-[#7450D8] text-white border-[#7450D8]'
+                          : 'bg-[#FAF9FC] text-[#5F6485] border-[#DCD0F7] hover:bg-[#F3EEFC]'
+                      }`}
+                    >
+                      {st}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-[#5F6485]">Statutory Justification & Reviewer Notes</label>
+                <textarea
+                  rows={3}
+                  value={resolutionNotes}
+                  onChange={(e) => setResolutionNotes(e.target.value)}
+                  placeholder="Enter detailed reason for resolution (e.g. verified against physical gazette or approval order)..."
+                  className="w-full text-xs p-3 rounded-xl border border-[#DCD0F7] bg-[#FAF9FC] focus:outline-none focus:border-[#7450D8]"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setResolutionModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-[#5F6485] hover:bg-[#FAF9FC] transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={resolving || resolutionNotes.trim().length < 3}
+                onClick={handleResolveDiscrepancy}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-[#7450D8] text-white hover:bg-[#6039C8] transition-all cursor-pointer disabled:opacity-50"
+              >
+                {resolving ? 'Recording...' : 'Confirm Adjudication'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Upload Document Modal */}
       <DocumentUploadModal
