@@ -25,7 +25,7 @@
 | **Phase 12** | Advanced Multilingual Document Scrutiny | `prompt.md` L2351–2760 | `COMPLETED` | 108 passed (7 multilingual) | `80acd21` | Devanagari numeral normalization (०-९ to 0-9), script-distribution language detection (en/hi/mixed/und), bilingual candidate fields, statutory regulatory glossary, offline translation |
 | **Phase 13** | Institutional Dossier History & Versioning | `prompt.md` L2761–3150 | `COMPLETED` | 115 passed (7 versioning) | `d4c006a` | Application revisions, document versioning, stale evaluation detection, historical diffing |
 | **Phase 14** | External Regulatory Portal Interoperability | `prompt.md` L3151–3570 | `COMPLETED` | 121 passed (6 integration) | `e4d45bd` | External portal adapters, SSRF defense, official stubs, sync history audit |
-| **Phase 15** | Final Pilot Demonstration & Evaluation Package | `prompt.md` L3571–4136 | `COMPLETED` | 121 passed + 10/10 readiness | Pending | Complete demo dataset, PyMuPDF PDF synthesis, readiness auditor, DEMO_SCRIPT, EVALUATION_PACKAGE, README |
+| **Phase 15** | Final Pilot Demonstration & Evaluation Package | `prompt.md` L3571–4136 | `COMPLETED` | 121 passed + 10/10 readiness | `eabd3e5` | Complete demo dataset, PyMuPDF PDF synthesis, readiness auditor, DEMO_SCRIPT, EVALUATION_PACKAGE, README |
 
 ---
 
@@ -135,7 +135,7 @@
 
 ### Phase 15 — Final Pilot Demonstration & Evaluation Package
 - **Status:** VERIFIED & COMPLETE
-- **Commit:** Pending
+- **Commit:** `eabd3e5`
 - **Scope & Implementation:**
   - Automated Demonstration Readiness Auditor (`backend/app/cli/readiness.py`):
     - 10 automated pre-flight checks: Python environment (>=3.11), core dependencies (FastAPI, SQLAlchemy, PyMuPDF, Pydantic), database connectivity, storage write permissions, RBAC user accounts, active validation rules, demonstration dossiers, regulatory gateway adapters, SSRF defense filter, and frontend production build.
