@@ -998,5 +998,189 @@ export async function toggleUserActiveStatus(userId: string, isActive: boolean):
   return resJson.data;
 }
 
+// ---------------------------------------------------------------------------
+// Phase 8: End-to-End Workflow Orchestration & Readiness Types & Client
+// ---------------------------------------------------------------------------
+
+export interface StageDetail {
+  status: string;
+  summary: string;
+  metadata?: Record<string, any>;
+}
+
+export interface WorkflowStatusData {
+  application_id: string;
+  application_reference: string;
+  lifecycle_status: string;
+  pipeline_status: string;
+  submitted_at?: string | null;
+  assigned_reviewer_id?: string | null;
+  stages: Record<string, StageDetail>;
+  last_updated_at: string;
+}
+
+export interface ApplicationReadinessData {
+  application_id: string;
+  is_ready_for_scrutiny: boolean;
+  readiness_state: string;
+  document_readiness: {
+    complete: boolean;
+    uploaded_count: number;
+    required_count: number;
+    missing_types: string[];
+  };
+  processing_readiness: {
+    complete: boolean;
+    total_documents: number;
+    processed_count: number;
+    pending_count: number;
+    failed_count: number;
+  };
+  validation_readiness: {
+    evaluated: boolean;
+    passed_count: number;
+    failed_count: number;
+    needs_review_count: number;
+    unable_to_evaluate_count: number;
+  };
+  anomaly_readiness: {
+    analyzed: boolean;
+    total_findings: number;
+    open_findings: number;
+    confirmed_findings: number;
+    dismissed_findings: number;
+    resolved_findings: number;
+  };
+  blockers: string[];
+  recommended_action: string;
+}
+
+export interface ScrutinyQueueItemData {
+  id: string;
+  application_reference: string;
+  institution_id: string;
+  institution_name: string;
+  category_code: string;
+  academic_year?: string | null;
+  lifecycle_status: string;
+  pipeline_status: string;
+  readiness_state: string;
+  blockers_count: number;
+  open_findings_count: number;
+  validation_failure_count: number;
+  assigned_reviewer_id?: string | null;
+  submitted_at?: string | null;
+  created_at: string;
+}
+
+export interface PaginatedScrutinyQueue {
+  data: ScrutinyQueueItemData[];
+  meta: {
+    page: number;
+    page_size: number;
+    total: number;
+  };
+}
+
+export async function fetchWorkflowStatus(applicationId: string): Promise<WorkflowStatusData> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/workflow`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to fetch workflow status (${response.status})`);
+  }
+
+  const resJson = await response.json();
+  return resJson.data;
+}
+
+export async function fetchApplicationReadiness(applicationId: string): Promise<ApplicationReadinessData> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/readiness`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to fetch application readiness (${response.status})`);
+  }
+
+  const resJson = await response.json();
+  return resJson.data;
+}
+
+export async function startApplicationWorkflow(applicationId: string): Promise<WorkflowStatusData> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/workflow/start`, {
+    method: 'POST',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+
+  const resJson = await response.json();
+  if (!response.ok) {
+    const message = resJson?.error?.message || 'Failed to start workflow';
+    const code = resJson?.error?.code;
+    const error = new Error(code ? `[${code}] ${message}` : message);
+    (error as any).code = code;
+    throw error;
+  }
+
+  return resJson.data;
+}
+
+export async function transitionWorkflowState(
+  applicationId: string,
+  payload: { target_status: string; reason?: string; reviewer_notes?: string }
+): Promise<WorkflowStatusData> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/workflow/transitions`, {
+    method: 'POST',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+
+  const resJson = await response.json();
+  if (!response.ok) {
+    const message = resJson?.error?.message || 'Failed to transition workflow state';
+    const code = resJson?.error?.code;
+    const error = new Error(code ? `[${code}] ${message}` : message);
+    (error as any).code = code;
+    throw error;
+  }
+
+  return resJson.data;
+}
+
+export async function fetchScrutinyQueue(params?: {
+  page?: number;
+  pageSize?: number;
+  readinessState?: string;
+  lifecycleStatus?: string;
+}): Promise<PaginatedScrutinyQueue> {
+  const query = new URLSearchParams();
+  if (params?.page) query.set('page', String(params.page));
+  if (params?.pageSize) query.set('page_size', String(params.pageSize));
+  if (params?.readinessState) query.set('readiness_state', params.readinessState);
+  if (params?.lifecycleStatus) query.set('lifecycle_status', params.lifecycleStatus);
+
+  const response = await fetch(`/api/v1/scrutiny-queue?${query.toString()}`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to fetch scrutiny queue (${response.status})`);
+  }
+
+  return response.json();
+}
+
 
 

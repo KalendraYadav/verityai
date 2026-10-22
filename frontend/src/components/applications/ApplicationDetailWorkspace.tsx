@@ -34,6 +34,10 @@ import {
   fetchApplicationAnalysis,
   triggerApplicationAnalysis,
   reviewFinding,
+  fetchWorkflowStatus,
+  fetchApplicationReadiness,
+  startApplicationWorkflow,
+  transitionWorkflowState,
   type ApplicationDetailResponse,
   type DocumentListItem,
   type AuditEventItem,
@@ -41,6 +45,8 @@ import {
   type ValidationSummaryData,
   type ApplicationAnalysisData,
   type FindingItem,
+  type WorkflowStatusData,
+  type ApplicationReadinessData,
 } from '../../api/client';
 import { DocumentUploadModal } from '../documents/DocumentUploadModal';
 
@@ -79,6 +85,13 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
   const [anomalyReviewFilter, setAnomalyReviewFilter] = useState<'ALL' | 'OPEN' | 'CONFIRMED' | 'DISMISSED' | 'RESOLVED' | 'UNDER_REVIEW'>('ALL');
   const [activeAnomalySection, setActiveAnomalySection] = useState<'findings' | 'fields'>('findings');
 
+  // Phase 8: End-to-End Workflow & Readiness
+  const [workflowStatus, setWorkflowStatus] = useState<WorkflowStatusData | null>(null);
+  const [readiness, setReadiness] = useState<ApplicationReadinessData | null>(null);
+  const [runningWorkflow, setRunningWorkflow] = useState(false);
+  const [transitioning, setTransitioning] = useState(false);
+  const [workflowMessage, setWorkflowMessage] = useState<string | null>(null);
+
   const [activeSubTab, setActiveSubTab] = useState<'documents' | 'validation' | 'anomalies' | 'requirements' | 'audit' | 'institution'>('documents');
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
@@ -86,13 +99,15 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
     setLoading(true);
     setError(null);
     try {
-      const [appData, docsData, auditData, catsData, valData, analysisRes] = await Promise.all([
+      const [appData, docsData, auditData, catsData, valData, analysisRes, wfData, readyData] = await Promise.all([
         fetchApplicationDetail(applicationId),
         fetchApplicationDocuments(applicationId, 1, 100),
         fetchApplicationAudit(applicationId),
         fetchCategories(),
         fetchApplicationValidationSummary(applicationId).catch(() => null),
         fetchApplicationAnalysis(applicationId).catch(() => null),
+        fetchWorkflowStatus(applicationId).catch(() => null),
+        fetchApplicationReadiness(applicationId).catch(() => null),
       ]);
       setApplication(appData);
       setDocuments(docsData.data);
@@ -104,11 +119,66 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
       if (analysisRes) {
         setAnalysisData(analysisRes);
       }
+      if (wfData) {
+        setWorkflowStatus(wfData);
+      }
+      if (readyData) {
+        setReadiness(readyData);
+      }
     } catch (err: any) {
       console.error('Failed to load application detail workspace', err);
       setError(err.message || 'Failed to load application workspace');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleRunFullWorkflow() {
+    setRunningWorkflow(true);
+    setWorkflowMessage(null);
+    try {
+      const updatedWf = await startApplicationWorkflow(applicationId);
+      setWorkflowStatus(updatedWf);
+      // Reload validation and analysis to reflect new results
+      const [valData, analysisRes, readyData, appData] = await Promise.all([
+        fetchApplicationValidationSummary(applicationId).catch(() => null),
+        fetchApplicationAnalysis(applicationId).catch(() => null),
+        fetchApplicationReadiness(applicationId).catch(() => null),
+        fetchApplicationDetail(applicationId),
+      ]);
+      if (valData) setValidationSummary(valData);
+      if (analysisRes) setAnalysisData(analysisRes);
+      if (readyData) setReadiness(readyData);
+      setApplication(appData);
+      setWorkflowMessage('Full scrutiny pipeline executed successfully.');
+    } catch (err: any) {
+      console.error('Workflow execution failed', err);
+      setWorkflowMessage(err.message || 'Failed to run full workflow');
+    } finally {
+      setRunningWorkflow(false);
+    }
+  }
+
+  async function handleExecuteTransition(targetStatus: string, reason?: string, notes?: string) {
+    setTransitioning(true);
+    try {
+      const updatedWf = await transitionWorkflowState(applicationId, {
+        target_status: targetStatus,
+        reason: reason || `Reviewer transitioned state to ${targetStatus}`,
+        reviewer_notes: notes,
+      });
+      setWorkflowStatus(updatedWf);
+      const [appData, auditData] = await Promise.all([
+        fetchApplicationDetail(applicationId),
+        fetchApplicationAudit(applicationId),
+      ]);
+      setApplication(appData);
+      setAuditEvents(auditData);
+    } catch (err: any) {
+      console.error('State transition failed', err);
+      alert(`Transition failed: ${err.message}`);
+    } finally {
+      setTransitioning(false);
     }
   }
 
@@ -353,7 +423,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
           <span>Back to Applications</span>
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={loadWorkspaceData}
             className="p-2.5 rounded-xl bg-white border border-[#E9E6F2] text-[#5F6485] hover:text-[#7450D8] shadow-2xs transition-all cursor-pointer"
@@ -362,23 +432,173 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             <RefreshCw className="w-4 h-4" />
           </button>
           <button
+            onClick={handleRunFullWorkflow}
+            disabled={runningWorkflow}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#7450D8] hover:bg-[#5D3FBD] disabled:opacity-60 text-white text-xs sm:text-sm font-semibold transition-all shadow-xs cursor-pointer"
+            title="Execute integrated end-to-end scrutiny pipeline (documents -> validation -> anomaly analysis)"
+          >
+            <Sparkles className={`w-4 h-4 ${runningWorkflow ? 'animate-spin' : ''}`} />
+            <span>{runningWorkflow ? 'Executing Pipeline...' : 'Run Scrutiny Pipeline'}</span>
+          </button>
+          <button
             onClick={handleTriggerValidation}
             disabled={validating}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#7450D8] hover:bg-[#623ec2] disabled:opacity-60 text-white text-xs sm:text-sm font-semibold transition-all shadow-xs cursor-pointer"
+            className="inline-flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white border border-[#DCD0F7] hover:bg-[#FAF8FF] disabled:opacity-60 text-[#7450D8] text-xs font-semibold transition-all shadow-xs cursor-pointer"
             title="Execute deterministic compliance rules against application & documents"
           >
-            <RefreshCw className={`w-4 h-4 ${validating ? 'animate-spin' : ''}`} />
-            <span>{validating ? 'Evaluating...' : validationSummary ? 'Re-run Validation' : 'Run Scrutiny Validation'}</span>
+            <RefreshCw className={`w-3.5 h-3.5 ${validating ? 'animate-spin' : ''}`} />
+            <span>{validating ? 'Evaluating...' : 'Validation Rules'}</span>
           </button>
           <button
             onClick={() => setUploadModalOpen(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#F04438] hover:bg-[#E34234] text-white text-xs sm:text-sm font-semibold transition-all shadow-xs cursor-pointer"
           >
             <Upload className="w-4 h-4" />
-            <span>Upload Supporting Document</span>
+            <span>Upload Document</span>
           </button>
         </div>
       </div>
+
+      {/* Workflow Notification if any */}
+      {workflowMessage && (
+        <div className="p-3.5 rounded-2xl bg-[#F3EEFC] border border-[#DCD0F7] text-[#7450D8] text-xs font-semibold flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-[#7450D8]" />
+            <span>{workflowMessage}</span>
+          </div>
+          <button onClick={() => setWorkflowMessage(null)} className="text-[#8589A6] hover:text-[#171B45] cursor-pointer">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* End-to-End Workflow Pipeline Stages & Reviewer Determination Controls */}
+      <div className="bg-white rounded-3xl border border-[#E9E6F2] shadow-xs p-5 space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#EEEAF5] pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-[#8589A6] uppercase tracking-wider">Workflow Orchestration</span>
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                readiness?.is_ready_for_scrutiny
+                  ? 'bg-[#ECFDF3] text-[#027A48] border border-[#A6F4C5]'
+                  : 'bg-[#FFFAEB] text-[#B54708] border border-[#FEDF89]'
+              }`}>
+                {readiness?.readiness_state || 'EVALUATING'}
+              </span>
+            </div>
+            <p className="text-xs text-[#5F6485] mt-0.5">
+              {readiness?.recommended_action || 'Execute pipeline to evaluate document completeness and scrutiny readiness.'}
+            </p>
+          </div>
+
+          {/* Reviewer Action Buttons */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {application.lifecycle_status === 'SUBMITTED' && (
+              <button
+                onClick={() => handleExecuteTransition('UNDER_SCRUTINY', 'Regulatory reviewer initiated scrutiny')}
+                disabled={transitioning}
+                className="px-3.5 py-2 rounded-xl bg-[#7450D8] hover:bg-[#5D3FBD] text-white text-xs font-semibold transition-all cursor-pointer shadow-2xs"
+              >
+                Claim & Begin Scrutiny
+              </button>
+            )}
+
+            {application.lifecycle_status === 'UNDER_SCRUTINY' && (
+              <>
+                <button
+                  onClick={() => handleExecuteTransition('ACTION_REQUIRED', 'Official clarification or document update required')}
+                  disabled={transitioning}
+                  className="px-3 py-2 rounded-xl bg-[#FFF4ED] border border-[#FDCEB9] hover:bg-[#FFE6D5] text-[#C4320A] text-xs font-semibold transition-all cursor-pointer"
+                >
+                  Request Information
+                </button>
+                <button
+                  onClick={() => handleExecuteTransition('SCRUTINY_COMPLETED', 'Regulatory scrutiny completed')}
+                  disabled={transitioning}
+                  className="px-3.5 py-2 rounded-xl bg-[#027A48] hover:bg-[#05603A] text-white text-xs font-semibold transition-all cursor-pointer shadow-2xs"
+                >
+                  Finalize Scrutiny Determination
+                </button>
+              </>
+            )}
+
+            {application.lifecycle_status === 'ACTION_REQUIRED' && (
+              <button
+                onClick={() => handleExecuteTransition('SUBMITTED', 'Institutional applicant resubmitted dossier')}
+                disabled={transitioning}
+                className="px-3.5 py-2 rounded-xl bg-[#7450D8] hover:bg-[#5D3FBD] text-white text-xs font-semibold transition-all cursor-pointer"
+              >
+                Mark Resubmitted
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* 5-Stage Stepper Progression */}
+        <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 pt-1 text-xs">
+          {[
+            {
+              step: '1. Documents',
+              desc: `${documents.length} Uploaded`,
+              status: workflowStatus?.stages?.documents?.status || (documents.length > 0 ? 'COMPLETE' : 'PENDING'),
+            },
+            {
+              step: '2. Text Extraction',
+              desc: `${documents.filter((d) => d.processing_status === 'COMPLETED' || d.processing_status === 'COMPLETED_WITH_WARNINGS' || d.processing_status === 'EXTRACTED').length} Extracted`,
+              status: workflowStatus?.stages?.extraction?.status || 'PARTIAL',
+            },
+            {
+              step: '3. Rules Validation',
+              desc: validationSummary ? `${validationSummary.passed}/${validationSummary.total_rules} Passed` : 'Pending',
+              status: workflowStatus?.stages?.validation?.status || (validationSummary ? 'COMPLETE' : 'NOT_STARTED'),
+            },
+            {
+              step: '4. Anomaly Findings',
+              desc: analysisData ? `${analysisData.open_findings} Open` : 'Pending',
+              status: workflowStatus?.stages?.anomalies?.status || (analysisData ? 'COMPLETE' : 'NOT_STARTED'),
+            },
+            {
+              step: '5. Human Decision',
+              desc: application.lifecycle_status,
+              status: application.lifecycle_status === 'SCRUTINY_COMPLETED' ? 'COMPLETE' : (application.lifecycle_status === 'UNDER_SCRUTINY' ? 'IN_PROGRESS' : 'PENDING'),
+            },
+          ].map((st, idx) => (
+            <div
+              key={idx}
+              className={`p-2.5 rounded-xl border transition-all ${
+                st.status === 'COMPLETE'
+                  ? 'bg-[#ECFDF3] border-[#A6F4C5] text-[#027A48]'
+                  : st.status === 'IN_PROGRESS'
+                  ? 'bg-[#EFF8FF] border-[#B2DDFF] text-[#175CD3]'
+                  : 'bg-[#FAF8FF] border-[#E9E6F2] text-[#5F6485]'
+              }`}
+            >
+              <div className="font-bold flex items-center justify-between">
+                <span>{st.step}</span>
+                {st.status === 'COMPLETE' ? (
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                ) : st.status === 'IN_PROGRESS' ? (
+                  <Clock className="w-3.5 h-3.5 animate-spin" />
+                ) : null}
+              </div>
+              <div className="text-[11px] mt-0.5 opacity-90 truncate">{st.desc}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Multi-Dimensional Blockers List */}
+        {readiness?.blockers && readiness.blockers.length > 0 && (
+          <div className="p-3 rounded-2xl bg-[#FFF0EF] border border-[#FECDCA] text-[11px] text-[#B42318] space-y-1">
+            <span className="font-bold uppercase tracking-wider text-[10px]">Outstanding Review Blockers ({readiness.blockers.length})</span>
+            <ul className="list-disc pl-4 space-y-0.5">
+              {readiness.blockers.map((b, idx) => (
+                <li key={idx}>{b}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
 
       {/* 2. Application Scrutiny Header Dossier Card */}
       <div className="bg-white rounded-3xl border border-[#E9E6F2] shadow-xs p-5 sm:p-6 space-y-4">

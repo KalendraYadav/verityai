@@ -17,9 +17,9 @@
 | **Phase 4** | Document Text Extraction & OCR Pipeline | Earlier Milestone | `COMPLETED` | 36 passed | `83f8c46` | PyMuPDF, RapidOCR, DocumentPage |
 | **Phase 5** | Deterministic Validation Engine & Rule Results | Earlier Milestone | `COMPLETED` | 55 passed | `e28e1ef` | 4 rule types, persistent results, evidence |
 | **Phase 6** | AI-Assisted Document Analysis & Anomaly Detection | `prompt.md` L1–470 | `COMPLETED` | 61 passed | `0556bb5` | Cross-document inconsistency checks, candidate fields, anomaly findings |
-| **Phase 7** | Authentication, Authorization & RBAC | `prompt.md` L471–816 | `COMPLETED` | 75 passed (14 auth) | Pending commit | Argon2id, HttpOnly JWT cookies, CSRF X-Requested-With, RBAC, AuthModal |
-| **Phase 8** | End-to-End Workflow Orchestration | `prompt.md` L817–1242 | `IN_PROGRESS` | Pending | TBD | Application lifecycle state machine, readiness |
-| **Phase 9** | Explainable AI, Reviewer Decision Support & Reports | `prompt.md` L1243–1630 | `NOT_STARTED` | Pending | TBD | PDF scrutiny reports, evidence summary |
+| **Phase 7** | Authentication, Authorization & RBAC | `prompt.md` L471–816 | `COMPLETED` | 75 passed (14 auth) | `9b3c3a2` | Argon2id, HttpOnly JWT cookies, CSRF X-Requested-With, RBAC, AuthModal |
+| **Phase 8** | End-to-End Workflow Orchestration | `prompt.md` L817–1242 | `COMPLETED` | 81 passed (6 workflow) | Pending commit | State machine, multi-dimensional readiness, scrutiny queue, pipeline stepper |
+| **Phase 9** | Explainable AI, Reviewer Decision Support & Reports | `prompt.md` L1243–1630 | `IN_PROGRESS` | Pending | TBD | PDF scrutiny reports, evidence summary |
 | **Phase 10** | Security Hardening, Performance & Production Readiness | `prompt.md` L1631–2052 | `NOT_STARTED` | Pending | TBD | Security audit, indexing, profiling |
 | **Phase 11** | Extended Verification & Registry Integration | `prompt.md` | `BLOCKED` | N/A | N/A | Prompt not present in `prompt.md` (ends at L2052) |
 | **Phase 12** | Advanced Multi-Lingual Document Scrutiny | `prompt.md` | `BLOCKED` | N/A | N/A | Prompt not present in `prompt.md` (ends at L2052) |
@@ -42,4 +42,10 @@
   - Admin user management endpoints: `GET /users`, `POST /users`, `PATCH /users/{id}/status` (`backend/app/api/v1/endpoints/users.py`).
   - 14 comprehensive automated unit/integration tests in `backend/tests/test_auth.py`. Full test suite: 75 passed, 0 failures.
   - Frontend integration: `AuthModal.tsx` with quick-switch demo logins (Admin, Reviewer), password change, session indicators in `AppShell.tsx` and `App.tsx`. Vite production build succeeded with 0 errors.
+* **2026-10-22 09:55:** Phase 8 implementation:
+  - Workflow Orchestration Service (`backend/app/services/workflow.py`): Document-processing assessment, deterministic validation execution, and anomaly detection orchestration. Multi-dimensional readiness calculator (document, extraction, validation, anomaly, human decision) with transparent blockers.
+  - Application Lifecycle State Machine: Validated transitions (`DRAFT` -> `SUBMITTED` -> `UNDER_SCRUTINY` -> `ACTION_REQUIRED` / `SCRUTINY_COMPLETED`), rejecting invalid transitions with HTTP 400 `INVALID_STATE_TRANSITION`.
+  - Workflow & Queue APIs (`backend/app/api/v1/endpoints/workflow.py`): `POST /applications/{id}/workflow/start`, `GET /applications/{id}/workflow`, `GET /applications/{id}/readiness`, `POST /applications/{id}/workflow/transitions`, `GET /scrutiny-queue`.
+  - Frontend Scrutiny Queue & Workspace: Upgraded `ScrutinyQueueView.tsx` with live readiness badges and filter tabs; added 5-stage progress stepper, "Run Scrutiny Pipeline" trigger, multi-dimensional blockers card, and Reviewer Decision controls (`Claim Scrutiny`, `Request Info`, `Finalize Determination`) in `ApplicationDetailWorkspace.tsx`.
+  - Automated Tests: 6 comprehensive tests in `backend/tests/test_workflow.py`. Total test suite: 81 passed, 0 failures. Frontend production build succeeded with 0 errors.
 
