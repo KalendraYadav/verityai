@@ -113,6 +113,9 @@ def get_optional_current_user(
     return user
 
 
+get_current_user_optional = get_optional_current_user
+
+
 def require_roles(*allowed_roles: str) -> Callable[[User], User]:
     """FastAPI dependency factory enforcing role-based permissions."""
     def role_checker(current_user: User = Depends(get_current_user)) -> User:

@@ -1182,5 +1182,187 @@ export async function fetchScrutinyQueue(params?: {
   return response.json();
 }
 
+// ==========================================
+// Phase 9: Reporting & Decision Support Types
+// ==========================================
+
+export interface RuleExplanationItem {
+  rule_code: string;
+  name: string;
+  rule_type: string;
+  status: string;
+  purpose: string;
+  expected: string;
+  observed: string;
+  evidence_source: string;
+  document_name?: string | null;
+  page_number?: number | null;
+  evaluated_at?: string | null;
+  limitation_or_uncertainty?: string | null;
+  recommendation?: string | null;
+}
+
+export interface FindingEvidenceSummary {
+  document_id?: string | null;
+  document_name?: string | null;
+  page_number?: number | null;
+  field_key?: string | null;
+  extracted_value?: string | null;
+  declared_value?: string | null;
+  source_type?: string | null;
+  comparison_note?: string | null;
+}
+
+export interface AnomalyFindingItem {
+  finding_id: string;
+  finding_code: string;
+  category: string;
+  severity: string;
+  status: string;
+  title: string;
+  description: string;
+  source_agent: string;
+  confidence_score?: number | null;
+  evidence: FindingEvidenceSummary[];
+  suggested_action?: string | null;
+}
+
+export interface ActionRecommendation {
+  action_type: string;
+  priority: string;
+  title: string;
+  description: string;
+  reference_id?: string | null;
+}
+
+export interface EvidenceTraceItem {
+  id: string;
+  application_id: string;
+  document_id?: string | null;
+  document_name?: string | null;
+  page_number?: number | null;
+  field_key?: string | null;
+  declared_value?: string | null;
+  observed_value?: string | null;
+  comparison_note?: string | null;
+  source: string;
+  timestamp?: string | null;
+}
+
+export interface ReviewSummaryResponse {
+  application_id: string;
+  application_title: string;
+  application_status: string;
+  category_name?: string | null;
+  institution_name?: string | null;
+  institution_code?: string | null;
+  created_at: string;
+  documents_summary: {
+    total_documents: number;
+    processed_documents: number;
+    missing_required_types: string[];
+    is_complete: boolean;
+  };
+  validation_summary: {
+    run_id?: string | null;
+    evaluated_at?: string | null;
+    total_rules: number;
+    passed: number;
+    failed: number;
+    needs_review: number;
+    unable_to_evaluate: number;
+  };
+  anomaly_summary: {
+    total_findings: number;
+    open_findings: number;
+    confirmed_findings: number;
+    dismissed_findings: number;
+  };
+  rule_explanations: RuleExplanationItem[];
+  anomalies: AnomalyFindingItem[];
+  evidence_items: EvidenceTraceItem[];
+  recommended_actions: ActionRecommendation[];
+  disclaimer: string;
+}
+
+export interface ScrutinyReportResponse {
+  id: string;
+  application_id: string;
+  generated_by_id?: string | null;
+  report_type: string;
+  format: string;
+  file_size_bytes: number;
+  created_at: string;
+  summary_snapshot?: Record<string, any> | null;
+}
+
+export async function fetchReviewSummary(applicationId: string): Promise<ReviewSummaryResponse> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/review-summary`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to fetch review summary (${response.status})`);
+  }
+
+  return response.json();
+}
+
+export async function fetchEvidenceTrace(applicationId: string): Promise<EvidenceTraceItem[]> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/evidence`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to fetch evidence trace (${response.status})`);
+  }
+
+  return response.json();
+}
+
+export async function generateReport(
+  applicationId: string,
+  format: 'PDF' | 'JSON' = 'PDF'
+): Promise<ScrutinyReportResponse> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/reports`, {
+    method: 'POST',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+    body: JSON.stringify({ format, include_evidence_detail: true }),
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to generate report (${response.status})`);
+  }
+
+  return response.json();
+}
+
+export async function fetchApplicationReports(applicationId: string): Promise<ScrutinyReportResponse[]> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/reports`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to fetch reports (${response.status})`);
+  }
+
+  return response.json();
+}
+
+export function getReportDownloadUrl(reportId: string): string {
+  return `/api/v1/reports/${reportId}/download`;
+}
+
 
 

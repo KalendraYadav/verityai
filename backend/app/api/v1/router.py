@@ -11,6 +11,7 @@ from app.api.v1.endpoints import (
     auth,
     users,
     workflow,
+    reports,
 )
 
 api_router = APIRouter()
@@ -25,4 +26,5 @@ api_router.include_router(documents.router, tags=["Documents"])
 api_router.include_router(validation.router, tags=["Validation Engine"])
 api_router.include_router(anomalies.router, tags=["Anomaly Detection"])
 api_router.include_router(workflow.router, tags=["Workflow Orchestration"])
+api_router.include_router(reports.router, tags=["Scrutiny Reports & Decision Support"])
 

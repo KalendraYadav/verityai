@@ -38,6 +38,10 @@ import {
   fetchApplicationReadiness,
   startApplicationWorkflow,
   transitionWorkflowState,
+  fetchReviewSummary,
+  generateReport,
+  fetchApplicationReports,
+  getReportDownloadUrl,
   type ApplicationDetailResponse,
   type DocumentListItem,
   type AuditEventItem,
@@ -47,6 +51,8 @@ import {
   type FindingItem,
   type WorkflowStatusData,
   type ApplicationReadinessData,
+  type ReviewSummaryResponse,
+  type ScrutinyReportResponse,
 } from '../../api/client';
 import { DocumentUploadModal } from '../documents/DocumentUploadModal';
 
@@ -92,14 +98,21 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
   const [transitioning, setTransitioning] = useState(false);
   const [workflowMessage, setWorkflowMessage] = useState<string | null>(null);
 
-  const [activeSubTab, setActiveSubTab] = useState<'documents' | 'validation' | 'anomalies' | 'requirements' | 'audit' | 'institution'>('documents');
+  // Phase 9: Explainable AI, Reviewer Decision Support & Reports
+  const [reviewSummary, setReviewSummary] = useState<ReviewSummaryResponse | null>(null);
+  const [reportsList, setReportsList] = useState<ScrutinyReportResponse[]>([]);
+  const [generatingReport, setGeneratingReport] = useState(false);
+  const [reportMessage, setReportMessage] = useState<string | null>(null);
+  const [reportError, setReportError] = useState<string | null>(null);
+
+  const [activeSubTab, setActiveSubTab] = useState<'documents' | 'validation' | 'anomalies' | 'requirements' | 'audit' | 'institution' | 'reports'>('documents');
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
   async function loadWorkspaceData() {
     setLoading(true);
     setError(null);
     try {
-      const [appData, docsData, auditData, catsData, valData, analysisRes, wfData, readyData] = await Promise.all([
+      const [appData, docsData, auditData, catsData, valData, analysisRes, wfData, readyData, revSum, repList] = await Promise.all([
         fetchApplicationDetail(applicationId),
         fetchApplicationDocuments(applicationId, 1, 100),
         fetchApplicationAudit(applicationId),
@@ -108,6 +121,8 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
         fetchApplicationAnalysis(applicationId).catch(() => null),
         fetchWorkflowStatus(applicationId).catch(() => null),
         fetchApplicationReadiness(applicationId).catch(() => null),
+        fetchReviewSummary(applicationId).catch(() => null),
+        fetchApplicationReports(applicationId).catch(() => []),
       ]);
       setApplication(appData);
       setDocuments(docsData.data);
@@ -125,11 +140,37 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
       if (readyData) {
         setReadiness(readyData);
       }
+      if (revSum) {
+        setReviewSummary(revSum);
+      }
+      if (repList) {
+        setReportsList(repList);
+      }
     } catch (err: any) {
       console.error('Failed to load application detail workspace', err);
       setError(err.message || 'Failed to load application workspace');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleGenerateScrutinyReport(format: 'PDF' | 'JSON' = 'PDF') {
+    setGeneratingReport(true);
+    setReportError(null);
+    setReportMessage(null);
+    try {
+      const rep = await generateReport(applicationId, format);
+      setReportMessage(`Scrutiny ${format} dossier generated successfully (${Math.round(rep.file_size_bytes / 1024)} KB)`);
+      const updatedReports = await fetchApplicationReports(applicationId);
+      setReportsList(updatedReports);
+      const updatedSummary = await fetchReviewSummary(applicationId);
+      setReviewSummary(updatedSummary);
+      setActiveSubTab('reports');
+    } catch (err: any) {
+      console.error('Failed to generate report', err);
+      setReportError(err.message || 'Report generation failed');
+    } finally {
+      setGeneratingReport(false);
     }
   }
 
@@ -441,6 +482,19 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             <span>{runningWorkflow ? 'Executing Pipeline...' : 'Run Scrutiny Pipeline'}</span>
           </button>
           <button
+            onClick={() => handleGenerateScrutinyReport('PDF')}
+            disabled={generatingReport}
+            className="inline-flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white border border-[#DCD0F7] hover:bg-[#FAF8FF] disabled:opacity-60 text-[#7450D8] text-xs font-semibold transition-all shadow-xs cursor-pointer"
+            title="Generate multi-page regulatory scrutiny dossier report"
+          >
+            {generatingReport ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Download className="w-3.5 h-3.5" />
+            )}
+            <span>{generatingReport ? 'Generating...' : 'Scrutiny Dossier (PDF)'}</span>
+          </button>
+          <button
             onClick={handleTriggerValidation}
             disabled={validating}
             className="inline-flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white border border-[#DCD0F7] hover:bg-[#FAF8FF] disabled:opacity-60 text-[#7450D8] text-xs font-semibold transition-all shadow-xs cursor-pointer"
@@ -458,6 +512,30 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
           </button>
         </div>
       </div>
+
+      {/* Report Notification if any */}
+      {reportMessage && (
+        <div className="p-3.5 rounded-2xl bg-[#ECFDF3] border border-[#A6F4C5] text-[#027A48] text-xs font-semibold flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-[#027A48]" />
+            <span>{reportMessage}</span>
+          </div>
+          <button onClick={() => setReportMessage(null)} className="text-[#8589A6] hover:text-[#171B45] cursor-pointer">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+      {reportError && (
+        <div className="p-3.5 rounded-2xl bg-[#FEF3F2] border border-[#FECDCA] text-[#B42318] text-xs font-semibold flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-[#B42318]" />
+            <span>{reportError}</span>
+          </div>
+          <button onClick={() => setReportError(null)} className="text-[#8589A6] hover:text-[#171B45] cursor-pointer">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Workflow Notification if any */}
       {workflowMessage && (
@@ -764,6 +842,18 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
           >
             <Building2 className="w-4 h-4" />
             <span>Institution Dossier</span>
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('reports')}
+            className={`py-3.5 text-xs sm:text-sm font-bold border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+              activeSubTab === 'reports'
+                ? 'border-[#7450D8] text-[#7450D8]'
+                : 'border-transparent text-[#5F6485] hover:text-[#171B45]'
+            }`}
+          >
+            <Download className="w-4 h-4 text-[#7450D8]" />
+            <span>Scrutiny Dossier & Reports {reportsList.length > 0 ? `(${reportsList.length})` : ''}</span>
           </button>
         </div>
 
@@ -1812,6 +1902,207 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                   {application.institution.status || 'ACTIVE'}
                 </p>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 5: Regulatory Scrutiny Dossier & Reports */}
+        {activeSubTab === 'reports' && (
+          <div className="p-4 sm:p-6 space-y-6">
+            {/* Header & Generation Toolbar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-[#FAF8FF] border border-[#E9E6F2]">
+              <div>
+                <h4 className="text-sm sm:text-base font-extrabold text-[#171B45] flex items-center gap-2">
+                  <Download className="w-4 h-4 text-[#7450D8]" />
+                  Regulatory Scrutiny Dossier & Evidence Reports
+                </h4>
+                <p className="text-xs text-[#5F6485] mt-1 max-w-xl">
+                  Generate structured dossiers compiling application metadata, submitted document extractions, deterministic rule evaluations, and cross-document anomaly findings.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => handleGenerateScrutinyReport('PDF')}
+                  disabled={generatingReport}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#7450D8] hover:bg-[#5D3FBD] disabled:opacity-60 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                >
+                  <Download className={`w-3.5 h-3.5 ${generatingReport ? 'animate-spin' : ''}`} />
+                  <span>{generatingReport ? 'Generating...' : 'Generate PDF Dossier'}</span>
+                </button>
+                <button
+                  onClick={() => handleGenerateScrutinyReport('JSON')}
+                  disabled={generatingReport}
+                  className="inline-flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white border border-[#DCD0F7] hover:bg-[#FAF8FF] disabled:opacity-60 text-[#7450D8] text-xs font-bold transition-all shadow-xs cursor-pointer"
+                >
+                  <span>Export JSON</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Advisory Disclaimer Notice */}
+            <div className="p-4 rounded-2xl bg-[#FFF8F7] border border-[#FECDCA] text-xs space-y-1">
+              <div className="flex items-center gap-2 font-bold text-[#B42318]">
+                <AlertTriangle className="w-4 h-4" />
+                <span>Regulatory Notice — Decision Support Layer</span>
+              </div>
+              <p className="text-[#5F6485] leading-relaxed">
+                {reviewSummary?.disclaimer ||
+                  'Automated scrutiny dossiers and AI-assisted findings are strictly advisory decision-support artifacts. They do not constitute official approval, certification, or an adverse regulatory determination. Consequential decisions remain the sole responsibility of authorized human reviewers.'}
+              </p>
+            </div>
+
+            {/* Actionable Reviewer Recommendations */}
+            {reviewSummary?.recommended_actions && reviewSummary.recommended_actions.length > 0 && (
+              <div className="p-5 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs space-y-3">
+                <h5 className="text-xs font-bold uppercase tracking-wider text-[#171B45] flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-[#7450D8]" />
+                  Recommended Reviewer Actions ({reviewSummary.recommended_actions.length})
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {reviewSummary.recommended_actions.map((rec, idx) => (
+                    <div
+                      key={idx}
+                      className="p-3.5 rounded-xl border border-[#E9E6F2] bg-[#FAF8FF] space-y-1 text-xs"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-bold text-[#171B45]">{rec.title}</span>
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${
+                            rec.priority === 'HIGH'
+                              ? 'bg-[#FEE4E2] text-[#B42318]'
+                              : rec.priority === 'MEDIUM'
+                              ? 'bg-[#FFFAEB] text-[#B54708]'
+                              : 'bg-[#F3EEFC] text-[#7450D8]'
+                          }`}
+                        >
+                          {rec.priority}
+                        </span>
+                      </div>
+                      <p className="text-[#5F6485]">{rec.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Explainable Validation Rule Explanations */}
+            <div className="p-5 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs space-y-3">
+              <h5 className="text-xs font-bold uppercase tracking-wider text-[#171B45] flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-[#7450D8]" />
+                Explainable Validation Rule Breakdowns
+              </h5>
+              {(!reviewSummary?.rule_explanations || reviewSummary.rule_explanations.length === 0) ? (
+                <div className="p-8 text-center text-xs text-[#8589A6]">
+                  No rule evaluations recorded for this application. Execute the Scrutiny Pipeline above.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-[#EEEAF5] bg-[#FAF9FC] text-[#8589A6] font-semibold text-[11px]">
+                        <th className="py-2.5 px-3">RULE CODE & NAME</th>
+                        <th className="py-2.5 px-3">STATUS</th>
+                        <th className="py-2.5 px-3">PURPOSE</th>
+                        <th className="py-2.5 px-3">EXPECTED VS OBSERVED</th>
+                        <th className="py-2.5 px-3">EVIDENCE CITATION</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#F0EDF7]">
+                      {reviewSummary.rule_explanations.map((r, idx) => (
+                        <tr key={idx} className="hover:bg-[#FAF9FD]">
+                          <td className="py-3 px-3">
+                            <span className="font-mono font-bold text-[#171B45] block">{r.rule_code}</span>
+                            <span className="text-[11px] text-[#5F6485]">{r.name}</span>
+                          </td>
+                          <td className="py-3 px-3 whitespace-nowrap">
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                r.status === 'PASS' || r.status === 'PASSED'
+                                  ? 'bg-[#ECFDF3] text-[#027A48]'
+                                  : r.status === 'FAIL' || r.status === 'FAILED'
+                                  ? 'bg-[#FEF3F2] text-[#B42318]'
+                                  : 'bg-[#FFFAEB] text-[#B54708]'
+                              }`}
+                            >
+                              {r.status}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 text-[#5F6485]">{r.purpose}</td>
+                          <td className="py-3 px-3 space-y-0.5">
+                            <div className="text-[11px]">
+                              <span className="font-bold text-[#171B45]">Exp:</span> {r.expected}
+                            </div>
+                            <div className="text-[11px] text-[#5F6485]">
+                              <span className="font-bold text-[#171B45]">Obs:</span> {r.observed}
+                            </div>
+                          </td>
+                          <td className="py-3 px-3 text-[#7450D8] font-mono text-[11px]">
+                            {r.evidence_source}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Generated Reports & Artifacts */}
+            <div className="p-5 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs space-y-3">
+              <h5 className="text-xs font-bold uppercase tracking-wider text-[#171B45] flex items-center gap-2">
+                <FileText className="w-4 h-4 text-[#7450D8]" />
+                Generated Scrutiny Artifacts ({reportsList.length})
+              </h5>
+              {reportsList.length === 0 ? (
+                <div className="p-8 text-center text-xs text-[#8589A6]">
+                  No reports generated yet. Click "Generate PDF Dossier" above to generate a formal review package.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-[#EEEAF5] bg-[#FAF9FC] text-[#8589A6] font-semibold text-[11px]">
+                        <th className="py-2.5 px-3">REPORT DOSSIER ID</th>
+                        <th className="py-2.5 px-3">TYPE / FORMAT</th>
+                        <th className="py-2.5 px-3">FILE SIZE</th>
+                        <th className="py-2.5 px-3">GENERATED AT</th>
+                        <th className="py-2.5 px-3 text-right">ACTION</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#F0EDF7]">
+                      {reportsList.map((rep) => (
+                        <tr key={rep.id} className="hover:bg-[#FAF9FD]">
+                          <td className="py-3 px-3 font-mono font-bold text-[#171B45]">
+                            {rep.id.slice(0, 8)}...
+                          </td>
+                          <td className="py-3 px-3">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#F3EEFC] text-[#7450D8] border border-[#DCD0F7]">
+                              {rep.format}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 text-[#5F6485]">
+                            {Math.round(rep.file_size_bytes / 1024)} KB
+                          </td>
+                          <td className="py-3 px-3 text-[#5F6485]">
+                            {formatDate(rep.created_at)}
+                          </td>
+                          <td className="py-3 px-3 text-right">
+                            <a
+                              href={getReportDownloadUrl(rep.id)}
+                              download
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FAF8FF] border border-[#DCD0F7] hover:bg-[#F3EEFC] text-[#7450D8] font-bold text-xs transition-all cursor-pointer"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              <span>Download {rep.format}</span>
+                            </a>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         )}
