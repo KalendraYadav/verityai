@@ -190,6 +190,11 @@ def seed_database():
             else:
                 print(f"  * Application exists: {existing_app.application_reference}")
 
+        # 5. Seed Validation Rules
+        from app.services.validation import ensure_default_rules
+        rules = ensure_default_rules(db)
+        print(f"  + Seeded/Verified {len(rules)} Validation Rules.")
+
         db.commit()
         print("✅ Seeding completed successfully.")
     except Exception as e:

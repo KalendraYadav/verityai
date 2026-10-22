@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from app.models.user import User
     from app.models.audit import AuditEvent
     from app.models.document import Document
+    from app.models.validation import ValidationRun, RuleResult
 
 
 class Application(Base):
@@ -59,3 +60,9 @@ class Application(Base):
     )
     audit_events: Mapped[List["AuditEvent"]] = relationship("AuditEvent", back_populates="application")
     documents: Mapped[List["Document"]] = relationship("Document", back_populates="application")
+    validation_runs: Mapped[List["ValidationRun"]] = relationship(
+        "ValidationRun", back_populates="application", cascade="all, delete-orphan", order_by="desc(ValidationRun.started_at)"
+    )
+    rule_results: Mapped[List["RuleResult"]] = relationship(
+        "RuleResult", back_populates="application", cascade="all, delete-orphan", order_by="desc(RuleResult.evaluated_at)"
+    )

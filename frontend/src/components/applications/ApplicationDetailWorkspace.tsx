@@ -17,6 +17,10 @@ import {
   X,
   FileQuestion,
   AlertCircle,
+  HelpCircle,
+  XCircle,
+  CheckCircle,
+  Filter,
 } from 'lucide-react';
 import {
   fetchApplicationDetail,
@@ -24,10 +28,13 @@ import {
   fetchApplicationAudit,
   fetchCategories,
   getDocumentFileUrl,
+  fetchApplicationValidationSummary,
+  triggerApplicationValidation,
   type ApplicationDetailResponse,
   type DocumentListItem,
   type AuditEventItem,
   type ApplicationCategory,
+  type ValidationSummaryData,
 } from '../../api/client';
 import { DocumentUploadModal } from '../documents/DocumentUploadModal';
 
@@ -46,31 +53,61 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
   const [documents, setDocuments] = useState<DocumentListItem[]>([]);
   const [auditEvents, setAuditEvents] = useState<AuditEventItem[]>([]);
   const [categories, setCategories] = useState<ApplicationCategory[]>([]);
+  const [validationSummary, setValidationSummary] = useState<ValidationSummaryData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [activeSubTab, setActiveSubTab] = useState<'documents' | 'requirements' | 'audit' | 'institution'>('documents');
+  const [validating, setValidating] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [resultFilter, setResultFilter] = useState<'ALL' | 'PASS' | 'FAIL' | 'NEEDS_REVIEW' | 'UNABLE_TO_EVALUATE'>('ALL');
+
+  const [activeSubTab, setActiveSubTab] = useState<'documents' | 'validation' | 'requirements' | 'audit' | 'institution'>('documents');
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
   async function loadWorkspaceData() {
     setLoading(true);
     setError(null);
     try {
-      const [appData, docsData, auditData, catsData] = await Promise.all([
+      const [appData, docsData, auditData, catsData, valData] = await Promise.all([
         fetchApplicationDetail(applicationId),
         fetchApplicationDocuments(applicationId, 1, 100),
         fetchApplicationAudit(applicationId),
         fetchCategories(),
+        fetchApplicationValidationSummary(applicationId).catch(() => null),
       ]);
       setApplication(appData);
       setDocuments(docsData.data);
       setAuditEvents(auditData);
       setCategories(catsData);
+      if (valData) {
+        setValidationSummary(valData);
+      }
     } catch (err: any) {
       console.error('Failed to load application detail workspace', err);
       setError(err.message || 'Failed to load application workspace');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleTriggerValidation() {
+    setValidating(true);
+    setValidationError(null);
+    try {
+      const summary = await triggerApplicationValidation(applicationId);
+      setValidationSummary(summary);
+      const [appData, auditData] = await Promise.all([
+        fetchApplicationDetail(applicationId),
+        fetchApplicationAudit(applicationId),
+      ]);
+      setApplication(appData);
+      setAuditEvents(auditData);
+      setActiveSubTab('validation');
+    } catch (err: any) {
+      console.error('Validation failed', err);
+      setValidationError(err.message || 'Failed to execute validation rules');
+    } finally {
+      setValidating(false);
     }
   }
 
@@ -250,6 +287,15 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             <RefreshCw className="w-4 h-4" />
           </button>
           <button
+            onClick={handleTriggerValidation}
+            disabled={validating}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#7450D8] hover:bg-[#623ec2] disabled:opacity-60 text-white text-xs sm:text-sm font-semibold transition-all shadow-xs cursor-pointer"
+            title="Execute deterministic compliance rules against application & documents"
+          >
+            <RefreshCw className={`w-4 h-4 ${validating ? 'animate-spin' : ''}`} />
+            <span>{validating ? 'Evaluating...' : validationSummary ? 'Re-run Validation' : 'Run Scrutiny Validation'}</span>
+          </button>
+          <button
             onClick={() => setUploadModalOpen(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#F04438] hover:bg-[#E34234] text-white text-xs sm:text-sm font-semibold transition-all shadow-xs cursor-pointer"
           >
@@ -307,10 +353,24 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             </p>
           </div>
           <div className="p-3 rounded-xl bg-[#FAF8FF] border border-[#E9E6F2]">
-            <span className="text-[10px] uppercase font-bold text-[#5F6485]">Pending Scrutiny / Review</span>
-            <p className="text-base font-extrabold text-[#C4320A] mt-0.5">
-              {documents.filter((d) => d.processing_status === 'MANUAL_REVIEW_REQUIRED' || d.processing_status === 'FAILED').length}
-            </p>
+            <span className="text-[10px] uppercase font-bold text-[#5F6485]">Validation Engine</span>
+            {validationSummary ? (
+              <p className={`text-xs font-extrabold mt-1 truncate ${
+                validationSummary.failed > 0
+                  ? 'text-[#B42318]'
+                  : validationSummary.needs_review > 0
+                  ? 'text-[#C4320A]'
+                  : 'text-[#027A48]'
+              }`}>
+                {validationSummary.failed > 0
+                  ? `${validationSummary.failed} Failed / ${validationSummary.total_rules} Rules`
+                  : validationSummary.needs_review > 0
+                  ? `${validationSummary.needs_review} Needs Review`
+                  : `${validationSummary.passed}/${validationSummary.total_rules} Passed`}
+              </p>
+            ) : (
+              <p className="text-xs font-bold text-[#8589A6] mt-1">Pending Validation</p>
+            )}
           </div>
           <div className="p-3 rounded-xl bg-[#FAF8FF] border border-[#E9E6F2]">
             <span className="text-[10px] uppercase font-bold text-[#5F6485]">Regulatory Category</span>
@@ -337,6 +397,26 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
           </button>
 
           <button
+            onClick={() => setActiveSubTab('validation')}
+            className={`py-3.5 text-xs sm:text-sm font-bold border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+              activeSubTab === 'validation'
+                ? 'border-[#7450D8] text-[#7450D8]'
+                : 'border-transparent text-[#5F6485] hover:text-[#171B45]'
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span>
+              Validation Rules & Results {validationSummary ? `(${validationSummary.results.length})` : ''}
+            </span>
+            {validationSummary && validationSummary.failed > 0 && (
+              <span className="w-2 h-2 rounded-full bg-[#F04438]" title="Has failed rules" />
+            )}
+            {validationSummary && validationSummary.failed === 0 && validationSummary.needs_review > 0 && (
+              <span className="w-2 h-2 rounded-full bg-[#F79009]" title="Needs human review" />
+            )}
+          </button>
+
+          <button
             onClick={() => setActiveSubTab('requirements')}
             className={`py-3.5 text-xs sm:text-sm font-bold border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === 'requirements'
@@ -344,8 +424,8 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                 : 'border-transparent text-[#5F6485] hover:text-[#171B45]'
             }`}
           >
-            <ShieldCheck className="w-4 h-4" />
-            <span>Declared Data & Requirements Checklist</span>
+            <Layers className="w-4 h-4" />
+            <span>Declared Data & Checklist</span>
           </button>
 
           <button
@@ -485,7 +565,299 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
           </div>
         )}
 
-        {/* Tab 2: Requirements & Declared Data */}
+        {/* Tab: Validation Rules & Results (Phase 5 Deterministic Engine) */}
+        {activeSubTab === 'validation' && (
+          <div className="p-4 sm:p-6 space-y-6">
+            {validationError && (
+              <div className="p-4 rounded-2xl bg-[#FEF3F2] border border-[#FECDCA] text-xs text-[#B42318] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>{validationError}</span>
+                </div>
+                <button
+                  onClick={() => setValidationError(null)}
+                  className="text-[#B42318] hover:underline font-bold cursor-pointer"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
+
+            {!validationSummary || !validationSummary.validation_run_id ? (
+              <div className="p-12 text-center rounded-3xl border border-dashed border-[#DCD0F7] bg-[#FAF8FF] space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-[#F3EEFC] text-[#7450D8] flex items-center justify-center mx-auto">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                <h3 className="text-sm font-bold text-[#171B45]">No Validation Run Executed Yet</h3>
+                <p className="text-xs text-[#5F6485] max-w-md mx-auto leading-relaxed">
+                  Evaluate mandatory document requirements, extracted certificates, validity expiry baselines, and institution field consistency.
+                </p>
+                <button
+                  onClick={handleTriggerValidation}
+                  disabled={validating}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#7450D8] hover:bg-[#623ec2] disabled:opacity-60 text-white text-xs sm:text-sm font-semibold transition-all shadow-xs cursor-pointer"
+                >
+                  <RefreshCw className={`w-4 h-4 ${validating ? 'animate-spin' : ''}`} />
+                  <span>{validating ? 'Evaluating Scrutiny Rules...' : 'Run Scrutiny Validation'}</span>
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Validation Summary Header Card */}
+                <div className="p-5 sm:p-6 rounded-3xl bg-[#FAF8FF] border border-[#DCD0F7] space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#EEEAF5] pb-4">
+                    <div>
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        <span className="font-mono text-xs font-bold text-[#7450D8] bg-[#F3EEFC] px-2 py-0.5 rounded">
+                          Run ID: {validationSummary.validation_run_id.substring(0, 8)}...
+                        </span>
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                            validationSummary.failed > 0
+                              ? 'bg-[#FEF3F2] text-[#B42318] border border-[#FECDCA]'
+                              : validationSummary.needs_review > 0
+                              ? 'bg-[#FFF6ED] text-[#C4320A] border border-[#FECDCA]'
+                              : 'bg-[#ECFDF3] text-[#027A48] border border-[#D1FADF]'
+                          }`}
+                        >
+                          {validationSummary.failed > 0 ? (
+                            <>
+                              <XCircle className="w-3.5 h-3.5 text-[#F04438]" />
+                              {validationSummary.failed} Failed Check(s)
+                            </>
+                          ) : validationSummary.needs_review > 0 ? (
+                            <>
+                              <AlertCircle className="w-3.5 h-3.5 text-[#F79009]" />
+                              Requires Review ({validationSummary.needs_review})
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="w-3.5 h-3.5 text-[#027A48]" />
+                              All Evaluated Rules Passed
+                            </>
+                          )}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#5F6485] mt-1.5">
+                        Evaluated {validationSummary.evaluated_at ? formatDate(validationSummary.evaluated_at) : 'recently'} • Baseline Date:{' '}
+                        <span className="font-mono font-semibold text-[#171B45]">{validationSummary.evaluation_date || 'Current Date'}</span> • Engine v{validationSummary.pipeline_version}
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={handleTriggerValidation}
+                      disabled={validating}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#DCD0F7] hover:border-[#7450D8] text-xs font-bold text-[#7450D8] shadow-2xs transition-all cursor-pointer self-start sm:self-auto shrink-0"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${validating ? 'animate-spin' : ''}`} />
+                      <span>{validating ? 'Re-evaluating...' : 'Re-run Validation'}</span>
+                    </button>
+                  </div>
+
+                  {/* Summary Metric Counters */}
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                    <div className="p-3 rounded-xl bg-white border border-[#E9E6F2]">
+                      <span className="text-[10px] uppercase font-bold text-[#8589A6]">Total Evaluated</span>
+                      <p className="text-base font-extrabold text-[#171B45] mt-0.5">{validationSummary.total_rules}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white border border-[#E9E6F2]">
+                      <span className="text-[10px] uppercase font-bold text-[#027A48]">Passed</span>
+                      <p className="text-base font-extrabold text-[#027A48] mt-0.5">{validationSummary.passed}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white border border-[#E9E6F2]">
+                      <span className="text-[10px] uppercase font-bold text-[#B42318]">Failed</span>
+                      <p className="text-base font-extrabold text-[#B42318] mt-0.5">{validationSummary.failed}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white border border-[#E9E6F2]">
+                      <span className="text-[10px] uppercase font-bold text-[#C4320A]">Needs Review</span>
+                      <p className="text-base font-extrabold text-[#C4320A] mt-0.5">{validationSummary.needs_review}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white border border-[#E9E6F2]">
+                      <span className="text-[10px] uppercase font-bold text-[#175CD3]">Unable To Eval</span>
+                      <p className="text-base font-extrabold text-[#175CD3] mt-0.5">{validationSummary.unable_to_evaluate}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Filter Controls */}
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs font-bold text-[#5F6485] mr-1 flex items-center gap-1">
+                      <Filter className="w-3.5 h-3.5" /> Filter:
+                    </span>
+                    {(['ALL', 'PASS', 'FAIL', 'NEEDS_REVIEW', 'UNABLE_TO_EVALUATE'] as const).map((filterKey) => {
+                      const count =
+                        filterKey === 'ALL'
+                          ? validationSummary.results.length
+                          : filterKey === 'PASS'
+                          ? validationSummary.passed
+                          : filterKey === 'FAIL'
+                          ? validationSummary.failed
+                          : filterKey === 'NEEDS_REVIEW'
+                          ? validationSummary.needs_review
+                          : validationSummary.unable_to_evaluate;
+                      return (
+                        <button
+                          key={filterKey}
+                          onClick={() => setResultFilter(filterKey)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                            resultFilter === filterKey
+                              ? 'bg-[#7450D8] text-white shadow-2xs'
+                              : 'bg-white border border-[#E9E6F2] text-[#5F6485] hover:border-[#DCD0F7] hover:text-[#171B45]'
+                          }`}
+                        >
+                          {filterKey.replace(/_/g, ' ')} ({count})
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Detailed Rule Results List */}
+                <div className="space-y-3">
+                  {validationSummary.results
+                    .filter((r) => resultFilter === 'ALL' || r.status === resultFilter)
+                    .map((res) => {
+                      const sourceDoc = documents.find((d) => d.id === res.source_document_id);
+                      return (
+                        <div
+                          key={res.id}
+                          className="bg-white rounded-2xl border border-[#E9E6F2] p-4 sm:p-5 shadow-xs space-y-3 transition-all hover:border-[#DCD0F7]"
+                        >
+                          {/* Card Header */}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#F4F2F9] pb-3">
+                            <div className="flex items-center gap-2.5 flex-wrap">
+                              <span className="font-mono text-xs font-extrabold text-[#171B45]">
+                                {res.rule_code}
+                              </span>
+                              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#F3EEFC] text-[#7450D8]">
+                                {res.rule_type}
+                              </span>
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                  res.severity === 'CRITICAL' || res.severity === 'HIGH'
+                                    ? 'bg-[#FFF0EF] text-[#B42318] border border-[#FECDCA]'
+                                    : 'bg-[#FFFAEB] text-[#B54708] border border-[#FEDF89]'
+                                }`}
+                              >
+                                {res.severity}
+                              </span>
+                            </div>
+
+                            {/* Status Badge */}
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border self-start sm:self-auto ${
+                                res.status === 'PASS'
+                                  ? 'bg-[#ECFDF3] text-[#027A48] border-[#D1FADF]'
+                                  : res.status === 'FAIL'
+                                  ? 'bg-[#FEF3F2] text-[#B42318] border-[#FECDCA]'
+                                  : res.status === 'NEEDS_REVIEW'
+                                  ? 'bg-[#FFF6ED] text-[#C4320A] border-[#FECDCA]'
+                                  : 'bg-[#EFF8FF] text-[#175CD3] border-[#B2DDFF]'
+                              }`}
+                            >
+                              {res.status === 'PASS' ? (
+                                <Check className="w-3.5 h-3.5" />
+                              ) : res.status === 'FAIL' ? (
+                                <X className="w-3.5 h-3.5" />
+                              ) : (
+                                <HelpCircle className="w-3.5 h-3.5" />
+                              )}
+                              {res.status}
+                            </span>
+                          </div>
+
+                          {/* Rule Explanation */}
+                          <p className="text-xs sm:text-[13px] text-[#171B45] font-medium leading-relaxed">
+                            {res.explanation}
+                          </p>
+
+                          {/* Comparison Grid (Expected vs Observed) */}
+                          {(res.expected_value || res.observed_value) && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#FAF9FC] p-3 rounded-xl border border-[#EEEAF5] text-xs">
+                              <div>
+                                <span className="text-[10px] font-bold uppercase text-[#8589A6] block">
+                                  Expected Statutory Value
+                                </span>
+                                <span className="font-mono text-xs font-semibold text-[#171B45]">
+                                  {res.expected_value || 'None specified'}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] font-bold uppercase text-[#8589A6] block">
+                                  Observed Evidentiary Value
+                                </span>
+                                <span
+                                  className={`font-mono text-xs font-bold ${
+                                    res.status === 'FAIL' ? 'text-[#B42318]' : 'text-[#027A48]'
+                                  }`}
+                                >
+                                  {res.observed_value || 'None extracted'}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Evidence Tray & Provenance Links */}
+                          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-[#F8F7FB] text-[11px] text-[#5F6485]">
+                            <div className="flex items-center gap-3 flex-wrap">
+                              {sourceDoc ? (
+                                <span className="flex items-center gap-1.5 font-medium text-[#171B45]">
+                                  <FileText className="w-3.5 h-3.5 text-[#7450D8]" />
+                                  <span>{sourceDoc.original_filename}</span>
+                                </span>
+                              ) : res.source_document_id ? (
+                                <span className="font-mono text-[10px]">Doc: {res.source_document_id.substring(0, 8)}...</span>
+                              ) : (
+                                <span className="italic text-[#8589A6]">No single source document</span>
+                              )}
+
+                              {res.source_page_number && (
+                                <span className="px-2 py-0.5 rounded bg-[#F3EEFC] font-mono text-[10px] font-bold text-[#7450D8]">
+                                  Page {res.source_page_number}
+                                </span>
+                              )}
+
+                              {res.evidence_payload?.text_source && (
+                                <span className="font-mono text-[10px] text-[#8589A6]">
+                                  Source: {res.evidence_payload.text_source}
+                                </span>
+                              )}
+
+                              {res.evidence_payload?.ocr_confidence && (
+                                <span className="font-mono text-[10px] text-[#027A48]">
+                                  Conf: {Math.round(res.evidence_payload.ocr_confidence * 100)}%
+                                </span>
+                              )}
+
+                              {res.unresolved_reason && (
+                                <span className="px-2 py-0.5 rounded bg-[#FFF6ED] text-[#C4320A] font-mono text-[10px] font-bold border border-[#FECDCA]">
+                                  Reason: {res.unresolved_reason}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Direct inspection action */}
+                            {sourceDoc && onInspectDocument && (
+                              <button
+                                onClick={() => onInspectDocument(sourceDoc)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#DCD0F7] bg-[#FAF8FF] text-[11px] font-semibold text-[#7450D8] hover:bg-[#F3EEFC] transition-colors cursor-pointer shrink-0"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Inspect Source OCR</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tab: Requirements & Declared Data */}
         {activeSubTab === 'requirements' && (
           <div className="p-4 sm:p-6 space-y-6">
             {/* Required Documents Checklist */}

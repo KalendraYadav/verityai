@@ -463,4 +463,162 @@ export async function reprocessDocument(documentId: string): Promise<DocumentPro
   return resJson.data;
 }
 
+// ---------------------------------------------------------------------------
+// Phase 5: Deterministic Validation Engine Types & Client
+// ---------------------------------------------------------------------------
+
+export interface ValidationRuleItem {
+  id: string;
+  rule_code: string;
+  rule_version: string;
+  rule_name: string;
+  description: string;
+  rule_type: 'REQUIRED_DOCUMENT' | 'REQUIRED_FIELD' | 'EXPIRY_CHECK' | 'FIELD_EQUALS_APPLICATION' | string;
+  category: string;
+  applies_to: {
+    categories?: string[];
+    [key: string]: any;
+  };
+  parameters: Record<string, any>;
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | string;
+  on_fail_status: string;
+  provenance: string;
+  enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RuleResultItem {
+  id: string;
+  validation_run_id: string;
+  application_id: string;
+  rule_id: string;
+  rule_code: string;
+  rule_version: string;
+  rule_type: string;
+  target_key: string;
+  status: 'PASS' | 'FAIL' | 'NEEDS_REVIEW' | 'NOT_APPLICABLE' | 'UNABLE_TO_EVALUATE' | string;
+  severity: string;
+  explanation: string;
+  expected_value?: string | null;
+  observed_value?: string | null;
+  source_document_id?: string | null;
+  source_page_number?: number | null;
+  evidence_payload: Record<string, any>;
+  inputs_status: string;
+  human_review_required: boolean;
+  unresolved_reason?: string | null;
+  evaluation_date_used: string;
+  evaluated_at: string;
+}
+
+export interface ValidationSummaryData {
+  application_id: string;
+  validation_run_id?: string | null;
+  status: string;
+  evaluation_date?: string | null;
+  pipeline_version: string;
+  total_rules: number;
+  passed: number;
+  failed: number;
+  needs_review: number;
+  not_applicable: number;
+  unable_to_evaluate: number;
+  is_compliant: boolean;
+  evaluated_at?: string | null;
+  results: RuleResultItem[];
+}
+
+export async function fetchValidationRules(enabledOnly = false): Promise<ValidationRuleItem[]> {
+  const query = enabledOnly ? '?enabled_only=true' : '';
+  const response = await fetch(`/api/v1/validation-rules${query}`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to fetch validation rules (${response.status})`);
+  }
+
+  const resJson = await response.json();
+  return resJson.data;
+}
+
+export async function fetchApplicationValidationSummary(applicationId: string): Promise<ValidationSummaryData> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/validation-summary`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to fetch validation summary (${response.status})`);
+  }
+
+  const resJson = await response.json();
+  return resJson.data;
+}
+
+export async function fetchApplicationValidationResults(
+  applicationId: string,
+  status?: string,
+): Promise<RuleResultItem[]> {
+  const query = status ? `?status=${encodeURIComponent(status)}` : '';
+  const response = await fetch(`/api/v1/applications/${applicationId}/validation-results${query}`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to fetch validation results (${response.status})`);
+  }
+
+  const resJson = await response.json();
+  return resJson.data;
+}
+
+export async function triggerApplicationValidation(
+  applicationId: string,
+  evaluationDate?: string,
+  force = false,
+): Promise<ValidationSummaryData> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/validate`, {
+    method: 'POST',
+    headers: COMMON_HEADERS,
+    body: JSON.stringify({
+      evaluation_date: evaluationDate || null,
+      force,
+    }),
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    const message = errData?.error?.message || `Failed to trigger validation (${response.status})`;
+    const code = errData?.error?.code;
+    const error = new Error(code ? `[${code}] ${message}` : message);
+    (error as any).code = code;
+    throw error;
+  }
+
+  const resJson = await response.json();
+  return resJson.data;
+}
+
+export async function fetchValidationResultDetail(resultId: string): Promise<RuleResultItem> {
+  const response = await fetch(`/api/v1/validation-results/${resultId}`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to fetch validation result (${response.status})`);
+  }
+
+  const resJson = await response.json();
+  return resJson.data;
+}
+
 

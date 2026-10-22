@@ -20,6 +20,13 @@ from app.schemas.application import (
     ApplicationDetailResponse,
 )
 from app.schemas.audit import AuditEventResponse
+from app.schemas.validation import (
+    ValidationRuleResponse,
+    RuleResultResponse,
+    ValidationRunResponse,
+    ValidationSummaryResponse,
+    ValidationTriggerRequest,
+)
 
 __all__ = [
     "MetaPagination",
@@ -38,4 +45,9 @@ __all__ = [
     "ApplicationListItem",
     "ApplicationDetailResponse",
     "AuditEventResponse",
+    "ValidationRuleResponse",
+    "RuleResultResponse",
+    "ValidationRunResponse",
+    "ValidationSummaryResponse",
+    "ValidationTriggerRequest",
 ]

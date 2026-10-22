@@ -5,20 +5,31 @@ import {
   Layers,
   Scale,
   RefreshCw,
+  Code2,
 } from 'lucide-react';
-import { fetchCategories, type ApplicationCategory } from '../../api/client';
+import {
+  fetchCategories,
+  fetchValidationRules,
+  type ApplicationCategory,
+  type ValidationRuleItem,
+} from '../../api/client';
 
 export const ValidationComplianceView: React.FC = () => {
   const [categories, setCategories] = useState<ApplicationCategory[]>([]);
+  const [rules, setRules] = useState<ValidationRuleItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   async function loadData() {
     setLoading(true);
     try {
-      const cats = await fetchCategories();
+      const [cats, ruleList] = await Promise.all([
+        fetchCategories(),
+        fetchValidationRules(),
+      ]);
       setCategories(cats);
+      setRules(ruleList);
     } catch (e) {
-      console.error('Failed to load validation rules categories', e);
+      console.error('Failed to load validation rules or categories', e);
     } finally {
       setLoading(false);
     }
@@ -27,51 +38,6 @@ export const ValidationComplianceView: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
-
-  const ruleCatalog = [
-    {
-      code: 'RULE-REQ-DOC',
-      type: 'REQUIRED_DOCUMENT',
-      severity: 'HIGH',
-      description: 'Verifies mandatory document presence against statutory category requirements (e.g., Accreditation Certificate, NOC, Land Document).',
-      failureAction: 'Triggers missing-document findings; blocks automated fast-track scrutiny.',
-    },
-    {
-      code: 'RULE-REQ-FLD',
-      type: 'REQUIRED_FIELD',
-      severity: 'HIGH',
-      description: 'Checks if mandatory fields (e.g. Certificate Number, Issue Date, Expiry Date) were extracted from readable pages.',
-      failureAction: 'Distinguishes NOT_FOUND (missing on readable doc) from NOT_ATTEMPTED (OCR unreadable); never assumes PASS.',
-    },
-    {
-      code: 'RULE-EXP-001',
-      type: 'EXPIRY_CHECK',
-      severity: 'HIGH',
-      description: 'Validates that certificate expiry date is not before the regulatory evaluation baseline (today + grace window).',
-      failureAction: 'Marks expired certificates with exact date discrepancy and links to the source document page.',
-    },
-    {
-      code: 'RULE-SAN-001',
-      type: 'DATE_SANITY',
-      severity: 'MEDIUM',
-      description: 'Checks that Issue Date ≤ Expiry Date, Issue Date is not in the future, and years are plausible.',
-      failureAction: 'Flags anachronisms or contradictory dates for human reviewer adjudication.',
-    },
-    {
-      code: 'RULE-FLD-APP',
-      type: 'FIELD_EQUALS_APPLICATION',
-      severity: 'HIGH',
-      description: 'Cross-checks extracted document data against institution-declared form data (e.g., permanent ID, approved intake capacity).',
-      failureAction: 'Identifies discrepancy between applicant claim and supporting evidentiary document.',
-    },
-    {
-      code: 'RULE-UNIQ-001',
-      type: 'UNIQUENESS',
-      severity: 'HIGH',
-      description: 'SHA-256 cryptographic hash collision check against all existing documents across all tenants.',
-      failureAction: 'Flags duplicate document indicator; does not prove fraud, prompts scrutiny officer verification.',
-    },
-  ];
 
   const resultVocabulary = [
     {
@@ -151,57 +117,116 @@ export const ValidationComplianceView: React.FC = () => {
       <div className="bg-white rounded-3xl border border-[#E9E6F2] shadow-xs overflow-hidden">
         <div className="px-6 py-4 border-b border-[#EEEAF5] flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-bold text-[#171B45]">
-              Deterministic Scrutiny Rule Catalog
+            <h2 className="text-sm font-bold text-[#171B45] flex items-center gap-2">
+              <Code2 className="w-4 h-4 text-[#7450D8]" />
+              Configured Scrutiny Rule Catalog (Live Database)
             </h2>
             <p className="text-[11px] text-[#5F6485]">
-              Configured rule types evaluated against extracted document text and declared application fields.
+              Active deterministic validation rules persisted in the database and executed against applications.
             </p>
           </div>
-          <span className="text-[11px] font-mono text-[#7450D8] bg-[#F3EEFC] px-2.5 py-1 rounded-lg font-bold">
-            6 Core Evaluators
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-mono text-[#7450D8] bg-[#F3EEFC] px-2.5 py-1 rounded-lg font-bold">
+              {rules.length} Rules Registered
+            </span>
+            <button
+              onClick={loadData}
+              className="p-1.5 rounded-lg border border-[#E9E6F2] text-[#5F6485] hover:text-[#7450D8]"
+              title="Refresh rules"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-[#EEEAF5] bg-[#FAF9FC] text-[#8589A6] font-semibold text-[11px]">
-                <th className="py-3 px-5">RULE TYPE</th>
-                <th className="py-3 px-4">SEVERITY</th>
-                <th className="py-3 px-4">EVALUATION LOGIC</th>
-                <th className="py-3 px-4">FINDING & EVIDENCE EFFECT</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#EEEAF5]">
-              {ruleCatalog.map((rule) => (
-                <tr key={rule.code} className="hover:bg-[#FAF8FF] transition-colors">
-                  <td className="py-3.5 px-5">
-                    <span className="font-mono font-bold text-[#171B45]">{rule.type}</span>
-                    <span className="block text-[10px] text-[#8589A6] font-mono mt-0.5">{rule.code}</span>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <span
-                      className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold ${
-                        rule.severity === 'HIGH'
-                          ? 'bg-[#FFF0EF] text-[#B42318] border border-[#FECDCA]'
-                          : 'bg-[#FFFAEB] text-[#B54708] border border-[#FEDF89]'
-                      }`}
-                    >
-                      {rule.severity}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4 text-[#5F6485] leading-relaxed max-w-md">
-                    {rule.description}
-                  </td>
-                  <td className="py-3.5 px-4 text-[#171B45] text-[11px] leading-relaxed max-w-sm">
-                    {rule.failureAction}
-                  </td>
+        {loading ? (
+          <div className="p-8 text-center text-xs text-[#5F6485]">Loading rule catalog...</div>
+        ) : rules.length === 0 ? (
+          <div className="p-8 text-center text-xs text-[#5F6485]">No validation rules registered. Run seed script or contact administrator.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-[#EEEAF5] bg-[#FAF9FC] text-[#8589A6] font-semibold text-[11px]">
+                  <th className="py-3 px-5">RULE CODE & TYPE</th>
+                  <th className="py-3 px-4">SEVERITY</th>
+                  <th className="py-3 px-4">DESCRIPTION & PARAMETERS</th>
+                  <th className="py-3 px-4">APPLIES TO</th>
+                  <th className="py-3 px-4">PROVENANCE & STATUS</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-[#EEEAF5]">
+                {rules.map((rule: ValidationRuleItem) => (
+                  <tr key={rule.id || rule.rule_code} className="hover:bg-[#FAF8FF] transition-colors">
+                    <td className="py-3.5 px-5">
+                      <div className="font-mono font-bold text-[#171B45] text-xs">{rule.rule_code}</div>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#F3EEFC] text-[#7450D8]">
+                          {rule.rule_type}
+                        </span>
+                        <span className="text-[10px] text-[#8589A6] font-mono">v{rule.rule_version}</span>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span
+                        className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold ${
+                          rule.severity === 'CRITICAL' || rule.severity === 'HIGH'
+                            ? 'bg-[#FFF0EF] text-[#B42318] border border-[#FECDCA]'
+                            : 'bg-[#FFFAEB] text-[#B54708] border border-[#FEDF89]'
+                        }`}
+                      >
+                        {rule.severity}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-[#5F6485] leading-relaxed max-w-md">
+                      <div className="font-semibold text-[#171B45] text-xs mb-0.5">{rule.rule_name}</div>
+                      <div className="text-[11px] mb-1.5">{rule.description}</div>
+                      {rule.parameters && Object.keys(rule.parameters).length > 0 && (
+                        <div className="bg-[#F8F9FC] p-2 rounded-lg border border-[#E9E6F2] font-mono text-[10px] text-[#5F6485] space-y-0.5">
+                          {Object.entries(rule.parameters).map(([k, v]) => (
+                            <div key={k} className="truncate">
+                              <span className="text-[#8589A6]">{k}:</span>{' '}
+                              <span className="text-[#171B45]">{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-4 text-[#171B45] text-[11px]">
+                      {rule.applies_to?.categories && rule.applies_to.categories.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {rule.applies_to.categories.map((c: string) => (
+                            <span key={c} className="px-2 py-0.5 rounded text-[10px] bg-[#FAF9FC] border border-[#E9E6F2] font-mono text-[#7450D8]">
+                              {c}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-[#8589A6] text-[10px] italic">All Categories</span>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <div className="flex flex-col gap-1 items-start">
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold ${
+                            rule.enabled
+                              ? 'bg-[#ECFDF3] text-[#027A48] border border-[#D1FADF]'
+                              : 'bg-[#F2F4F7] text-[#5F6485] border border-[#E4E7EC]'
+                          }`}
+                        >
+                          {rule.enabled ? 'Enabled' : 'Disabled'}
+                        </span>
+                        <span className="text-[10px] text-[#8589A6] font-mono">
+                          {rule.provenance === 'SYNTHETIC_DEMO' ? 'Synthetic Demo Rule' : rule.provenance}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* 4. Result Status Vocabulary Standards */}
@@ -254,7 +279,7 @@ export const ValidationComplianceView: React.FC = () => {
           <div className="p-8 text-center text-xs text-[#5F6485]">No categories found in database.</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {categories.map((cat) => (
+            {categories.map((cat: ApplicationCategory) => (
               <div key={cat.code} className="p-4 rounded-2xl bg-[#FAF8FF] border border-[#DCD0F7] space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-xs font-bold text-[#7450D8]">{cat.code}</span>
@@ -271,7 +296,7 @@ export const ValidationComplianceView: React.FC = () => {
                       Required Document Types:
                     </span>
                     <div className="flex flex-wrap gap-1">
-                      {cat.required_document_types.map((t) => (
+                      {cat.required_document_types.map((t: string) => (
                         <span key={t} className="px-2 py-0.5 rounded text-[10px] font-medium bg-white border border-[#E9E6F2] text-[#171B45]">
                           {t}
                         </span>

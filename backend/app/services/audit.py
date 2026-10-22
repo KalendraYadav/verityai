@@ -17,11 +17,18 @@ def record_audit_event(
     request_id: Optional[str] = None,
 ) -> AuditEvent:
     """Record an append-only audit event in the current transaction."""
+    resolved_actor_id = actor_id
+    resolved_actor_type = actor_type
+
+    if actor_id == "SYSTEM" or actor_type == "SYSTEM":
+        resolved_actor_id = None
+        resolved_actor_type = "SYSTEM"
+
     event = AuditEvent(
         id=str(uuid.uuid4()),
         event_type=event_type,
-        actor_id=actor_id,
-        actor_type=actor_type,
+        actor_id=resolved_actor_id,
+        actor_type=resolved_actor_type,
         application_id=application_id,
         document_id=document_id,
         entity_type=entity_type,
