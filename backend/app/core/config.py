@@ -28,9 +28,15 @@ class Settings(BaseSettings):
 
     # Storage & Uploads
     STORAGE_LOCAL_DIR: str = "./var/uploads"
+    STORAGE_ROOT: str = "./var/uploads"
     MAX_UPLOAD_SIZE_BYTES: int = 20 * 1024 * 1024  # 20 MB default per Section 18.1
     ALLOWED_UPLOAD_EXTENSIONS: List[str] = [".pdf", ".png", ".jpg", ".jpeg"]
     ALLOWED_UPLOAD_MIME_TYPES: List[str] = ["application/pdf", "image/png", "image/jpeg"]
+
+    # Optional AI Provider (Graceful offline degradation)
+    LLM_ENABLED: bool = False
+    LLM_BASE_URL: str = "http://localhost:11434"
+    LLM_MODEL: str = "llama3.2"
 
     model_config = SettingsConfigDict(
         env_file=".env",

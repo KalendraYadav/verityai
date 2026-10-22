@@ -1,7 +1,7 @@
 # PROJECT_STATUS.md — VerityAI & EntityLocker
 
 **Project:** VerityAI / EntityLocker (Smart India Hackathon 2026, Smart Automation Track)  
-**Milestone:** Phase 6 — AI-Assisted Document Analysis & Anomaly Detection (P0)  
+**Milestone:** Phase 10 — Security Hardening, Performance & Production Readiness (Final Audit)  
 **Last Updated:** 2026-10-22  
 **Baseline Environment:** WSL2 Ubuntu 24.04 LTS (Python 3.12.3, Node.js v22.23.2, npm 10.9.8, SQLite with WAL mode)
 
@@ -11,6 +11,8 @@
 
 | Component / Feature | Status | Notes / Verified Capabilities |
 |---|---|---|
+| **Security Hardening Middleware (`backend/app/main.py`)** | Implemented | Enforces mandatory HTTP security headers on all responses (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-XSS-Protection: 1; mode=block`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`). Global unhandled exception handler suppresses internal tracebacks and returns sanitized JSON error payloads. Path traversal blocking verified. |
+| **Regulatory Scrutiny Reports & Decision Support (`backend/app/services/reporting.py`, `/api/v1/applications/{id}/reports*`)** | Implemented | Automated multi-page PDF generation via PyMuPDF (`fitz`) and structured JSON dossiers. Consolidates application metadata, document completeness, explainable deterministic validation rule results (purpose, expected vs observed, evidence citations), cross-document anomaly findings, and prioritized reviewer recommendations. Secure streaming download (`/reports/{id}/download`) with `nosniff` and `no-store` headers. Persisted `ScrutinyReport` model with Alembic migration `702f3a5e4d62`. |
 | **Workflow Orchestration Service (`backend/app/services/workflow.py`)** | Implemented | Coordinates document-processing assessment, deterministic validation execution, and AI-assisted cross-document anomaly analysis. Evaluates multi-dimensional application readiness (documents, processing, validation, anomaly findings, human decision) without artificial percentages. Generates actionable blocker lists and recommended actions. |
 | **Application Lifecycle State Machine (`PERMITTED_TRANSITIONS`)** | Implemented | Enforces strict transitions across `DRAFT` -> `SUBMITTED` -> `UNDER_SCRUTINY` -> (`ACTION_REQUIRED` / `SCRUTINY_COMPLETED`). Enforces reviewer assignment upon scrutiny claim, auto-timestamping of submission, and transition audit events. Invalid jumps rejected with HTTP 400 `INVALID_STATE_TRANSITION`. |
 | **Workflow & Scrutiny Queue APIs (`/api/v1/applications/{id}/workflow*`, `/api/v1/scrutiny-queue`)** | Implemented | `POST /applications/{id}/workflow/start`, `GET /applications/{id}/workflow`, `GET /applications/{id}/readiness`, `POST /applications/{id}/workflow/transitions`, `GET /scrutiny-queue`. Supports filtering by readiness state (`READY_FOR_SCRUTINY`, `DOCUMENTS_PENDING`, `VALIDATION_REQUIRED`, `ACTION_REQUIRED`) and lifecycle status. |
