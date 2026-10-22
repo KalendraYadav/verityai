@@ -1,139 +1,77 @@
 # PROJECT_STATUS.md — VerityAI & EntityLocker
 
 **Project:** VerityAI / EntityLocker (Smart India Hackathon 2026, Smart Automation Track)  
-**Milestone:** Phase 10 — Security Hardening, Performance & Production Readiness (Final Audit)  
+**Milestone:** Phase 15 — Final Pilot Demonstration & Evaluation Package (COMPLETED)  
 **Last Updated:** 2026-10-22  
-**Baseline Environment:** WSL2 Ubuntu 24.04 LTS (Python 3.12.3, Node.js v22.23.2, npm 10.9.8, SQLite with WAL mode)
+**Baseline Environment:** WSL2 Ubuntu 24.04 LTS (Python 3.12.3, Node.js v22.23.2, npm 10.9.8, SQLite with WAL mode)  
+**Overall Status:** Demonstration Ready (100% Readiness Score, 121 Backend Tests Passing, 0 Regressions)
 
 ---
 
-## 1. Feature Status Inventory
+## 1. Feature Status Inventory (Phases 1–15)
 
-| Component / Feature | Status | Notes / Verified Capabilities |
+| Phase | Component / Capability | Status | Verified Implementation Details |
+|---|---|---|---|
+| **Phase 1** | Foundation & Project Setup | Implemented | FastAPI baseline, SQLite 3 with WAL mode, SQLAlchemy 2.0 Base, React 19 + TypeScript + Vite frontend. |
+| **Phase 2** | Core Records & Ingestion | Implemented | `Institution`, `Application`, `ApplicationCategory`, `AuditEvent` models; REST APIs with Pydantic v2 schemas. |
+| **Phase 3** | Document Handling & Storage | Implemented | Content magic byte detection (PDF `%PDF-`, PNG, JPEG), 20MB limit, SHA-256 deduplication, path-traversal prevention. |
+| **Phase 4** | Text Extraction & OCR | Implemented | PyMuPDF (`fitz`) native text extraction, RapidOCR fallback, Unicode NFKC, `DocumentPage` models, reprocessing. |
+| **Phase 5** | Deterministic Validation | Implemented | 4 core rule types (`REQUIRED_DOCUMENT`, `REQUIRED_FIELD`, `EXPIRY_CHECK`, `FIELD_EQUALS_APPLICATION`), persistent runs. |
+| **Phase 6** | Anomaly Detection | Implemented | Candidate field regex extraction, cross-document checks (`ANM-XDOC-NAME`, `ANM-XDOC-INTAKE`, `ANM-DATE-SANITY`). |
+| **Phase 7** | Authentication & RBAC | Implemented | Argon2id password hashing, HttpOnly JWT cookies, CSRF `X-Requested-With` checks, user RBAC endpoints, `AuthModal`. |
+| **Phase 8** | Workflow Orchestration | Implemented | Lifecycle state machine (`DRAFT` to `APPROVED`), multi-dimensional readiness calculator, live scrutiny queue. |
+| **Phase 9** | Explainable Reports | Implemented | PyMuPDF multi-page executive PDF scrutiny reports with official banners, JSON export, secure streaming download. |
+| **Phase 10** | Security Hardening | Implemented | HTTP security headers (`nosniff`, `DENY`), sanitized error responses, DB health probe (`/health`), safe defaults. |
+| **Phase 11** | Extended Verification | Implemented | Pluggable registry adapters (`SyntheticAISHEProvider`, `OfficialAICTEProviderStub`), legal name normalization, adjudication. |
+| **Phase 12** | Multilingual Scrutiny | Implemented | Devanagari numeral normalization (`०-९` -> `0-9`), script distribution classifier (`en`/`hi`/`mixed`/`und`), statutory glossary. |
+| **Phase 13** | Dossier History & Versioning | Implemented | Immutable `ApplicationVersion` snapshots, `DocumentRevision` ledgers, dossier freshness auditing, version diff engine. |
+| **Phase 14** | External Interoperability | Implemented | Three-tier gateway architecture (Category A Synthetic, Category B Generic REST, Category C Statutory Stub), socket-level SSRF defense. |
+| **Phase 15** | Final Pilot Demonstration | Implemented | Repeatable synthetic demo seeding (`seed.py`), pre-flight readiness auditor (`readiness.py`), `DEMO_SCRIPT.md`, `EVALUATION_PACKAGE.md`. |
+
+---
+
+## 2. Test Execution & Quality Assurance Summary
+
+| Test Suite / Target | Command | Real Result |
 |---|---|---|
-| **Extended Verification & Regulatory Registry Integration (`backend/app/services/registry.py`, `/api/v1/registry*`)** | Implemented | Pluggable registry provider interface with local `SyntheticAISHEProvider` and `OfficialAICTEProviderStub`. Deterministic comparison engine verifying AISHE identifiers, normalized legal names, active registration status, approved intake capacity ceilings, and jurisdiction states. Safe repeat CSV/JSON import with batch validation. Discrepancy adjudication workflow. Frontend Registry Verification tab with provider selector, synthetic advisory notices, and reviewer adjudication modal dialog. Alembic migration `89a1b2c3d4e5` applied. |
-| **Security Hardening Middleware (`backend/app/main.py`)** | Implemented | Enforces mandatory HTTP security headers on all responses (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-XSS-Protection: 1; mode=block`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`). Global unhandled exception handler suppresses internal tracebacks and returns sanitized JSON error payloads. Path traversal blocking verified. |
-| **Regulatory Scrutiny Reports & Decision Support (`backend/app/services/reporting.py`, `/api/v1/applications/{id}/reports*`)** | Implemented | Automated multi-page PDF generation via PyMuPDF (`fitz`) and structured JSON dossiers. Consolidates application metadata, document completeness, explainable deterministic validation rule results (purpose, expected vs observed, evidence citations), cross-document anomaly findings, and prioritized reviewer recommendations. Secure streaming download (`/reports/{id}/download`) with `nosniff` and `no-store` headers. Persisted `ScrutinyReport` model with Alembic migration `702f3a5e4d62`. |
-| **Workflow Orchestration Service (`backend/app/services/workflow.py`)** | Implemented | Coordinates document-processing assessment, deterministic validation execution, and AI-assisted cross-document anomaly analysis. Evaluates multi-dimensional application readiness (documents, processing, validation, anomaly findings, human decision) without artificial percentages. Generates actionable blocker lists and recommended actions. |
-| **Application Lifecycle State Machine (`PERMITTED_TRANSITIONS`)** | Implemented | Enforces strict transitions across `DRAFT` -> `SUBMITTED` -> `UNDER_SCRUTINY` -> (`ACTION_REQUIRED` / `SCRUTINY_COMPLETED`). Enforces reviewer assignment upon scrutiny claim, auto-timestamping of submission, and transition audit events. Invalid jumps rejected with HTTP 400 `INVALID_STATE_TRANSITION`. |
-| **Workflow & Scrutiny Queue APIs (`/api/v1/applications/{id}/workflow*`, `/api/v1/scrutiny-queue`)** | Implemented | `POST /applications/{id}/workflow/start`, `GET /applications/{id}/workflow`, `GET /applications/{id}/readiness`, `POST /applications/{id}/workflow/transitions`, `GET /scrutiny-queue`. Supports filtering by readiness state (`READY_FOR_SCRUTINY`, `DOCUMENTS_PENDING`, `VALIDATION_REQUIRED`, `ACTION_REQUIRED`) and lifecycle status. |
-| **Scrutiny Queue & Dossier Pipeline Stepper (`ScrutinyQueueView.tsx`, `ApplicationDetailWorkspace.tsx`)** | Implemented | Live Scrutiny Queue displaying real readiness badges, blockers, open findings, and validation failures. Scrutiny Dossier features 5-stage visual progress stepper, "Run Scrutiny Pipeline" one-click orchestration, multi-dimensional blockers banner, and Reviewer Decision controls (`Claim Scrutiny`, `Request Info`, `Finalize Determination`). |
-| **Authentication & RBAC (`backend/app/core/security.py`, `backend/app/api/deps.py`)** | Implemented | Argon2id password hashing with constant-time verification. Secure session management via HttpOnly, SameSite=Lax JWT cookies. CSRF defense via `X-Requested-With: VerityAI` enforcement on cookie-mutating requests. Role-based access control with `require_roles("ADMIN", "REVIEWER", "VIEWER")`. Complete audit logging (`USER_LOGIN_SUCCESS`, `USER_LOGIN_FAILED`, `USER_LOGOUT`, `USER_PASSWORD_CHANGED`, `USER_CREATED`, `USER_STATUS_UPDATED`). |
-| **Auth & User Management APIs (`/api/v1/auth*`, `/api/v1/users*`)** | Implemented | `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `POST /auth/change-password`, `GET /users`, `POST /users`, `PATCH /users/{id}/status`. Non-enumerating credential rejection (401), disabled account checks (403), admin self-deactivation protection (400). |
-| **Frontend Authentication & Session Modal (`AuthModal.tsx`, `AppShell.tsx`)** | Implemented | Interactive session modal with quick demo logins (Admin: `admin@verityai.gov.in`, Reviewer: `reviewer@verityai.gov.in`), active user session indicators, role badges, sign-out controls, and Argon2id password change form. Production build verified with zero errors. |
-| **AI-Assisted Anomaly Detection Engine (`backend/app/services/anomaly.py`)** | Implemented | Discovers candidate fields (`certificate_number`, `institution_name`, `approved_intake`, `academic_year`, `expiry_date`, `issue_date`, `aishe_code`) with document/page provenance. Detects cross-document name conflict (`ANM-XDOC-NAME`), intake mismatch (`ANM-XDOC-INTAKE`), chronological date inversion (`ANM-DATE-SANITY`), duplicate file upload collision (`ANM-DUPLICATE-FILE`), and degraded OCR quality (`ANM-EXTRACTION-QUALITY`). Carry-over of human reviews on re-analysis. |
-| **Findings & Candidate Field Models (`findings`, `finding_evidence`, `extracted_fields`)** | Implemented | Strict conformance to `DATA_MODEL_AND_API.md` (Tables 10, 14, 15). Review states (`OPEN`, `UNDER_REVIEW`, `CONFIRMED`, `DISMISSED`, `RESOLVED`, `AWAITING_EVIDENCE`). Alembic migration `f6afdebbf862` applied and verified. |
-| **Anomaly & Analysis APIs (`/api/v1/applications/{id}/analyze`, `/anomalies*`)** | Implemented | `POST /applications/{id}/analyze`, `GET /applications/{id}/analysis`, `GET /applications/{id}/anomalies`, `GET /anomalies/{id}`, `POST /anomalies/{id}/review`, `GET /applications/{id}/extracted-fields`. Full Pydantic v2 schemas. |
-| **Scrutiny Workspace Anomalies Tab (`ApplicationDetailWorkspace.tsx`)** | Implemented | Interactive scrutiny tab: advisory banner, scrutiny scan trigger, metric counters, severity/verdict filters, discrepancy cards with expected vs observed values, evidence citations, and human reviewer verdict controls. |
-| **Deterministic Validation Engine (`backend/app/services/validation.py`)** | Implemented | Evaluates 4 required rule types (`REQUIRED_DOCUMENT`, `REQUIRED_FIELD`, `EXPIRY_CHECK`, `FIELD_EQUALS_APPLICATION`) against stored applications, uploaded documents, and page-level extracted OCR/text. Injected/deterministic `evaluation_date`. ISO/DMY/Textual date parsing with ambiguity detection. Robust regex with digit lookaheads. Idempotent evaluation with previous-run deactivation and full audit logging (`VALIDATION_INITIATED`, `VALIDATION_COMPLETED`). |
-| **Validation Models & Alembic Migration (`validation_rules`, `validation_runs`, `rule_results`)** | Implemented | Conforms strictly to `DATA_MODEL_AND_API.md` (Tables 11, 12, 13). Full foreign key references, status vocabularies (`PASS`, `FAIL`, `NEEDS_REVIEW`, `NOT_APPLICABLE`, `UNABLE_TO_EVALUATE`), and evidence payload snapshots. Alembic migration `6a9eaf48f7bc` applied and verified. |
-| **Validation API Endpoints (`/api/v1/validation*`)** | Implemented | `GET /api/v1/validation-rules`, `POST /api/v1/applications/{id}/validate`, `GET /api/v1/applications/{id}/validation-summary`, `GET /api/v1/applications/{id}/validation-results`, `GET /api/v1/validation-results/{id}`. Pydantic v2 schemas and consistent error responses. |
-| **Application Scrutiny Workspace Validation Tab (`ApplicationDetailWorkspace.tsx`)** | Implemented | Full interactive validation tab in Scrutiny Workspace: "Run Scrutiny Validation" / "Re-run Validation" triggers, status banner (`All Passed`, `Requires Review`, `Failed`), metric counters, status filter pills, evidence-linked result cards with expected vs observed value comparisons, page badges, OCR confidence, unresolved reason tags, and direct document OCR inspection links. Zero fabricated statistics. |
-| **Validation Rules Live Catalog (`ValidationComplianceView.tsx`)** | Implemented | Displays live database-persisted scrutiny rules catalog fetched from `GET /api/v1/validation-rules`. Shows rule code, version, severity, rule type, parameter breakdown, category applicability, and synthetic demonstration labeling. |
-| **Design System & Visual Tokens** | Implemented | Unified tokens for Brand (Lavender `#CBB3E8`, Purple `#7450D8`, Deep Purple `#5633B8`), Primary Actions (Tomato Red `#E34234`, Button Red `#F04438`), Neutrals (`#FAF9FC`, `#FFFFFF`, `#171B45`, `#5F6485`), and Statuses. Inter typography and 8px spacing grid. |
-| **VerityAI Information Architecture & Shell (`AppShell`)** | Implemented | Navigation: Overview, Applications, Scrutiny Queue, Documents, Validation Rules, Institutions, Audit Trail. Truthful Scrutiny Session metadata panel (Reviewer role, SQLite WAL storage, VerityAI v0.2). |
-| **Institutional Overview Dashboard (`DashboardView`)** | Implemented | Workload-centric: registered applications, awaiting scrutiny count, drafts, document processing distribution (Extracted, Processing, Needs Review), active applications work queue with direct Scrutiny Workspace triggers, and live regulatory audit events feed. Zero fabricated percentages or metrics. |
-| **Scrutiny Queue (`ScrutinyQueueView`)** | Implemented | Dedicated queue for submitted applications awaiting official review, tracking document readiness, extraction completeness, and direct "Examine Scrutiny" workspace triggers. |
-| **Registered Technical Institutions (`EntitiesView`)** | Implemented | AICTE institutional directory displaying registered engineering and technical colleges from the live SQLite database, AISHE identifiers, city, state, and tenant isolation status. |
-| **Regulatory Audit Timeline (`AuditTimelineView`)** | Implemented | Chronological timeline of regulatory audit events loaded directly from `GET /api/v1/audit-events`. Actor-isolation for system events (`actor_id = None`, `actor_type = 'SYSTEM'`). |
-| **Core Models (`User`, `Institution`, `ApplicationCategory`, `Application`, `AuditEvent`)** | Implemented | SQLAlchemy 2.0 models conforming to `DATA_MODEL_AND_API.md`. Foreign keys enforce `RESTRICT`/`SET NULL`; SQLite WAL and PRAGMA foreign_keys=ON verified. |
-| **Document & Processing Run Models (`Document`, `ProcessingRun`)** | Implemented | UUID primary keys, relative storage keys, SHA-256 deduplication indexing, lifecycle status tracking, and cascading processing runs. Migration `5770d28a3aaa` applied. |
-| **Document Pages Model (`DocumentPage`)** | Implemented | Tracks `document_id`, `processing_run_id`, `page_number`, `text_source` (`DIGITAL_TEXT`, `OCR`, `NONE`), `raw_text`, `clean_text`, `char_count`, `ocr_mean_confidence` (strictly null for digital text), `rotation_applied`, `status`, `error_code`, `duration_ms`. Migration `66af7474b624` applied. |
-| **Secure File Storage (`backend/app/services/storage.py`)** | Implemented | Isolated storage root outside public directories (`./var/uploads`), relative key pattern `<app_id>/<doc_id>/original.<ext>`, strict path traversal prevention, atomic file write with temporary file cleanup on failure. |
-| **Multi-Layer File Validation & Security** | Implemented | Content-based magic byte inspection for PDF (`%PDF-`), PNG (`\x89PNG\r\n\x1a\n`), and JPEG (`\xff\xd8\xff`). Checks extension allowlist, compares detected mime against extension and declared mime, rejects empty files (422), enforces 20MB size limit (413). |
-| **Document Upload Endpoint (`POST /api/v1/applications/{id}/documents`)** | Implemented | Multipart upload returning HTTP 202 Accepted. Enqueues asynchronous text extraction in `BackgroundTasks` so upload returns immediately. |
-| **Document Listing & Metadata APIs** | Implemented | `GET /api/v1/applications/{id}/documents`, `GET /api/v1/documents`, and `GET /api/v1/documents/{id}` return paginated metadata without exposing internal filesystem paths. Exposes `extraction_quality_band`. |
-| **Secure File Preview/Download (`GET /api/v1/documents/{id}/file`)** | Implemented | Protected streaming endpoint with `X-Content-Type-Options: nosniff`, `Cache-Control: no-store`, sanitized Content-Disposition (`inline` or `attachment`), missing-file graceful handling, and audit logging. |
-| **Modular Text Extraction Service (`backend/app/services/extraction.py`)** | Implemented | PyMuPDF for native digital text extraction (>= 50 chars threshold); conservative normalization (Unicode NFKC, de-hyphenation, whitespace collapse). Scanned PDF fallback and PNG/JPEG OCR via RapidOCR (`rapidocr-onnxruntime`). |
-| **Page-Level Extraction API (`GET /api/v1/documents/{id}/pages`)** | Implemented | Returns page-level text, text source (`DIGITAL_TEXT`, `OCR`, `NONE`), engine-reported confidence, character counts, and timings. |
-| **Processing Status & Quality API (`GET /api/v1/documents/{id}/processing`)** | Implemented | Exposes current processing run, status, quality summary, safe error summaries, and warnings. |
-| **Idempotent Reprocess Endpoint (`POST /api/v1/documents/{id}/reprocess`)** | Implemented | Allows re-running extraction and OCR on demand. Enforces conflict rejection (409) if processing is active; replaces previous page records safely without orphans. |
-| **Document Extraction Workspace (`DocumentsView.tsx`)** | Implemented | Comprehensive multi-tab document workspace: page-by-page extracted text viewer with copy action, OCR engine confidence disclaimers, inline document preview, pipeline run metadata & quality breakdown, live status badges, automated polling for in-progress jobs, and reprocess actions. |
-| **System Liveness (`GET /api/v1/health`)** | Implemented | Live `SELECT 1` database query probe, version and timestamp diagnostics; verified via automated unit and regression tests. |
+| **Comprehensive Backend Suite (121 tests)** | `pytest backend/tests -q` | **121 passed, 0 failures** in 17.13s |
+| • `tests/test_auth.py` (14 tests) | Argon2id, JWT session cookies, CSRF, RBAC | 14 passed |
+| • `tests/test_applications.py` (8 tests) | Application lifecycle, categories, queries | 8 passed |
+| • `tests/test_documents.py` (15 tests) | Magic bytes, upload limits, deduplication, path safety | 15 passed |
+| • `tests/test_extraction.py` (13 tests) | PyMuPDF extraction, RapidOCR fallback, quality bands | 13 passed |
+| • `tests/test_validation.py` (19 tests) | Deterministic compliance rules, date parsing, idempotency | 19 passed |
+| • `tests/test_anomalies.py` (6 tests) | Cross-document discrepancies, candidate regex fields | 6 passed |
+| • `tests/test_workflow.py` (6 tests) | State machine transitions, readiness, scrutiny queue | 6 passed |
+| • `tests/test_reports.py` (5 tests) | PyMuPDF multi-page PDF generation and download | 5 passed |
+| • `tests/test_security.py` (6 tests) | Security headers, sanitized errors, health probe | 6 passed |
+| • `tests/test_registry.py` (9 tests) | AISHE synthetic adapter, official stub, deduplication | 9 passed |
+| • `tests/test_multilingual.py` (7 tests) | Devanagari numerals, script classifier, glossary | 7 passed |
+| • `tests/test_versioning.py` (7 tests) | Snapshots, document revisions, freshness auditing | 7 passed |
+| • `tests/test_integration.py` (6 tests) | SSRF defenses, Category A/B/C adapters, sync log | 6 passed |
+| **Frontend Production Build** | `npm run build` | **Built successfully** (`vite build`) in 4.81s with 0 errors |
+| **Demonstration Readiness Pre-Flight** | `python -m app.cli.readiness` | **10/10 Checks Passed (100% Score)** |
 
 ---
 
-## 2. Test Execution & Verified Results
+## 3. Demonstration Data Assets (Synthetic Sandbox)
 
-| Test Target | Command | Real Result |
-|---|---|---|
-| **Backend Test Suite (61 tests)** | `pytest backend/tests -v` | **61 passed**, 0 failed in 5.37s |
-| • `test_candidate_field_extraction` | Regex-based candidate field extraction with page provenance | Passed |
-| • `test_cross_document_name_and_intake_anomalies` | Detects ANM-XDOC-NAME and ANM-XDOC-INTAKE with citations | Passed |
-| • `test_date_sanity_and_duplicate_file_anomalies` | Detects inverted dates (ANM-DATE-SANITY) and duplicate SHA-256 | Passed |
-| • `test_degraded_ocr_extraction_quality_anomaly` | Detects ANM-EXTRACTION-QUALITY for poor OCR quality bands | Passed |
-| • `test_reviewer_workflow_and_carry_over` | Human reviewer verdict updates & carry-over on re-analysis | Passed |
-| • `test_anomaly_api_endpoints` | Tests all /api/v1/applications/{id}/analyze and anomaly endpoints | Passed |
-| • `test_create_and_list_institution` | In-memory SQLite | Passed |
-| • `test_create_application_success` | In-memory SQLite + Audit check | Passed |
-| • `test_list_applications_with_pagination_and_filter` | Query filters & pagination meta | Passed |
-| • `test_get_application_detail` | Detail retrieval by ID | Passed |
-| • `test_get_application_not_found` | 404 with standard error body | Passed |
-| • `test_create_application_nonexistent_institution` | 404 INSTITUTION_NOT_FOUND | Passed |
-| • `test_create_application_nonexistent_category` | 404 CATEGORY_NOT_FOUND | Passed |
-| • `test_create_application_invalid_date_format` | 422 VALIDATION_ERROR on non-ISO date | Passed |
-| • `test_get_application_audit_events` | Audit timeline ordered by timestamp | Passed |
-| • `test_list_global_audit_events` | Global audit events endpoint check | Passed |
-| • `test_upload_pdf_success` | 202 Accepted, Document + ProcessingRun + Audit | Passed |
-| • `test_upload_png_success` | Content magic byte detection for PNG | Passed |
-| • `test_upload_jpeg_success` | Content magic byte detection for JPEG | Passed |
-| • `test_empty_file_rejected` | 422 EMPTY_FILE + FILE_REJECTED audit | Passed |
-| • `test_unsupported_extension_rejected` | 415 UNSUPPORTED_MEDIA_TYPE | Passed |
-| • `test_extension_content_mismatch_rejected` | 415 FILE_TYPE_MISMATCH | Passed |
-| • `test_file_too_large_rejected` | 413 FILE_TOO_LARGE streaming abort | Passed |
-| • `test_upload_nonexistent_application_rejected` | 404 APPLICATION_NOT_FOUND | Passed |
-| • `test_duplicate_content_detected` | Flags `possible_duplicate: true` on SHA-256 match | Passed |
-| • `test_list_and_get_document_metadata` | Paginated listing, no absolute paths exposed | Passed |
-| • `test_preview_and_download_document_file` | Nosniff, cache-control: no-store, Content-Disposition | Passed |
-| • `test_missing_stored_file_handling` | Graceful 404 FILE_NOT_FOUND and marks MISSING | Passed |
-| • `test_storage_path_traversal_protection` | Directory traversal blocked in storage resolver | Passed |
-| • `test_text_normalization_utility` | Unicode NFKC, de-hyphenation, and whitespace collapse | Passed |
-| • `test_digital_pdf_extraction` | Digital PDF extraction via PyMuPDF (strictly null confidence) | Passed |
-| • `test_multi_page_digital_pdf_extraction` | Multi-page text extraction retaining page order | Passed |
-| • `test_scanned_pdf_ocr_fallback` | Genuine RapidOCR fallback for scanned PDF (real confidence float) | Passed |
-| • `test_image_png_ocr` | Genuine RapidOCR inference on PNG document | Passed |
-| • `test_blank_image_no_text_extracted` | Blank image -> MANUAL_REVIEW_REQUIRED and NO_TEXT_EXTRACTED | Passed |
-| • `test_corrupt_pdf_failure_handling` | Malformed PDF -> FAILED and FILE_CORRUPTED | Passed |
-| • `test_missing_file_failure_handling` | Missing stored file -> FAILED and FILE_MISSING | Passed |
-| • `test_pages_and_processing_api_endpoints` | GET /pages, GET /processing, POST /reprocess verification | Passed |
-| • `test_health_endpoint_healthy` | Live probe regression | Passed |
-| • `test_root_endpoint` | Root schema regression | Passed |
-| • `test_alembic_migrations_fresh_database` | Fresh SQLite upgrade & downgrade including validation tables | Passed |
-| • `test_database_persistence_across_restart` | Disk persistence across engine close | Passed |
-| • `test_parse_date_string_iso` | Parses ISO dates (2026-10-22) | Passed |
-| • `test_parse_date_string_dmy` | Parses DMY dates with slashes/dashes | Passed |
-| • `test_parse_date_string_ambiguous` | Flags ambiguous MM/DD vs DD/MM as uncertain | Passed |
-| • `test_parse_date_string_textual_month` | Parses dates with month names (31 March 2026) | Passed |
-| • `test_parse_date_string_malformed` | Rejects malformed dates cleanly without crash | Passed |
-| • `test_required_document_missing` | Flags missing mandatory doc as FAIL with clear explanation | Passed |
-| • `test_required_document_present_and_processed` | Reports PASS when doc is uploaded and processed | Passed |
-| • `test_required_document_processing_in_progress` | Flags in-flight doc as NEEDS_REVIEW (not FAIL or PASS) | Passed |
-| • `test_required_document_extraction_failed` | Flags failed extraction as NEEDS_REVIEW (manual review) | Passed |
-| • `test_required_field_present_on_page` | Identifies certificate_number on page, captures page # & OCR conf | Passed |
-| • `test_required_field_missing_on_readable_document` | Distinguishes missing field from missing document | Passed |
-| • `test_expiry_check_valid_date` | Verifies certificate validity against evaluation_date baseline | Passed |
-| • `test_expiry_check_expired_date` | Reports FAIL on expired certificate with exact day deficit | Passed |
-| • `test_field_equals_application_name_matching` | Cross-checks declared name vs certificate with case/space norm | Passed |
-| • `test_field_equals_application_numeric_intake_mismatch` | Reports FAIL on numeric intake capacity mismatch | Passed |
-| • `test_validation_idempotency_and_audit` | Repeated evaluation archives old run, creates audit events | Passed |
-| • `test_api_list_validation_rules` | GET /api/v1/validation-rules returns synthetic rule catalog | Passed |
-| • `test_api_trigger_and_get_summary` | POST /validate and GET /validation-summary API integration | Passed |
-| • `test_api_nonexistent_application_404` | 404 on nonexistent application validation | Passed |
-| **Frontend TypeScript Build** | `npm run build` | **Built successfully** (`tsc -b && vite build`) in 8.49s with 0 errors |
+* **Applications:**
+  * `VAI-2026-0001` (Apex Institute of Technology, Pune) — Fully compliant technical institute dossier (Intake 120, valid land possession).
+  * `VAI-2026-0002` (Zenith College of Engineering, Bengaluru) — Discrepancy dossier (Declared intake 180 vs Devanagari certificate stating १२०).
+  * `VAI-2026-0003` (Aryavart Polytechnic Institute, Delhi) — Draft dossier for institutional registrar submission walkthrough.
+* **Demonstration Documents:**
+  * `Apex_AICTE_Extension_of_Approval_2026.pdf` (Clean digital text, approved intake 120, valid through 2027-03-31)
+  * `Apex_Contiguous_Land_Certificate.pdf` (Revenue Department contiguous land certificate, 5.50 acres)
+  * `Zenith_Bilingual_AICTE_Approval_Devanagari.pdf` (Bilingual Hindi/English certificate with Devanagari numerals `१२०`)
+* **Demonstration Accounts:**
+  * Admin: `admin@verityai.gov.in` (`AdminSecurePass123!`)
+  * Reviewer: `reviewer@verityai.gov.in` (`ReviewerPass123!`)
+  * Operator: `operator@verityai.gov.in` (`OperatorPass123!`)
 
 ---
 
-## 3. Known Limitations and Deferred Requirements
+## 4. Known Boundaries & Limitations
 
-* **Authentication Sessions (Deferred to Phase 7):** Full cookie-based login (`POST /api/v1/auth/login`) is scheduled after document processing and the rule engine.
-* **Layout / Table Analysis (P1):** Multi-column reading order and complex table structure parsing are P1 enhancements; current pipeline extracts text in conservative reading order.
-* **Official AICTE Rule Catalog Verification (Production Requirement):** Demonstration rules (`RULE-DOC-ACCRED`, `RULE-DOC-LAND`, `RULE-FLD-CERTNO`, `RULE-EXP-ACCRED`, `RULE-CMP-NAME`, `RULE-CMP-INTAKE`) are realistic synthetic prototypes. Production deployment requires verifying exact statutory rules and tolerance thresholds against the AICTE Approval Process Handbook (APH).
-
----
-
-## 4. Next Recommended Action
-
-**Phase 6 — Cross-Document Checks, Verification Registry & Issuer Verification (P0):**
-1. Implement cross-document consistency checks (corroborating institution identifiers across multiple distinct documents).
-2. Implement synthetic verification registry (`verification_attempts` model and simulated issuer fixture lookup).
-3. Connect issuer verification status to evidence findings and human reviewer adjudication.
+* **Synthetic Data Only:** The system uses exclusively synthetic institutions, certificates, and mock registries. No live government credentials or private records are included.
+* **Statutory Gateway Stubs:** Official government endpoints (e.g. AICTE portal) report honest unconfigured status rather than fabricating responses.
+* **OCR Hardware:** Uses local CPU-bound RapidOCR inference; GPU acceleration is recommended for high-throughput production clusters.
