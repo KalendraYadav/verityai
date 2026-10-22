@@ -183,7 +183,7 @@ export const DashboardView: React.FC<Props> = ({
 
           <button
             onClick={onOpenNewApplication}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-[#F04438] text-white hover:bg-[#E34234] transition-all shadow-xs cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-[#6941C6] text-white hover:bg-[#5631A8] transition-all shadow-xs cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>New Application</span>

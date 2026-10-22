@@ -1,0 +1,43 @@
+# ==============================================================================
+# VerityAI Backend — .dockerignore
+# Exclude paths that bloat build context or leak secrets/state into the image.
+# ==============================================================================
+
+# Python virtual environment (can be several GB, causes cache invalidation)
+.venv/
+venv/
+env/
+
+# Python byte-code caches
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Test and coverage artefacts
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.coveragerc
+
+# Development / editor state
+.mypy_cache/
+.ruff_cache/
+.git/
+.gitignore
+*.md
+
+# Runtime data (mounted as a Docker volume in production)
+var/
+*.db
+*.sqlite
+*.sqlite3
+
+# Secrets and local config overrides
+.env
+.env.*
+!.env.example
+
+# OS noise
+.DS_Store
+Thumbs.db

@@ -80,3 +80,102 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #CBB3E8;
 }
+
+/* ── Landing Page Decorative & Workflow Card Enhancements ─────────────────── */
+.workflow-card {
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, box-shadow;
+  cursor: default;
+}
+
+.workflow-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 16px 32px -8px rgba(23, 27, 69, 0.12), 0 6px 16px -4px rgba(23, 27, 69, 0.06);
+}
+
+.workflow-card .workflow-icon {
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 220ms ease,
+              box-shadow 220ms ease;
+}
+
+.workflow-card:hover .workflow-icon {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.capability-card {
+  transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 240ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 240ms ease;
+  will-change: transform, box-shadow;
+  cursor: default;
+}
+
+.capability-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 28px -6px rgba(23, 27, 69, 0.10), 0 4px 12px -2px rgba(23, 27, 69, 0.05);
+}
+
+.capability-card .capability-icon {
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 220ms ease;
+}
+
+.capability-card:hover .capability-icon {
+  transform: translateY(-2px) scale(1.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workflow-card,
+  .workflow-card:hover,
+  .workflow-card .workflow-icon,
+  .workflow-card:hover .workflow-icon,
+  .capability-card,
+  .capability-card:hover,
+  .capability-card .capability-icon,
+  .capability-card:hover .capability-icon {
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+/* ── Accessibility & GIGW 3.0 Conformance Enhancements ────────────────────── */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 1rem;
+  background-color: #172554;
+  color: #FFFFFF;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  font-size: 0.75rem;
+  border-radius: 0.375rem;
+  z-index: 9999;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: top 150ms ease-in-out;
+}
+
+.skip-link:focus {
+  top: 0.75rem;
+  outline: 3px solid #F59E0B;
+  outline-offset: 2px;
+}
+
+/* Accessible standard focus indicator conforming to WCAG 2.1 Focus Visible (2.4.7) */
+*:focus-visible {
+  outline: 2px solid #6941C6;
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #6941C6;
+  outline-offset: 2px;
+}

@@ -1,7 +1,7 @@
 import re
 import uuid
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 
 from sqlalchemy.orm import Session
@@ -216,7 +216,7 @@ def import_registry_dataset(
             existing.dataset_version = dataset_version
             existing.is_stale = item.get("is_stale", False)
             existing.metadata_json = item.get("metadata_json") or existing.metadata_json
-            existing.updated_at = datetime.utcnow()
+            existing.updated_at = datetime.now(timezone.utc)
             updated_count += 1
         else:
             new_record = RegistryRecord(
@@ -506,7 +506,7 @@ def resolve_registry_discrepancy(
     result.resolution_status = resolution_status
     result.resolution_notes = resolution_notes
     result.resolved_by_id = actor_id
-    result.resolved_at = datetime.utcnow()
+    result.resolved_at = datetime.now(timezone.utc)
 
     audit = AuditEvent(
         actor_id=actor_id,

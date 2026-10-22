@@ -4,13 +4,16 @@ import {
   fetchInstitutions,
   fetchCategories,
   fetchCurrentUser,
+  logoutUser,
   type HealthResponse,
   type Institution,
   type ApplicationCategory,
   type UserProfile,
 } from './api/client';
+import { useAppRouter } from './router/useAppRouter';
 import { AppShell, type NavItemKey } from './components/layout/AppShell';
 import { LandingPage } from './components/landing/LandingPage';
+import { LoginPage } from './components/auth/LoginPage';
 import { DashboardView } from './components/dashboard/DashboardView';
 import { ApplicationList } from './components/ApplicationList';
 import { ApplicationDetailWorkspace } from './components/applications/ApplicationDetailWorkspace';
@@ -24,19 +27,19 @@ import { DocumentUploadModal } from './components/documents/DocumentUploadModal'
 import { AuthModal } from './components/auth/AuthModal';
 import { RegistryVerificationView } from './components/registry/RegistryVerificationView';
 import { RegulatoryGatewaysView } from './components/gateways/RegulatoryGatewaysView';
-import {
-  ShieldCheck,
-  RefreshCw,
-  X,
-} from 'lucide-react';
+import { VerityAIExcelLogo } from './components/brand/VerityAIExcelLogo';
+import { ShieldCheck, RefreshCw, X } from 'lucide-react';
 
 export function App() {
-  const [viewMode, setViewMode] = useState<'landing' | 'dashboard'>('dashboard');
-  const [currentTab, setCurrentTab] = useState<NavItemKey>('overview');
-  const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
+  const { pathname, search, route, navigate, navigateToTab } = useAppRouter();
 
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [authChecking, setAuthChecking] = useState<boolean>(true);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(
+    route.type === 'workspace' && route.applicationId ? route.applicationId : null
+  );
 
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [healthLoading, setHealthLoading] = useState(false);
@@ -46,6 +49,41 @@ export function App() {
   const [categories, setCategories] = useState<ApplicationCategory[]>([]);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+
+  // Synchronize route applicationId with local state
+  useEffect(() => {
+    if (route.type === 'workspace') {
+      if (route.applicationId) {
+        setSelectedApplicationId(route.applicationId);
+      } else if (route.tab !== 'applications') {
+        setSelectedApplicationId(null);
+      }
+    }
+  }, [route]);
+
+  // Synchronize descriptive document title per route (WCAG 2.4.2 Page Titled / GIGW 3.0)
+  useEffect(() => {
+    if (route.type === 'landing') {
+      document.title = 'VerityAI Excel — Institutional Application Scrutiny Platform';
+    } else if (route.type === 'login') {
+      document.title = 'Sign In — VerityAI Excel Scrutiny Portal';
+    } else if (route.type === 'workspace') {
+      const tabTitles: Record<NavItemKey, string> = {
+        overview: 'Workspace Overview — VerityAI Excel',
+        applications: route.applicationId
+          ? `Application ${route.applicationId} — VerityAI Excel`
+          : 'Application Register — VerityAI Excel',
+        scrutiny: 'Scrutiny Queue — VerityAI Excel',
+        documents: 'Document Repository — VerityAI Excel',
+        compliance: 'Validation Rules & Compliance — VerityAI Excel',
+        institutions: 'Institutional Register — VerityAI Excel',
+        registry: 'Registry Verification — VerityAI Excel',
+        gateways: 'Regulatory Gateways — VerityAI Excel',
+        audit: 'Audit Trail & Compliance Log — VerityAI Excel',
+      };
+      document.title = tabTitles[route.tab] || 'Workspace — VerityAI Excel';
+    }
+  }, [route]);
 
   async function checkHealth() {
     setHealthLoading(true);
@@ -66,155 +104,266 @@ export function App() {
       setInstitutions(insts);
       setCategories(cats);
     } catch (e) {
-      console.error(e);
+      console.error('Failed to load metadata', e);
     }
   }
 
-  async function checkUserSession() {
-    try {
-      const user = await fetchCurrentUser();
-      setCurrentUser(user);
-    } catch {
-      setCurrentUser(null);
-    }
-  }
-
+  // Verify session on mount without flashing or mis-routing
   useEffect(() => {
+    let isMounted = true;
+    async function checkSession() {
+      try {
+        const user = await fetchCurrentUser();
+        if (isMounted) {
+          setCurrentUser(user);
+        }
+      } catch {
+        if (isMounted) {
+          setCurrentUser(null);
+        }
+      } finally {
+        if (isMounted) {
+          setAuthChecking(false);
+        }
+      }
+    }
+
+    checkSession();
     checkHealth();
     loadMetadata();
-    checkUserSession();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+    } catch (err) {
+      console.error('Logout error', err);
+    } finally {
+      setCurrentUser(null);
+      navigate('/');
+    }
+  };
+
+  /* ── 1. Loading splash for protected workspace routes ───────── */
+  if (route.type === 'workspace' && authChecking) {
+    return (
+      <div className="min-h-screen bg-[#F7F8FC] flex flex-col items-center justify-center p-4">
+        <div className="text-center space-y-4">
+          <VerityAIExcelLogo size="lg" />
+          <div className="flex items-center justify-center gap-2 text-xs font-semibold text-[#667085]">
+            <RefreshCw className="w-4 h-4 animate-spin text-[#6941C6]" />
+            <span>Verifying Scrutiny Session &amp; Credentials...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── 2. Protected route enforcement: redirect unauthenticated users ── */
+  if (route.type === 'workspace' && !currentUser) {
+    const returnPath = pathname + search;
+    navigate(`/login?returnUrl=${encodeURIComponent(returnPath)}`, {
+      replace: true,
+      scrollToTop: false,
+    });
+    return null;
+  }
+
+  /* ── 3. Login Route (/login) ─────────────────────────────────── */
+  if (route.type === 'login') {
+    // If user is already authenticated, redirect to returnUrl or workspace
+    if (currentUser && !authChecking) {
+      navigate(route.returnUrl || '/app/overview', { replace: true });
+      return null;
+    }
+
+    return (
+      <LoginPage
+        onSuccess={(user) => {
+          setCurrentUser(user);
+          navigate(route.returnUrl || '/app/overview');
+        }}
+        onBackToLanding={() => navigate('/')}
+        returnUrl={route.returnUrl}
+      />
+    );
+  }
+
+  /* ── 4. Public Landing Page (/) ─────────────────────────────── */
+  if (route.type === 'landing') {
+    return (
+      <LandingPage
+        onGetStarted={() => {
+          if (currentUser) {
+            navigate('/app/overview');
+          } else {
+            navigate('/login');
+          }
+        }}
+        onSignIn={() => navigate('/login')}
+        onEnterWorkspace={() => navigate('/app/overview')}
+        currentUser={currentUser}
+      />
+    );
+  }
+
+  /* ── 5. Authenticated Operational Workspace (/app/*) ────────── */
+  const activeTab: NavItemKey = route.tab;
 
   return (
     <AppShell
-      currentTab={currentTab}
+      currentTab={activeTab}
       onTabChange={(tab) => {
-        setCurrentTab(tab);
-        if (tab !== 'applications') {
-          // Keep application selection context or let user return to register
+        if (tab === 'applications' && selectedApplicationId) {
+          navigateToTab('applications', selectedApplicationId);
+        } else {
+          navigateToTab(tab);
         }
       }}
-      viewMode={viewMode}
-      onViewModeChange={setViewMode}
       apiHealthy={health?.status === 'healthy'}
       onProbeClick={() => setShowHealthModal(true)}
       currentUser={currentUser}
       onOpenAuthModal={() => setAuthModalOpen(true)}
+      onNavigateToLanding={() => navigate('/')}
+      onLogout={handleLogout}
     >
-      {viewMode === 'landing' ? (
-        <LandingPage
-          onGetStarted={() => {
-            setViewMode('dashboard');
-            setCurrentTab('overview');
-          }}
+      {/* Overview / Dashboard */}
+      {activeTab === 'overview' && (
+        <DashboardView
           onOpenNewApplication={() => setCreateModalOpen(true)}
+          onOpenUploadDocument={() => setUploadModalOpen(true)}
+          onSelectApplication={(id) => {
+            setSelectedApplicationId(id);
+            navigateToTab('applications', id);
+          }}
+          onNavigateToTab={(tab) => navigateToTab(tab as NavItemKey)}
         />
-      ) : (
+      )}
+
+      {/* Applications Register & Detail Workspace */}
+      {activeTab === 'applications' && (
         <>
-          {currentTab === 'overview' && (
-            <DashboardView
-              onOpenNewApplication={() => setCreateModalOpen(true)}
-              onOpenUploadDocument={() => setUploadModalOpen(true)}
-              onSelectApplication={(id) => {
-                setSelectedApplicationId(id);
-                setCurrentTab('applications');
+          {selectedApplicationId ? (
+            <ApplicationDetailWorkspace
+              applicationId={selectedApplicationId}
+              onBack={() => {
+                setSelectedApplicationId(null);
+                navigateToTab('applications');
               }}
             />
+          ) : (
+            <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-4">
+              <div>
+                <h1 className="text-xl sm:text-2xl font-extrabold text-[#111827]">
+                  Application Register
+                </h1>
+                <p className="text-xs sm:text-sm text-[#667085] mt-0.5">
+                  Institutional approval applications, declared fields, and scrutiny status.
+                  Click any application to open the Scrutiny Dossier.
+                </p>
+              </div>
+              <ApplicationList
+                onSelectApplication={(id) => {
+                  setSelectedApplicationId(id);
+                  navigateToTab('applications', id);
+                }}
+              />
+            </div>
           )}
-
-          {currentTab === 'applications' && (
-            <>
-              {selectedApplicationId ? (
-                <ApplicationDetailWorkspace
-                  applicationId={selectedApplicationId}
-                  onBack={() => setSelectedApplicationId(null)}
-                />
-              ) : (
-                <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-4">
-                  <div>
-                    <h1 className="text-xl sm:text-2xl font-extrabold text-[#171B45]">
-                      Application Register
-                    </h1>
-                    <p className="text-xs sm:text-sm text-[#5F6485] mt-0.5">
-                      Institutional approval applications, declared fields, and scrutiny status. Click any application to open the Scrutiny Dossier.
-                    </p>
-                  </div>
-                  <ApplicationList onSelectApplication={(id) => setSelectedApplicationId(id)} />
-                </div>
-              )}
-            </>
-          )}
-
-          {currentTab === 'scrutiny' && (
-            <ScrutinyQueueView
-              onSelectApplication={(id) => {
-                setSelectedApplicationId(id);
-                setCurrentTab('applications');
-              }}
-            />
-          )}
-
-          {currentTab === 'documents' && <DocumentsView />}
-
-          {currentTab === 'compliance' && <ValidationComplianceView />}
-
-          {currentTab === 'institutions' && <EntitiesView />}
-
-          {currentTab === 'registry' && (
-            <RegistryVerificationView
-              onNavigateToApplications={() => setCurrentTab('applications')}
-              onSelectApplication={(id) => {
-                setSelectedApplicationId(id);
-                setCurrentTab('applications');
-              }}
-            />
-          )}
-
-          {currentTab === 'gateways' && <RegulatoryGatewaysView />}
-
-          {currentTab === 'audit' && <AuditTimelineView />}
         </>
       )}
 
-      {/* Health Diagnostics Modal */}
+      {/* Scrutiny Queue */}
+      {activeTab === 'scrutiny' && (
+        <ScrutinyQueueView
+          onSelectApplication={(id) => {
+            setSelectedApplicationId(id);
+            navigateToTab('applications', id);
+          }}
+        />
+      )}
+
+      {/* Documents */}
+      {activeTab === 'documents' && <DocumentsView />}
+
+      {/* Validation Rules */}
+      {activeTab === 'compliance' && <ValidationComplianceView />}
+
+      {/* Institutions */}
+      {activeTab === 'institutions' && <EntitiesView />}
+
+      {/* Registry Verification */}
+      {activeTab === 'registry' && (
+        <RegistryVerificationView
+          onNavigateToApplications={() => navigateToTab('applications')}
+          onSelectApplication={(id) => {
+            setSelectedApplicationId(id);
+            navigateToTab('applications', id);
+          }}
+        />
+      )}
+
+      {/* Regulatory Gateways */}
+      {activeTab === 'gateways' && <RegulatoryGatewaysView />}
+
+      {/* Audit Trail */}
+      {activeTab === 'audit' && <AuditTimelineView />}
+
+      {/* Diagnostics Modal */}
       {showHealthModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl border border-[#E9E6F2] shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-[#EEEAF5] pb-3">
-              <div className="flex items-center gap-2 font-bold text-sm text-[#171B45]">
-                <ShieldCheck className="w-5 h-5 text-[#7450D8]" />
-                API & Database Diagnostics
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl border border-[#E4E7EC] shadow-2xl max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E4E7EC] pb-3">
+              <div className="flex items-center gap-2 font-bold text-sm text-[#111827]">
+                <ShieldCheck className="w-5 h-5 text-[#6941C6]" />
+                API &amp; Database Diagnostics
               </div>
               <button
                 onClick={() => setShowHealthModal(false)}
-                className="p-1 rounded-lg text-[#8589A6] hover:bg-[#FAF8FF] hover:text-[#171B45]"
+                className="p-1 rounded-lg text-[#9CA3AF] hover:bg-[#F9FAFB] hover:text-[#111827] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="p-3 rounded-xl bg-[#FAF9FC] border border-[#E9E6F2] space-y-1">
+              <div className="p-3 rounded-lg bg-[#F9FAFB] border border-[#E4E7EC] space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-[#171B45]">FastAPI Monolith</span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E6F4F2] text-[#12B886]">
-                    {health?.status.toUpperCase() || 'OFFLINE'}
+                  <span className="font-semibold text-[#111827]">FastAPI Backend</span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      health?.status === 'healthy'
+                        ? 'bg-[#DCFCE7] text-[#15803D]'
+                        : 'bg-[#FEE2E2] text-[#B42318]'
+                    }`}
+                  >
+                    {health?.status?.toUpperCase() || 'OFFLINE'}
                   </span>
                 </div>
-                <div className="text-[11px] text-[#5F6485]">
+                <div className="text-[11px] text-[#667085]">
                   Version: v{health?.version} · Route prefix: /api/v1/
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-[#FAF9FC] border border-[#E9E6F2] space-y-1">
+              <div className="p-3 rounded-lg bg-[#F9FAFB] border border-[#E4E7EC] space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-[#171B45]">SQLite Engine</span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E6F4F2] text-[#12B886]">
-                    {health?.database.status.toUpperCase() || 'OFFLINE'}
+                  <span className="font-semibold text-[#111827]">SQLite Database</span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      health?.database?.status === 'connected'
+                        ? 'bg-[#DCFCE7] text-[#15803D]'
+                        : 'bg-[#FEE2E2] text-[#B42318]'
+                    }`}
+                  >
+                    {health?.database?.status?.toUpperCase() || 'OFFLINE'}
                   </span>
                 </div>
-                <div className="text-[11px] text-[#5F6485]">
-                  WAL Mode · Foreign Keys Enforced · Active Probe: SELECT 1
+                <div className="text-[11px] text-[#667085]">
+                  Engine: {health?.database?.engine || 'sqlite'} · Active probe: SELECT 1
                 </div>
               </div>
             </div>
@@ -223,14 +372,14 @@ export function App() {
               <button
                 onClick={checkHealth}
                 disabled={healthLoading}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#7450D8] text-white hover:bg-[#5633B8] transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-[#6941C6] text-white hover:bg-[#5631A8] transition-colors cursor-pointer disabled:opacity-50"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${healthLoading ? 'animate-spin' : ''}`} />
-                {healthLoading ? 'Testing...' : 'Probe Live Health'}
+                {healthLoading ? 'Testing...' : 'Probe Health'}
               </button>
               <button
                 onClick={() => setShowHealthModal(false)}
-                className="px-3.5 py-2 rounded-xl text-xs font-semibold text-[#5F6485] hover:bg-[#FAF8FF] transition-colors cursor-pointer"
+                className="px-3.5 py-2 rounded-lg text-xs font-semibold text-[#667085] hover:bg-[#F9FAFB] transition-colors cursor-pointer"
               >
                 Close
               </button>
@@ -245,7 +394,7 @@ export function App() {
         onClose={() => setCreateModalOpen(false)}
         onSuccess={() => {
           loadMetadata();
-          setCurrentTab('applications');
+          navigateToTab('applications');
         }}
         institutions={institutions}
         categories={categories}
@@ -255,12 +404,10 @@ export function App() {
       <DocumentUploadModal
         isOpen={uploadModalOpen}
         onClose={() => setUploadModalOpen(false)}
-        onSuccess={() => {
-          // If in documents view, refresh documents; if in dashboard, keep updated
-        }}
+        onSuccess={() => {}}
       />
 
-      {/* Authentication and Session Management Modal */}
+      {/* Auth Modal (within workspace for password changes and account details) */}
       <AuthModal
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
@@ -270,6 +417,7 @@ export function App() {
         }}
         onLogoutSuccess={() => {
           setCurrentUser(null);
+          navigate('/');
         }}
       />
     </AppShell>

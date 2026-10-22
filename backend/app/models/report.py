@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 
 from sqlalchemy import Column, String, DateTime, Integer, JSON, ForeignKey
@@ -20,7 +20,7 @@ class ScrutinyReport(Base):
     storage_path = Column(String(255), nullable=False)
     file_size_bytes = Column(Integer, nullable=False, default=0)
     summary_snapshot = Column(JSON, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, server_default=func.now())
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), server_default=func.now())
 
     application = relationship("Application", backref="reports")
     generated_by = relationship("User", backref="generated_reports")

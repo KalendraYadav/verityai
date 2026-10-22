@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
 
 from sqlalchemy import Column, String, DateTime, Integer, Boolean, Text, JSON, ForeignKey
@@ -30,8 +30,8 @@ class RegistryRecord(Base):
     dataset_version = Column(String(64), nullable=False, default="1.0")
     metadata_json = Column(JSON, nullable=True)
     is_stale = Column(Boolean, nullable=False, default=False)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, server_default=func.now())
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, server_default=func.now(), onupdate=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), server_default=func.now())
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), server_default=func.now(), onupdate=lambda: datetime.now(timezone.utc))
 
 
 class RegistryVerificationRun(Base):
@@ -48,7 +48,7 @@ class RegistryVerificationRun(Base):
     summary = Column(Text, nullable=True)
     reference_record_id = Column(String(36), ForeignKey("registry_records.id", ondelete="SET NULL"), nullable=True)
     executed_by_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    executed_at = Column(DateTime, nullable=False, default=datetime.utcnow, server_default=func.now())
+    executed_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), server_default=func.now())
 
     application = relationship("Application", backref="registry_verification_runs")
     reference_record = relationship("RegistryRecord", backref="verification_runs")

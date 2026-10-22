@@ -1,10 +1,10 @@
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 import json
 
-import fitz  # PyMuPDF
+import pymupdf as fitz
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
@@ -305,7 +305,7 @@ def generate_scrutiny_pdf(db: Session, application_id: str, actor_id: Optional[s
         p.draw_line(fitz.Point(30, 810), fitz.Point(565, 810), color=(0.8, 0.8, 0.8), width=0.5)
         p.insert_text(
             fitz.Point(30, 825),
-            f"Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')} | VerityAI Prototype (SIH 2026)",
+            f"Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')} | VerityAI Prototype (SIH 2026)",
             fontsize=8,
             color=(0.5, 0.5, 0.5),
             fontname="helv",
@@ -449,7 +449,7 @@ def generate_scrutiny_pdf(db: Session, application_id: str, actor_id: Optional[s
             "documents_summary": summary["documents_summary"],
             "validation_summary": summary["validation_summary"],
             "anomaly_summary": summary["anomaly_summary"],
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         },
     )
     db.add(report_record)
