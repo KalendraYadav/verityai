@@ -21,6 +21,7 @@ import {
   XCircle,
   CheckCircle,
   Filter,
+  Sparkles,
 } from 'lucide-react';
 import {
   fetchApplicationDetail,
@@ -30,11 +31,16 @@ import {
   getDocumentFileUrl,
   fetchApplicationValidationSummary,
   triggerApplicationValidation,
+  fetchApplicationAnalysis,
+  triggerApplicationAnalysis,
+  reviewFinding,
   type ApplicationDetailResponse,
   type DocumentListItem,
   type AuditEventItem,
   type ApplicationCategory,
   type ValidationSummaryData,
+  type ApplicationAnalysisData,
+  type FindingItem,
 } from '../../api/client';
 import { DocumentUploadModal } from '../documents/DocumentUploadModal';
 
@@ -61,19 +67,32 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
   const [validationError, setValidationError] = useState<string | null>(null);
   const [resultFilter, setResultFilter] = useState<'ALL' | 'PASS' | 'FAIL' | 'NEEDS_REVIEW' | 'UNABLE_TO_EVALUATE'>('ALL');
 
-  const [activeSubTab, setActiveSubTab] = useState<'documents' | 'validation' | 'requirements' | 'audit' | 'institution'>('documents');
+  // Phase 6: Anomaly Detection & Candidate Fields
+  const [analysisData, setAnalysisData] = useState<ApplicationAnalysisData | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [selectedFinding, setSelectedFinding] = useState<FindingItem | null>(null);
+  const [reviewStatusInput, setReviewStatusInput] = useState<string>('CONFIRMED');
+  const [reviewCommentInput, setReviewCommentInput] = useState<string>('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [anomalySeverityFilter, setAnomalySeverityFilter] = useState<'ALL' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'>('ALL');
+  const [anomalyReviewFilter, setAnomalyReviewFilter] = useState<'ALL' | 'OPEN' | 'CONFIRMED' | 'DISMISSED' | 'RESOLVED' | 'UNDER_REVIEW'>('ALL');
+  const [activeAnomalySection, setActiveAnomalySection] = useState<'findings' | 'fields'>('findings');
+
+  const [activeSubTab, setActiveSubTab] = useState<'documents' | 'validation' | 'anomalies' | 'requirements' | 'audit' | 'institution'>('documents');
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
   async function loadWorkspaceData() {
     setLoading(true);
     setError(null);
     try {
-      const [appData, docsData, auditData, catsData, valData] = await Promise.all([
+      const [appData, docsData, auditData, catsData, valData, analysisRes] = await Promise.all([
         fetchApplicationDetail(applicationId),
         fetchApplicationDocuments(applicationId, 1, 100),
         fetchApplicationAudit(applicationId),
         fetchCategories(),
         fetchApplicationValidationSummary(applicationId).catch(() => null),
+        fetchApplicationAnalysis(applicationId).catch(() => null),
       ]);
       setApplication(appData);
       setDocuments(docsData.data);
@@ -81,6 +100,9 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
       setCategories(catsData);
       if (valData) {
         setValidationSummary(valData);
+      }
+      if (analysisRes) {
+        setAnalysisData(analysisRes);
       }
     } catch (err: any) {
       console.error('Failed to load application detail workspace', err);
@@ -108,6 +130,59 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
       setValidationError(err.message || 'Failed to execute validation rules');
     } finally {
       setValidating(false);
+    }
+  }
+
+  async function handleTriggerAnalysis() {
+    setAnalyzing(true);
+    setAnalysisError(null);
+    try {
+      const result = await triggerApplicationAnalysis(applicationId);
+      setAnalysisData(result);
+      const [appData, auditData] = await Promise.all([
+        fetchApplicationDetail(applicationId),
+        fetchApplicationAudit(applicationId),
+      ]);
+      setApplication(appData);
+      setAuditEvents(auditData);
+      setActiveSubTab('anomalies');
+    } catch (err: any) {
+      console.error('Analysis failed', err);
+      setAnalysisError(err.message || 'Failed to execute anomaly analysis');
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
+  async function handleSubmitFindingReview(findingId: string) {
+    if (!reviewStatusInput) return;
+    setSubmittingReview(true);
+    try {
+      const updated = await reviewFinding(findingId, {
+        review_status: reviewStatusInput,
+        comment: reviewCommentInput.trim() || undefined,
+        reviewer_id: 'REVIEWER_DESK',
+      });
+      if (analysisData) {
+        const nextFindings = analysisData.findings.map((f) => (f.id === updated.id ? updated : f));
+        setAnalysisData({
+          ...analysisData,
+          findings: nextFindings,
+          open_findings: nextFindings.filter((f) => f.review_status === 'OPEN').length,
+          confirmed_findings: nextFindings.filter((f) => f.review_status === 'CONFIRMED').length,
+          dismissed_findings: nextFindings.filter((f) => f.review_status === 'DISMISSED').length,
+          resolved_findings: nextFindings.filter((f) => f.review_status === 'RESOLVED').length,
+        });
+      }
+      setSelectedFinding(null);
+      setReviewCommentInput('');
+      const auditData = await fetchApplicationAudit(applicationId);
+      setAuditEvents(auditData);
+    } catch (err: any) {
+      console.error('Failed to submit finding review', err);
+      setAnalysisError(err.message || 'Failed to update finding status');
+    } finally {
+      setSubmittingReview(false);
     }
   }
 
@@ -413,6 +488,25 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             )}
             {validationSummary && validationSummary.failed === 0 && validationSummary.needs_review > 0 && (
               <span className="w-2 h-2 rounded-full bg-[#F79009]" title="Needs human review" />
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('anomalies')}
+            className={`py-3.5 text-xs sm:text-sm font-bold border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+              activeSubTab === 'anomalies'
+                ? 'border-[#7450D8] text-[#7450D8]'
+                : 'border-transparent text-[#5F6485] hover:text-[#171B45]'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-[#7450D8]" />
+            <span>
+              Anomalies & Candidate Fields {analysisData ? `(${analysisData.findings.length})` : ''}
+            </span>
+            {analysisData && analysisData.open_findings > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-[#FEE4E2] text-[#B42318] border border-[#FECDCA]">
+                {analysisData.open_findings}
+              </span>
             )}
           </button>
 
@@ -852,6 +946,472 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                       );
                     })}
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tab: AI-Assisted Document Analysis, Candidate Fields & Anomalies */}
+        {activeSubTab === 'anomalies' && (
+          <div className="p-4 sm:p-6 space-y-6">
+            {/* 1. Advisory Banner & Scan Trigger Bar */}
+            <div className="p-5 rounded-2xl bg-gradient-to-r from-[#F3EEFC] via-[#FAF8FF] to-[#F3EEFC] border border-[#DCD0F7] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 rounded-lg bg-[#7450D8] text-white">
+                    <Sparkles className="w-4 h-4" />
+                  </span>
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#7450D8]">
+                    AI & Deterministic Scrutiny Advisory
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white text-[#027A48] border border-[#A6F4C5]">
+                    LOCAL ENGINE ACTIVE
+                  </span>
+                </div>
+                <p className="text-xs text-[#171B45] font-medium leading-relaxed max-w-2xl">
+                  Cross-document consistency checking, chronological date sanity validation, duplicate upload collision detection, and OCR extraction quality monitoring.
+                  All findings require human scrutiny officer review before final decisions.
+                </p>
+              </div>
+
+              <button
+                onClick={handleTriggerAnalysis}
+                disabled={analyzing}
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#7450D8] hover:bg-[#5E3EB8] disabled:opacity-50 text-white text-xs sm:text-sm font-semibold transition-all shadow-xs cursor-pointer shrink-0"
+              >
+                <RefreshCw className={`w-4 h-4 ${analyzing ? 'animate-spin' : ''}`} />
+                <span>{analyzing ? 'Executing Scrutiny Scan...' : 'Run Anomaly Detection Scan'}</span>
+              </button>
+            </div>
+
+            {analysisError && (
+              <div className="p-4 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-xs text-[#B42318] flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{analysisError}</span>
+              </div>
+            )}
+
+            {/* 2. Scrutiny Metrics Bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              <div className="p-3.5 rounded-xl bg-[#FAF9FC] border border-[#E9E6F2]">
+                <span className="text-[10px] uppercase font-bold text-[#8589A6]">Total Anomalies</span>
+                <p className="text-lg font-extrabold text-[#171B45] mt-0.5">
+                  {analysisData?.total_anomalies ?? 0}
+                </p>
+              </div>
+              <div className="p-3.5 rounded-xl bg-[#FEF3F2] border border-[#FECDCA]">
+                <span className="text-[10px] uppercase font-bold text-[#B42318]">Open For Review</span>
+                <p className="text-lg font-extrabold text-[#B42318] mt-0.5">
+                  {analysisData?.open_findings ?? 0}
+                </p>
+              </div>
+              <div className="p-3.5 rounded-xl bg-[#FFF6ED] border border-[#FEE4E2]">
+                <span className="text-[10px] uppercase font-bold text-[#C4320A]">Confirmed Findings</span>
+                <p className="text-lg font-extrabold text-[#C4320A] mt-0.5">
+                  {analysisData?.confirmed_findings ?? 0}
+                </p>
+              </div>
+              <div className="p-3.5 rounded-xl bg-[#EDFPF6] bg-[#ECFDF3] border border-[#A6F4C5]">
+                <span className="text-[10px] uppercase font-bold text-[#027A48]">Resolved / Dismissed</span>
+                <p className="text-lg font-extrabold text-[#027A48] mt-0.5">
+                  {(analysisData?.dismissed_findings ?? 0) + (analysisData?.resolved_findings ?? 0)}
+                </p>
+              </div>
+              <div className="p-3.5 rounded-xl bg-[#F3EEFC] border border-[#DCD0F7]">
+                <span className="text-[10px] uppercase font-bold text-[#7450D8]">Candidate Fields</span>
+                <p className="text-lg font-extrabold text-[#7450D8] mt-0.5">
+                  {analysisData?.extracted_fields?.length ?? 0}
+                </p>
+              </div>
+            </div>
+
+            {/* 3. Sub-View Switcher */}
+            <div className="flex items-center justify-between border-b border-[#EEEAF5] pb-3 flex-wrap gap-3">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setActiveAnomalySection('findings')}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    activeAnomalySection === 'findings'
+                      ? 'bg-[#171B45] text-white shadow-xs'
+                      : 'bg-[#FAF8FF] text-[#5F6485] hover:text-[#171B45] border border-[#E9E6F2]'
+                  }`}
+                >
+                  Cross-Document Discrepancies & Anomalies ({analysisData?.findings?.length ?? 0})
+                </button>
+                <button
+                  onClick={() => setActiveAnomalySection('fields')}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    activeAnomalySection === 'fields'
+                      ? 'bg-[#171B45] text-white shadow-xs'
+                      : 'bg-[#FAF8FF] text-[#5F6485] hover:text-[#171B45] border border-[#E9E6F2]'
+                  }`}
+                >
+                  Candidate Extracted Fields ({analysisData?.extracted_fields?.length ?? 0})
+                </button>
+              </div>
+
+              {activeAnomalySection === 'findings' && (
+                <div className="flex items-center gap-2 flex-wrap text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] uppercase font-bold text-[#8589A6]">Severity:</span>
+                    <select
+                      value={anomalySeverityFilter}
+                      onChange={(e) => setAnomalySeverityFilter(e.target.value as any)}
+                      className="px-2 py-1 rounded-lg border border-[#E9E6F2] bg-white text-xs font-semibold text-[#171B45]"
+                    >
+                      <option value="ALL">All Severities</option>
+                      <option value="CRITICAL">Critical</option>
+                      <option value="HIGH">High</option>
+                      <option value="MEDIUM">Medium</option>
+                      <option value="LOW">Low</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] uppercase font-bold text-[#8589A6]">Verdict:</span>
+                    <select
+                      value={anomalyReviewFilter}
+                      onChange={(e) => setAnomalyReviewFilter(e.target.value as any)}
+                      className="px-2 py-1 rounded-lg border border-[#E9E6F2] bg-white text-xs font-semibold text-[#171B45]"
+                    >
+                      <option value="ALL">All Verdicts</option>
+                      <option value="OPEN">Open</option>
+                      <option value="CONFIRMED">Confirmed</option>
+                      <option value="DISMISSED">Dismissed</option>
+                      <option value="RESOLVED">Resolved</option>
+                      <option value="UNDER_REVIEW">Under Review</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 4A. SECTION: ANOMALY FINDINGS */}
+            {activeAnomalySection === 'findings' && (
+              <div className="space-y-4">
+                {(!analysisData || analysisData.findings.length === 0) ? (
+                  <div className="p-12 text-center space-y-3 bg-[#FAF8FF] rounded-2xl border border-dashed border-[#DCD0F7]">
+                    <Sparkles className="w-8 h-8 text-[#7450D8] mx-auto opacity-70" />
+                    <h4 className="text-sm font-bold text-[#171B45]">No Anomalies or Discrepancies Recorded</h4>
+                    <p className="text-xs text-[#5F6485] max-w-md mx-auto">
+                      Click &quot;Run Anomaly Detection Scan&quot; above to cross-reference document names, intake figures, certificate dates, and upload checksums.
+                    </p>
+                    <button
+                      onClick={handleTriggerAnalysis}
+                      disabled={analyzing}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#7450D8] text-white text-xs font-semibold hover:bg-[#5E3EB8] transition-all cursor-pointer shadow-xs mt-2"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${analyzing ? 'animate-spin' : ''}`} />
+                      <span>Execute Scrutiny Scan</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {analysisData.findings
+                      .filter((f) => {
+                        if (anomalySeverityFilter !== 'ALL' && f.severity !== anomalySeverityFilter) return false;
+                        if (anomalyReviewFilter !== 'ALL' && f.review_status !== anomalyReviewFilter) return false;
+                        return true;
+                      })
+                      .map((finding) => {
+                        const isUnderReview = selectedFinding?.id === finding.id;
+
+                        return (
+                          <div
+                            key={finding.id}
+                            className={`p-5 rounded-2xl border transition-all ${
+                              finding.severity === 'CRITICAL'
+                                ? 'border-[#FECDCA] bg-white border-l-4 border-l-[#B42318]'
+                                : finding.severity === 'HIGH'
+                                ? 'border-[#FECDCA] bg-white border-l-4 border-l-[#F04438]'
+                                : finding.severity === 'MEDIUM'
+                                ? 'border-[#FEDF89] bg-white border-l-4 border-l-[#F79009]'
+                                : 'border-[#E9E6F2] bg-white border-l-4 border-l-[#7450D8]'
+                            }`}
+                          >
+                            <div className="space-y-3">
+                              {/* Header Badges */}
+                              <div className="flex items-center justify-between gap-2 flex-wrap">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-mono text-xs font-extrabold px-2.5 py-0.5 rounded-md bg-[#171B45] text-white">
+                                    {finding.rule_code}
+                                  </span>
+                                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold ${
+                                    finding.severity === 'CRITICAL'
+                                      ? 'bg-[#FEF3F2] text-[#B42318] border border-[#FECDCA]'
+                                      : finding.severity === 'HIGH'
+                                      ? 'bg-[#FFF6ED] text-[#C4320A] border border-[#FEE4E2]'
+                                      : finding.severity === 'MEDIUM'
+                                      ? 'bg-[#FFFAEB] text-[#B54708] border border-[#FEDF89]'
+                                      : 'bg-[#F3EEFC] text-[#7450D8] border border-[#DCD0F7]'
+                                  }`}>
+                                    {finding.severity} SEVERITY
+                                  </span>
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#FAF8FF] text-[#5F6485] border border-[#E9E6F2]">
+                                    {finding.category}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                                    finding.review_status === 'CONFIRMED'
+                                      ? 'bg-[#FEF3F2] text-[#B42318] border border-[#FECDCA]'
+                                      : finding.review_status === 'DISMISSED' || finding.review_status === 'RESOLVED'
+                                      ? 'bg-[#ECFDF3] text-[#027A48] border border-[#A6F4C5]'
+                                      : finding.review_status === 'UNDER_REVIEW'
+                                      ? 'bg-[#FFF6ED] text-[#C4320A] border border-[#FEE4E2]'
+                                      : 'bg-[#F8F9FC] text-[#5F6485] border border-[#E9E6F2]'
+                                  }`}>
+                                    VERDICT: {finding.review_status}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Title & Explanation */}
+                              <div>
+                                <h5 className="text-sm font-extrabold text-[#171B45]">
+                                  {finding.title}
+                                </h5>
+                                <p className="text-xs text-[#5F6485] mt-1 leading-relaxed">
+                                  {finding.explanation}
+                                </p>
+                              </div>
+
+                              {/* Expected vs Observed Grid */}
+                              {(finding.expected_value || finding.observed_value) && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-[#FAF9FC] border border-[#EEEAF5] text-xs">
+                                  <div>
+                                    <span className="text-[10px] uppercase font-bold text-[#027A48]">Expected Reference</span>
+                                    <p className="font-mono text-xs font-semibold text-[#171B45] mt-0.5 break-words">
+                                      {finding.expected_value || 'N/A'}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <span className="text-[10px] uppercase font-bold text-[#B42318]">Observed in Submission</span>
+                                    <p className="font-mono text-xs font-semibold text-[#B42318] mt-0.5 break-words">
+                                      {finding.observed_value || 'N/A'}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Evidence Items Chain */}
+                              {finding.evidence_items && finding.evidence_items.length > 0 && (
+                                <div className="space-y-1.5 pt-1">
+                                  <span className="text-[10px] uppercase font-bold text-[#8589A6]">
+                                    Evidence Citations ({finding.evidence_items.length}):
+                                  </span>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    {finding.evidence_items.map((ev, idx) => (
+                                      <div
+                                        key={ev.id || idx}
+                                        className="p-2.5 rounded-lg bg-[#FAF8FF] border border-[#E9E6F2] text-[11px] space-y-1"
+                                      >
+                                        <div className="flex items-center justify-between font-semibold text-[#171B45]">
+                                          <span className="truncate">{ev.label}</span>
+                                          {ev.page_number && (
+                                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-white text-[#7450D8] border border-[#DCD0F7] shrink-0">
+                                              Page {ev.page_number}
+                                            </span>
+                                          )}
+                                        </div>
+                                        {ev.raw_value && (
+                                          <div className="font-mono text-[10px] text-[#5F6485] truncate">
+                                            Value: &quot;{ev.raw_value}&quot;
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Recommended Action */}
+                              <div className="p-3 rounded-xl bg-[#FAF8FF] border border-[#E9E6F2] flex items-start gap-2.5 text-xs text-[#171B45]">
+                                <AlertTriangle className="w-4 h-4 text-[#7450D8] shrink-0 mt-0.5" />
+                                <div>
+                                  <span className="text-[10px] uppercase font-bold text-[#7450D8] block">
+                                    Recommended Scrutiny Protocol
+                                  </span>
+                                  <p className="text-[11px] text-[#5F6485] mt-0.5">
+                                    {finding.recommended_action}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Existing Review Notes (if reviewed) */}
+                              {finding.review_comment && (
+                                <div className="p-3 rounded-xl bg-[#F8F9FC] border border-[#E9E6F2] text-xs space-y-1">
+                                  <div className="flex items-center justify-between text-[10px] font-bold text-[#8589A6]">
+                                    <span>Reviewer Verdict Note</span>
+                                    {finding.reviewed_at && (
+                                      <span>{new Date(finding.reviewed_at).toLocaleString()}</span>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-[#171B45] italic">
+                                    &quot;{finding.review_comment}&quot;
+                                  </p>
+                                </div>
+                              )}
+
+                              {/* Reviewer Action Controls */}
+                              <div className="pt-2 flex items-center justify-between flex-wrap gap-2 border-t border-[#EEEAF5]">
+                                <div className="text-[11px] text-[#8589A6]">
+                                  Detection Method: <span className="font-mono font-medium text-[#171B45]">{finding.detection_method}</span>
+                                </div>
+
+                                <div>
+                                  {!isUnderReview ? (
+                                    <button
+                                      onClick={() => {
+                                        setSelectedFinding(finding);
+                                        setReviewStatusInput(finding.review_status === 'OPEN' ? 'CONFIRMED' : finding.review_status);
+                                        setReviewCommentInput(finding.review_comment || '');
+                                      }}
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FAF8FF] hover:bg-[#F3EEFC] text-[#7450D8] border border-[#DCD0F7] text-xs font-semibold transition-colors cursor-pointer"
+                                    >
+                                      <CheckCircle className="w-3.5 h-3.5" />
+                                      <span>Record Human Verdict</span>
+                                    </button>
+                                  ) : (
+                                    <div className="space-y-3 p-4 rounded-xl bg-[#FAF8FF] border border-[#DCD0F7] mt-2 w-full max-w-lg">
+                                      <h6 className="text-xs font-extrabold text-[#171B45]">
+                                        Record Scrutiny Officer Verdict
+                                      </h6>
+
+                                      <div className="space-y-2">
+                                        <label className="text-[10px] uppercase font-bold text-[#5F6485] block">
+                                          Verdict Status
+                                        </label>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-xs">
+                                          {(['CONFIRMED', 'DISMISSED', 'UNDER_REVIEW', 'RESOLVED', 'AWAITING_EVIDENCE'] as const).map((st) => (
+                                            <button
+                                              key={st}
+                                              type="button"
+                                              onClick={() => setReviewStatusInput(st)}
+                                              className={`py-1.5 px-2 rounded-lg text-[11px] font-bold border text-center transition-all cursor-pointer ${
+                                                reviewStatusInput === st
+                                                  ? 'bg-[#171B45] text-white border-[#171B45]'
+                                                  : 'bg-white text-[#5F6485] border-[#E9E6F2] hover:bg-[#FAF9FC]'
+                                              }`}
+                                            >
+                                              {st}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </div>
+
+                                      <div className="space-y-1">
+                                        <label className="text-[10px] uppercase font-bold text-[#5F6485] block">
+                                          Review Note / Reason
+                                        </label>
+                                        <textarea
+                                          value={reviewCommentInput}
+                                          onChange={(e) => setReviewCommentInput(e.target.value)}
+                                          placeholder="Enter regulatory justification or instructions for the institutional applicant..."
+                                          rows={2}
+                                          className="w-full text-xs p-2 rounded-lg border border-[#E9E6F2] bg-white focus:outline-none focus:ring-1 focus:ring-[#7450D8]"
+                                        />
+                                      </div>
+
+                                      <div className="flex items-center justify-end gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={() => setSelectedFinding(null)}
+                                          className="px-3 py-1.5 rounded-lg border border-[#E9E6F2] text-xs font-semibold text-[#5F6485] hover:bg-white cursor-pointer"
+                                        >
+                                          Cancel
+                                        </button>
+                                        <button
+                                          type="button"
+                                          disabled={submittingReview}
+                                          onClick={() => handleSubmitFindingReview(finding.id)}
+                                          className="px-4 py-1.5 rounded-lg bg-[#F04438] hover:bg-[#E34234] disabled:opacity-50 text-white text-xs font-semibold transition-all shadow-xs cursor-pointer"
+                                        >
+                                          {submittingReview ? 'Saving Verdict...' : 'Submit Verdict'}
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 4B. SECTION: CANDIDATE EXTRACTED FIELDS TABLE */}
+            {activeAnomalySection === 'fields' && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h5 className="text-xs sm:text-sm font-extrabold text-[#171B45]">
+                      Normalized Candidate Fields Across Uploaded Documents
+                    </h5>
+                    <p className="text-[11px] text-[#5F6485]">
+                      Discovered by pattern extraction and normalized for cross-checking against declared figures.
+                    </p>
+                  </div>
+                </div>
+
+                {(!analysisData || analysisData.extracted_fields.length === 0) ? (
+                  <div className="p-8 text-center text-xs text-[#5F6485] bg-[#FAF8FF] rounded-xl border border-[#E9E6F2]">
+                    No candidate fields extracted. Run the anomaly scan to scan document pages.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto rounded-xl border border-[#E9E6F2]">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="border-b border-[#EEEAF5] bg-[#FAF9FC] text-[#8589A6] font-semibold text-[11px]">
+                          <th className="py-3 px-4">FIELD KEY</th>
+                          <th className="py-3 px-4">NORMALIZED VALUE</th>
+                          <th className="py-3 px-4">RAW VALUE</th>
+                          <th className="py-3 px-4">PAGE / METHOD</th>
+                          <th className="py-3 px-4">STATUS</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#EEEAF5] bg-white">
+                        {analysisData.extracted_fields.map((ef) => (
+                          <tr key={ef.id} className="hover:bg-[#FAF8FF]/60 transition-colors">
+                            <td className="py-3 px-4 font-mono font-bold text-[#171B45]">
+                              {ef.field_key}
+                            </td>
+                            <td className="py-3 px-4 font-mono font-semibold text-[#7450D8]">
+                              {ef.normalized_value || '—'}
+                            </td>
+                            <td className="py-3 px-4 text-[#5F6485] max-w-xs truncate" title={ef.raw_value || ''}>
+                              {ef.raw_value || '—'}
+                            </td>
+                            <td className="py-3 px-4 text-[#5F6485]">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {ef.page_number && (
+                                  <span className="px-1.5 py-0.5 rounded bg-[#FAF8FF] text-[#171B45] border border-[#E9E6F2] font-mono text-[10px]">
+                                    P.{ef.page_number}
+                                  </span>
+                                )}
+                                <span className="font-mono text-[10px] text-[#8589A6]">
+                                  {ef.extraction_method}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                ef.extraction_status === 'EXTRACTED'
+                                  ? 'bg-[#ECFDF3] text-[#027A48]'
+                                  : 'bg-[#FFF6ED] text-[#C4320A]'
+                              }`}>
+                                {ef.extraction_status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
           </div>

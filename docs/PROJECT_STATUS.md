@@ -1,7 +1,7 @@
 # PROJECT_STATUS.md — VerityAI & EntityLocker
 
 **Project:** VerityAI / EntityLocker (Smart India Hackathon 2026, Smart Automation Track)  
-**Milestone:** Phase 5 — Deterministic Validation Engine & Rule Results (P0)  
+**Milestone:** Phase 6 — AI-Assisted Document Analysis & Anomaly Detection (P0)  
 **Last Updated:** 2026-10-22  
 **Baseline Environment:** WSL2 Ubuntu 24.04 LTS (Python 3.12.3, Node.js v22.23.2, npm 10.9.8, SQLite with WAL mode)
 
@@ -11,6 +11,10 @@
 
 | Component / Feature | Status | Notes / Verified Capabilities |
 |---|---|---|
+| **AI-Assisted Anomaly Detection Engine (`backend/app/services/anomaly.py`)** | Implemented | Discovers candidate fields (`certificate_number`, `institution_name`, `approved_intake`, `academic_year`, `expiry_date`, `issue_date`, `aishe_code`) with document/page provenance. Detects cross-document name conflict (`ANM-XDOC-NAME`), intake mismatch (`ANM-XDOC-INTAKE`), chronological date inversion (`ANM-DATE-SANITY`), duplicate file upload collision (`ANM-DUPLICATE-FILE`), and degraded OCR quality (`ANM-EXTRACTION-QUALITY`). Carry-over of human reviews on re-analysis. |
+| **Findings & Candidate Field Models (`findings`, `finding_evidence`, `extracted_fields`)** | Implemented | Strict conformance to `DATA_MODEL_AND_API.md` (Tables 10, 14, 15). Review states (`OPEN`, `UNDER_REVIEW`, `CONFIRMED`, `DISMISSED`, `RESOLVED`, `AWAITING_EVIDENCE`). Alembic migration `f6afdebbf862` applied and verified. |
+| **Anomaly & Analysis APIs (`/api/v1/applications/{id}/analyze`, `/anomalies*`)** | Implemented | `POST /applications/{id}/analyze`, `GET /applications/{id}/analysis`, `GET /applications/{id}/anomalies`, `GET /anomalies/{id}`, `POST /anomalies/{id}/review`, `GET /applications/{id}/extracted-fields`. Full Pydantic v2 schemas. |
+| **Scrutiny Workspace Anomalies Tab (`ApplicationDetailWorkspace.tsx`)** | Implemented | Interactive scrutiny tab: advisory banner, scrutiny scan trigger, metric counters, severity/verdict filters, discrepancy cards with expected vs observed values, evidence citations, and human reviewer verdict controls. |
 | **Deterministic Validation Engine (`backend/app/services/validation.py`)** | Implemented | Evaluates 4 required rule types (`REQUIRED_DOCUMENT`, `REQUIRED_FIELD`, `EXPIRY_CHECK`, `FIELD_EQUALS_APPLICATION`) against stored applications, uploaded documents, and page-level extracted OCR/text. Injected/deterministic `evaluation_date`. ISO/DMY/Textual date parsing with ambiguity detection. Robust regex with digit lookaheads. Idempotent evaluation with previous-run deactivation and full audit logging (`VALIDATION_INITIATED`, `VALIDATION_COMPLETED`). |
 | **Validation Models & Alembic Migration (`validation_rules`, `validation_runs`, `rule_results`)** | Implemented | Conforms strictly to `DATA_MODEL_AND_API.md` (Tables 11, 12, 13). Full foreign key references, status vocabularies (`PASS`, `FAIL`, `NEEDS_REVIEW`, `NOT_APPLICABLE`, `UNABLE_TO_EVALUATE`), and evidence payload snapshots. Alembic migration `6a9eaf48f7bc` applied and verified. |
 | **Validation API Endpoints (`/api/v1/validation*`)** | Implemented | `GET /api/v1/validation-rules`, `POST /api/v1/applications/{id}/validate`, `GET /api/v1/applications/{id}/validation-summary`, `GET /api/v1/applications/{id}/validation-results`, `GET /api/v1/validation-results/{id}`. Pydantic v2 schemas and consistent error responses. |
@@ -43,7 +47,13 @@
 
 | Test Target | Command | Real Result |
 |---|---|---|
-| **Backend Test Suite (55 tests)** | `pytest backend/tests -v` | **55 passed**, 0 failed in 8.70s |
+| **Backend Test Suite (61 tests)** | `pytest backend/tests -v` | **61 passed**, 0 failed in 5.37s |
+| • `test_candidate_field_extraction` | Regex-based candidate field extraction with page provenance | Passed |
+| • `test_cross_document_name_and_intake_anomalies` | Detects ANM-XDOC-NAME and ANM-XDOC-INTAKE with citations | Passed |
+| • `test_date_sanity_and_duplicate_file_anomalies` | Detects inverted dates (ANM-DATE-SANITY) and duplicate SHA-256 | Passed |
+| • `test_degraded_ocr_extraction_quality_anomaly` | Detects ANM-EXTRACTION-QUALITY for poor OCR quality bands | Passed |
+| • `test_reviewer_workflow_and_carry_over` | Human reviewer verdict updates & carry-over on re-analysis | Passed |
+| • `test_anomaly_api_endpoints` | Tests all /api/v1/applications/{id}/analyze and anomaly endpoints | Passed |
 | • `test_create_and_list_institution` | In-memory SQLite | Passed |
 | • `test_create_application_success` | In-memory SQLite + Audit check | Passed |
 | • `test_list_applications_with_pagination_and_filter` | Query filters & pagination meta | Passed |

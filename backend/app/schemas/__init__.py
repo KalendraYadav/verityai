@@ -27,6 +27,13 @@ from app.schemas.validation import (
     ValidationSummaryResponse,
     ValidationTriggerRequest,
 )
+from app.schemas.finding import (
+    ExtractedFieldResponse,
+    FindingEvidenceResponse,
+    FindingResponse,
+    FindingReviewRequest,
+    ApplicationAnalysisResponse,
+)
 
 __all__ = [
     "MetaPagination",
@@ -50,4 +57,9 @@ __all__ = [
     "ValidationRunResponse",
     "ValidationSummaryResponse",
     "ValidationTriggerRequest",
+    "ExtractedFieldResponse",
+    "FindingEvidenceResponse",
+    "FindingResponse",
+    "FindingReviewRequest",
+    "ApplicationAnalysisResponse",
 ]

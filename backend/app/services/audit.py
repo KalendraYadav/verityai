@@ -38,3 +38,7 @@ def record_audit_event(
     )
     db.add(event)
     return event
+
+
+# Alias for compatibility
+create_audit_event = record_audit_event

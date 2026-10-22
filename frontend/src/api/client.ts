@@ -621,4 +621,206 @@ export async function fetchValidationResultDetail(resultId: string): Promise<Rul
   return resJson.data;
 }
 
+// ---------------------------------------------------------------------------
+// Phase 6: AI-Assisted Document Analysis, Candidate Extraction & Anomalies
+// ---------------------------------------------------------------------------
+
+export interface ExtractedFieldItem {
+  id: string;
+  document_id: string;
+  processing_run_id?: string | null;
+  field_key: string;
+  raw_value?: string | null;
+  normalized_value?: string | null;
+  normalization_status?: string | null;
+  date_parse_status?: string | null;
+  candidate_values?: any;
+  page_number?: number | null;
+  extraction_method: string;
+  confidence?: number | null;
+  confidence_basis?: string | null;
+  extraction_status: string;
+  review_status: string;
+  field_version: number;
+  is_current: boolean;
+  created_at: string;
+}
+
+export interface FindingEvidenceItem {
+  id: string;
+  finding_id: string;
+  sort_order: number;
+  evidence_type: string;
+  label: string;
+  document_id?: string | null;
+  field_id?: string | null;
+  page_number?: number | null;
+  raw_value?: string | null;
+  normalized_value?: string | null;
+  snapshot: Record<string, any>;
+  captured_at: string;
+}
+
+export interface FindingItem {
+  id: string;
+  application_id: string;
+  document_id?: string | null;
+  validation_run_id?: string | null;
+  rule_result_id?: string | null;
+  rule_code: string;
+  rule_version: string;
+  finding_type: string;
+  category: string;
+  indicator_id?: string | null;
+  finding_key: string;
+  result_status: string;
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  title: string;
+  explanation: string;
+  expected_value?: string | null;
+  observed_value?: string | null;
+  recommended_action: string;
+  requires_human_review: boolean;
+  evidence_note?: string | null;
+  review_status: 'OPEN' | 'UNDER_REVIEW' | 'CONFIRMED' | 'DISMISSED' | 'RESOLVED' | 'AWAITING_EVIDENCE';
+  review_comment?: string | null;
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
+  is_current: boolean;
+  detection_method: string;
+  created_at: string;
+  updated_at: string;
+  evidence_items: FindingEvidenceItem[];
+}
+
+export interface ApplicationAnalysisData {
+  application_id: string;
+  total_anomalies: number;
+  open_findings: number;
+  confirmed_findings: number;
+  dismissed_findings: number;
+  resolved_findings: number;
+  severity_breakdown: Record<string, number>;
+  category_breakdown: Record<string, number>;
+  ai_advisory_status: string;
+  ai_advisory_message: string;
+  findings: FindingItem[];
+  extracted_fields: ExtractedFieldItem[];
+}
+
+export interface FindingReviewPayload {
+  review_status: string;
+  comment?: string;
+  reviewer_id?: string;
+}
+
+export async function fetchApplicationAnalysis(applicationId: string): Promise<ApplicationAnalysisData> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/analysis`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to fetch application analysis (${response.status})`);
+  }
+
+  const resJson = await response.json();
+  return resJson.data;
+}
+
+export async function triggerApplicationAnalysis(applicationId: string): Promise<ApplicationAnalysisData> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/analyze`, {
+    method: 'POST',
+    headers: COMMON_HEADERS,
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to trigger analysis (${response.status})`);
+  }
+
+  const resJson = await response.json();
+  return resJson.data;
+}
+
+export async function fetchApplicationAnomalies(
+  applicationId: string,
+  filter?: { severity?: string; category?: string; review_status?: string },
+): Promise<FindingItem[]> {
+  const params = new URLSearchParams();
+  if (filter?.severity) params.set('severity', filter.severity);
+  if (filter?.category) params.set('category', filter.category);
+  if (filter?.review_status) params.set('review_status', filter.review_status);
+
+  const query = params.toString() ? `?${params.toString()}` : '';
+  const response = await fetch(`/api/v1/applications/${applicationId}/anomalies${query}`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to list anomalies (${response.status})`);
+  }
+
+  const resJson = await response.json();
+  return resJson.data;
+}
+
+export async function fetchFindingDetail(findingId: string): Promise<FindingItem> {
+  const response = await fetch(`/api/v1/anomalies/${findingId}`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to fetch finding (${response.status})`);
+  }
+
+  const resJson = await response.json();
+  return resJson.data;
+}
+
+export async function reviewFinding(findingId: string, payload: FindingReviewPayload): Promise<FindingItem> {
+  const response = await fetch(`/api/v1/anomalies/${findingId}/review`, {
+    method: 'POST',
+    headers: COMMON_HEADERS,
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to submit review for finding (${response.status})`);
+  }
+
+  const resJson = await response.json();
+  return resJson.data;
+}
+
+export async function fetchExtractedFields(
+  applicationId: string,
+  fieldKey?: string,
+  documentId?: string,
+): Promise<ExtractedFieldItem[]> {
+  const params = new URLSearchParams();
+  if (fieldKey) params.set('field_key', fieldKey);
+  if (documentId) params.set('document_id', documentId);
+
+  const query = params.toString() ? `?${params.toString()}` : '';
+  const response = await fetch(`/api/v1/applications/${applicationId}/extracted-fields${query}`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to fetch candidate fields (${response.status})`);
+  }
+
+  const resJson = await response.json();
+  return resJson.data;
+}
+
 

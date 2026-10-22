@@ -8,6 +8,7 @@ from app.models.document import Document
 from app.models.processing_run import ProcessingRun
 from app.models.document_page import DocumentPage
 from app.models.validation import ValidationRule, ValidationRun, RuleResult
+from app.models.finding import ExtractedField, Finding, FindingEvidence
 
 __all__ = [
     "Base",
@@ -22,5 +23,8 @@ __all__ = [
     "ValidationRule",
     "ValidationRun",
     "RuleResult",
+    "ExtractedField",
+    "Finding",
+    "FindingEvidence",
 ]
 

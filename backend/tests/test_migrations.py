@@ -38,6 +38,9 @@ def test_alembic_migrations_fresh_database():
             "validation_rules",
             "validation_runs",
             "rule_results",
+            "extracted_fields",
+            "findings",
+            "finding_evidence",
             "alembic_version",
         }
         assert expected_tables.issubset(tables), f"Missing tables in {tables}"
@@ -49,6 +52,9 @@ def test_alembic_migrations_fresh_database():
         tables_after = set(inspector_after.get_table_names())
         engine_after.dispose()
 
+        assert "finding_evidence" not in tables_after
+        assert "findings" not in tables_after
+        assert "extracted_fields" not in tables_after
         assert "rule_results" not in tables_after
         assert "validation_runs" not in tables_after
         assert "validation_rules" not in tables_after
