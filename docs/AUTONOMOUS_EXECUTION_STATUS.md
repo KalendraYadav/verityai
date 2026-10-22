@@ -24,7 +24,7 @@
 | **Phase 11** | Extended Verification & Registry Integration | `prompt.md` L2053–2350 | `COMPLETED` | 101 passed (9 registry) | `d002cf4` | Registry provider adapter, Synthetic AISHE, official stub, safe CSV/JSON import, deterministic comparison, discrepancy resolution |
 | **Phase 12** | Advanced Multilingual Document Scrutiny | `prompt.md` L2351–2760 | `COMPLETED` | 108 passed (7 multilingual) | `80acd21` | Devanagari numeral normalization (०-९ to 0-9), script-distribution language detection (en/hi/mixed/und), bilingual candidate fields, statutory regulatory glossary, offline translation |
 | **Phase 13** | Institutional Dossier History & Versioning | `prompt.md` L2761–3150 | `COMPLETED` | 115 passed (7 versioning) | `d4c006a` | Application revisions, document versioning, stale evaluation detection, historical diffing |
-| **Phase 14** | External Regulatory Portal Interoperability | `prompt.md` L3151–3570 | `COMPLETED` | 121 passed (6 integration) | Pending | External portal adapters, SSRF defense, official stubs, sync history audit |
+| **Phase 14** | External Regulatory Portal Interoperability | `prompt.md` L3151–3570 | `COMPLETED` | 121 passed (6 integration) | `e4d45bd` | External portal adapters, SSRF defense, official stubs, sync history audit |
 | **Phase 15** | Final Pilot Demonstration & Evaluation Package | `prompt.md` L3571–4136 | `NOT_STARTED` | N/A | N/A | Demo workflows, evaluation suite, judge packaging |
 
 ---
