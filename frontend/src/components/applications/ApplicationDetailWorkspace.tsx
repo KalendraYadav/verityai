@@ -23,6 +23,8 @@ import {
   Filter,
   Sparkles,
   Database,
+  GitCompare,
+  GitBranch,
 } from 'lucide-react';
 import {
   fetchApplicationDetail,
@@ -47,6 +49,9 @@ import {
   triggerRegistryVerification,
   fetchApplicationRegistryRuns,
   resolveRegistryDiscrepancy,
+  fetchApplicationVersions,
+  compareApplicationVersions,
+  fetchApplicationFreshness,
   type ApplicationDetailResponse,
   type DocumentListItem,
   type AuditEventItem,
@@ -61,8 +66,13 @@ import {
   type RegistryProviderInfo,
   type RegistryVerificationRunItem,
   type RegistryVerificationResultItem,
+  type ApplicationVersionItem,
+  type VersionComparisonResponse,
+  type VersionDifferenceItem,
+  type ApplicationFreshnessResponse,
 } from '../../api/client';
 import { DocumentUploadModal } from '../documents/DocumentUploadModal';
+
 
 interface Props {
   applicationId: string;
@@ -113,7 +123,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
   const [reportMessage, setReportMessage] = useState<string | null>(null);
   const [reportError, setReportError] = useState<string | null>(null);
 
-  const [activeSubTab, setActiveSubTab] = useState<'documents' | 'validation' | 'anomalies' | 'requirements' | 'audit' | 'institution' | 'reports' | 'registry'>('documents');
+  const [activeSubTab, setActiveSubTab] = useState<'documents' | 'validation' | 'anomalies' | 'requirements' | 'audit' | 'institution' | 'reports' | 'registry' | 'history'>('documents');
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
   // Phase 11: Extended Verification & Registry Integration
@@ -128,11 +138,20 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
   const [resolutionNotes, setResolutionNotes] = useState('');
   const [resolving, setResolving] = useState(false);
 
+  // Phase 13: Institutional Dossier History & Versioning
+  const [versionsList, setVersionsList] = useState<ApplicationVersionItem[]>([]);
+  const [freshnessStatus, setFreshnessStatus] = useState<ApplicationFreshnessResponse | null>(null);
+  const [selectedV1, setSelectedV1] = useState<number>(1);
+  const [selectedV2, setSelectedV2] = useState<number>(1);
+  const [comparisonResult, setComparisonResult] = useState<VersionComparisonResponse | null>(null);
+  const [comparingVersions, setComparingVersions] = useState(false);
+  const [comparisonError, setComparisonError] = useState<string | null>(null);
+
   async function loadWorkspaceData() {
     setLoading(true);
     setError(null);
     try {
-      const [appData, docsData, auditData, catsData, valData, analysisRes, wfData, readyData, revSum, repList, regRuns, regProviders] = await Promise.all([
+      const [appData, docsData, auditData, catsData, valData, analysisRes, wfData, readyData, revSum, repList, regRuns, regProviders, versData, freshData] = await Promise.all([
         fetchApplicationDetail(applicationId),
         fetchApplicationDocuments(applicationId, 1, 100),
         fetchApplicationAudit(applicationId),
@@ -145,6 +164,8 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
         fetchApplicationReports(applicationId).catch(() => []),
         fetchApplicationRegistryRuns(applicationId).catch(() => []),
         fetchRegistryProviders().catch(() => []),
+        fetchApplicationVersions(applicationId).catch(() => []),
+        fetchApplicationFreshness(applicationId).catch(() => null),
       ]);
       setApplication(appData);
       setDocuments(docsData.data);
@@ -174,6 +195,20 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
       if (regProviders) {
         setRegistryProviders(regProviders);
       }
+      if (versData && versData.length > 0) {
+        setVersionsList(versData);
+        if (versData.length >= 2) {
+          setSelectedV1(versData[1].version_number);
+          setSelectedV2(versData[0].version_number);
+        } else {
+          setSelectedV1(versData[0].version_number);
+          setSelectedV2(versData[0].version_number);
+        }
+      }
+      if (freshData) {
+        setFreshnessStatus(freshData);
+      }
+
     } catch (err: any) {
       console.error('Failed to load application detail workspace', err);
       setError(err.message || 'Failed to load application workspace');
@@ -215,6 +250,23 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
       alert(`Failed to resolve discrepancy: ${err.message}`);
     } finally {
       setResolving(false);
+    }
+  }
+
+  async function handleCompareVersions() {
+    if (selectedV1 === selectedV2) {
+      setComparisonError('Please select two distinct versions to compare differences.');
+      return;
+    }
+    setComparingVersions(true);
+    setComparisonError(null);
+    try {
+      const diff = await compareApplicationVersions(applicationId, selectedV1, selectedV2);
+      setComparisonResult(diff);
+    } catch (err: any) {
+      setComparisonError(err.message || 'Failed to compare dossier versions');
+    } finally {
+      setComparingVersions(false);
     }
   }
 
@@ -931,6 +983,20 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             <Database className="w-4 h-4 text-[#7450D8]" />
             <span>
               Registry Verification {registryRuns.length > 0 ? `(${registryRuns[0].overall_status})` : ''}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('history')}
+            className={`py-3.5 text-xs sm:text-sm font-bold border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+              activeSubTab === 'history'
+                ? 'border-[#7450D8] text-[#7450D8]'
+                : 'border-transparent text-[#5F6485] hover:text-[#171B45]'
+            }`}
+          >
+            <GitCompare className="w-4 h-4 text-[#7450D8]" />
+            <span>
+              Dossier History & Versioning {versionsList.length > 0 ? `(v${versionsList[0].version_number})` : ''}
             </span>
           </button>
         </div>
@@ -2380,6 +2446,289 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                 </p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Tab 9: Dossier History & Versioning */}
+        {activeSubTab === 'history' && (
+          <div className="p-4 sm:p-6 space-y-6">
+            {/* Header and Freshness Status */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <GitBranch className="w-5 h-5 text-[#7450D8]" />
+                  <h4 className="text-sm font-bold text-[#171B45]">Dossier Version History & Freshness Auditing</h4>
+                  {versionsList.length > 0 && (
+                    <span className="px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-[#FAF8FF] text-[#7450D8] border border-[#DCD0F7]">
+                      Current: v{versionsList[0].version_number}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-[#5F6485]">
+                  Every profile update, document revision, or regulatory amendment creates an immutable snapshot. Automated validation and reports track freshness against dossier revisions.
+                </p>
+              </div>
+
+              {freshnessStatus && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 ${
+                    freshnessStatus.is_overall_fresh
+                      ? 'bg-[#ECFDF3] text-[#027A48] border-[#A6F4C5]'
+                      : 'bg-[#FEF3F2] text-[#B42318] border-[#FECDCA]'
+                  }`}>
+                    {freshnessStatus.is_overall_fresh ? (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 text-[#027A48]" />
+                        <span>Dossier Fresh</span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertTriangle className="w-4 h-4 text-[#B42318]" />
+                        <span>Artifacts Stale</span>
+                      </>
+                    )}
+                  </div>
+                  <div className={`px-2.5 py-1 rounded-lg text-[11px] font-bold ${
+                    freshnessStatus.validation_status === 'FRESH'
+                      ? 'bg-[#ECFDF3] text-[#027A48]'
+                      : freshnessStatus.validation_status === 'STALE'
+                      ? 'bg-[#FEF0C7] text-[#B54708]'
+                      : 'bg-[#F2F4F7] text-[#475467]'
+                  }`}>
+                    Validation: {freshnessStatus.validation_status}
+                  </div>
+                  <div className={`px-2.5 py-1 rounded-lg text-[11px] font-bold ${
+                    freshnessStatus.report_status === 'FRESH'
+                      ? 'bg-[#ECFDF3] text-[#027A48]'
+                      : freshnessStatus.report_status === 'STALE'
+                      ? 'bg-[#FEF0C7] text-[#B54708]'
+                      : 'bg-[#F2F4F7] text-[#475467]'
+                  }`}>
+                    Reports: {freshnessStatus.report_status}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Freshness Alert Banner if Stale */}
+            {freshnessStatus && !freshnessStatus.is_overall_fresh && (
+              <div className="p-4 rounded-2xl bg-[#FFFAEB] border border-[#FEDF89] flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-[#B54708] shrink-0 mt-0.5" />
+                <div className="space-y-1 text-xs">
+                  <h5 className="font-bold text-[#B54708]">Dossier Artifact Staleness Detected</h5>
+                  <p className="text-[#B54708]">
+                    {freshnessStatus.validation_status === 'STALE' &&
+                      'The application or its documents have been amended since the last validation run. Re-run validation to evaluate the latest submitted revision.'}
+                    {freshnessStatus.report_status === 'STALE' &&
+                      ' Generated scrutiny reports reflect an earlier dossier version. Regenerate the dossier report to incorporate updated findings.'}
+                  </p>
+                  <div className="flex gap-2 pt-1">
+                    {freshnessStatus.validation_status === 'STALE' && (
+                      <button
+                        onClick={handleTriggerValidation}
+                        disabled={validating}
+                        className="px-3 py-1 rounded-lg bg-[#B54708] text-white text-[11px] font-bold hover:bg-[#93370D] transition-all cursor-pointer"
+                      >
+                        {validating ? 'Validating...' : 'Re-run Validation Now'}
+                      </button>
+                    )}
+                    {freshnessStatus.report_status === 'STALE' && (
+                      <button
+                        onClick={() => handleGenerateScrutinyReport('PDF')}
+                        disabled={generatingReport}
+                        className="px-3 py-1 rounded-lg bg-[#7450D8] text-white text-[11px] font-bold hover:bg-[#6039C8] transition-all cursor-pointer"
+                      >
+                        {generatingReport ? 'Generating...' : 'Regenerate Scrutiny Dossier'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Version Comparator Tool */}
+            <div className="p-5 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#EEEAF5] pb-3">
+                <div>
+                  <h5 className="text-xs font-bold uppercase tracking-wider text-[#171B45] flex items-center gap-1.5">
+                    <GitCompare className="w-4 h-4 text-[#7450D8]" />
+                    Comparative Version Diff Engine
+                  </h5>
+                  <p className="text-xs text-[#5F6485]">
+                    Select any two dossier snapshots to generate field-level and document-level discrepancy analysis.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 text-xs">
+                    <span className="text-[#5F6485] font-semibold">Base:</span>
+                    <select
+                      value={selectedV1}
+                      onChange={(e) => setSelectedV1(Number(e.target.value))}
+                      className="text-xs p-1.5 rounded-lg border border-[#DCD0F7] bg-[#FAF9FC] font-mono font-bold text-[#171B45]"
+                    >
+                      {versionsList.map((v) => (
+                        <option key={v.id} value={v.version_number}>
+                          v{v.version_number} ({formatDate(v.created_at)})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <span className="text-[#8589A6] text-xs font-bold">vs</span>
+
+                  <div className="flex items-center gap-1 text-xs">
+                    <span className="text-[#5F6485] font-semibold">Target:</span>
+                    <select
+                      value={selectedV2}
+                      onChange={(e) => setSelectedV2(Number(e.target.value))}
+                      className="text-xs p-1.5 rounded-lg border border-[#DCD0F7] bg-[#FAF9FC] font-mono font-bold text-[#171B45]"
+                    >
+                      {versionsList.map((v) => (
+                        <option key={v.id} value={v.version_number}>
+                          v{v.version_number} ({formatDate(v.created_at)})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <button
+                    onClick={handleCompareVersions}
+                    disabled={comparingVersions || selectedV1 === selectedV2}
+                    className="px-3.5 py-1.5 rounded-xl bg-[#7450D8] text-white text-xs font-bold hover:bg-[#6039C8] transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-xs"
+                  >
+                    <GitCompare className="w-3.5 h-3.5" />
+                    {comparingVersions ? 'Comparing...' : 'Compare'}
+                  </button>
+                </div>
+              </div>
+
+              {comparisonError && (
+                <div className="p-3 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-xs text-[#B42318]">
+                  {comparisonError}
+                </div>
+              )}
+
+              {comparisonResult && (
+                <div className="space-y-3 pt-1">
+                  <div className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E9E6F2] flex items-center justify-between text-xs">
+                    <span className="font-bold text-[#171B45]">
+                      Comparison: <span className="font-mono text-[#7450D8]">v{comparisonResult.v1_version}</span> vs{' '}
+                      <span className="font-mono text-[#7450D8]">v{comparisonResult.v2_version}</span>
+                    </span>
+                    <span className="text-[#5F6485] font-medium">
+                      {comparisonResult.changed_fields_count} of {comparisonResult.total_fields} fields modified
+                    </span>
+                  </div>
+
+                  {comparisonResult.differences && comparisonResult.differences.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead>
+                          <tr className="border-b border-[#EEEAF5] bg-[#FAF9FC] text-[#8589A6] font-semibold text-[11px]">
+                            <th className="py-2.5 px-3">FIELD / ATTRIBUTE</th>
+                            <th className="py-2.5 px-3">BASE VALUE (v{comparisonResult.v1_version})</th>
+                            <th className="py-2.5 px-3">TARGET VALUE (v{comparisonResult.v2_version})</th>
+                            <th className="py-2.5 px-3">STATUS</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#EEEAF5]">
+                          {comparisonResult.differences.map((diff: VersionDifferenceItem, idx: number) => (
+                            <tr key={idx} className="hover:bg-[#FAF9FC]">
+                              <td className="py-2 px-3 font-mono font-bold text-[#171B45]">{diff.field}</td>
+                              <td className="py-2 px-3 font-mono text-[#B42318] bg-[#FEF3F2]/50">
+                                {diff.v1_value !== null && diff.v1_value !== undefined ? String(diff.v1_value) : '<none>'}
+                              </td>
+                              <td className="py-2 px-3 font-mono text-[#027A48] bg-[#ECFDF3]/50">
+                                {diff.v2_value !== null && diff.v2_value !== undefined ? String(diff.v2_value) : '<none>'}
+                              </td>
+                              <td className="py-2 px-3">
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                  diff.is_changed
+                                    ? 'bg-[#FEF0C7] text-[#B54708]'
+                                    : 'bg-[#F2F4F7] text-[#475467]'
+                                }`}>
+                                  {diff.is_changed ? 'MODIFIED' : 'IDENTICAL'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center text-xs text-[#5F6485] bg-[#FAF9FC] rounded-xl border border-[#EEEAF5]">
+                      No field differences detected between v{comparisonResult.v1_version} and v{comparisonResult.v2_version}.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Application Version Timeline */}
+            <div className="p-5 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs space-y-4">
+              <h5 className="text-xs font-bold uppercase tracking-wider text-[#171B45]">
+                Application Dossier Version Timeline ({versionsList.length} recorded versions)
+              </h5>
+
+              {versionsList.length === 0 ? (
+                <div className="p-8 text-center text-xs text-[#8589A6]">
+                  No version history recorded yet.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-[#EEEAF5] bg-[#FAF9FC] text-[#8589A6] font-semibold text-[11px]">
+                        <th className="py-3 px-3">REVISION</th>
+                        <th className="py-3 px-3">CHANGE SUMMARY</th>
+                        <th className="py-3 px-3">AFFECTED FIELDS</th>
+                        <th className="py-3 px-3">RECORDED AT</th>
+                        <th className="py-3 px-3">ACTOR</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#EEEAF5]">
+                      {versionsList.map((ver, idx) => (
+                        <tr key={ver.id} className="hover:bg-[#FAF9FC]">
+                          <td className="py-3 px-3">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono font-bold text-[#7450D8]">v{ver.version_number}</span>
+                              {idx === 0 && (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#ECFDF3] text-[#027A48]">
+                                  LATEST
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 px-3 text-[#171B45] font-semibold max-w-xs truncate">
+                            {ver.change_summary || 'Dossier snapshot recorded'}
+                          </td>
+                          <td className="py-3 px-3">
+                            <div className="flex flex-wrap gap-1">
+                              {ver.changed_fields && Object.keys(ver.changed_fields).length > 0 ? (
+                                Object.keys(ver.changed_fields).map((f: string, i: number) => (
+                                  <span key={i} className="px-1.5 py-0.5 rounded bg-[#FAF8FF] border border-[#DCD0F7] text-[10px] font-mono text-[#7450D8]">
+                                    {f}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-[#8589A6] text-[10px]">Initial snapshot</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 px-3 text-[#5F6485] whitespace-nowrap">
+                            {formatDate(ver.created_at)}
+                          </td>
+                          <td className="py-3 px-3 font-mono text-[11px] text-[#8589A6]">
+                            {ver.created_by_id || 'SYSTEM'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

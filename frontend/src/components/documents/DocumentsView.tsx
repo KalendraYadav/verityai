@@ -22,6 +22,8 @@ import {
   Globe,
   BookOpen,
   Sparkles,
+  GitBranch,
+  UploadCloud,
 } from 'lucide-react';
 import {
   fetchAllDocuments,
@@ -35,6 +37,8 @@ import {
   reprocessDocumentMultilingual,
   translateDocumentText,
   fetchRegulatoryGlossary,
+  fetchDocumentRevisions,
+  uploadDocumentRevision,
   type DocumentListItem,
   type ApplicationListItem,
   type DocumentPageItem,
@@ -42,6 +46,7 @@ import {
   type DocumentLanguageResponse,
   type MultilingualFieldItem,
   type TranslationResponse,
+  type DocumentRevisionItem,
 } from '../../api/client';
 import { DocumentUploadModal } from './DocumentUploadModal';
 
@@ -58,7 +63,7 @@ export const DocumentsView: React.FC = () => {
 
   // Document Detail Workspace State
   const [selectedDoc, setSelectedDoc] = useState<DocumentListItem | null>(null);
-  const [activeTab, setActiveTab] = useState<'text' | 'file' | 'pipeline' | 'multilingual'>('text');
+  const [activeTab, setActiveTab] = useState<'text' | 'file' | 'pipeline' | 'multilingual' | 'revisions'>('text');
   const [pagesLoading, setPagesLoading] = useState(false);
   const [pages, setPages] = useState<DocumentPageItem[]>([]);
   const [processingData, setProcessingData] = useState<DocumentProcessingStatusData | null>(null);
@@ -75,6 +80,14 @@ export const DocumentsView: React.FC = () => {
   const [translateInput, setTranslateInput] = useState('संस्थान का नाम: राजकीय महिला पॉलिटेक्निक। स्वीकृत क्षमता: १२०। शैक्षणिक सत्र: २०२४-२५।');
   const [translationResult, setTranslationResult] = useState<TranslationResponse | null>(null);
   const [translating, setTranslating] = useState(false);
+
+  // Phase 13 Document Revisions State
+  const [docRevisions, setDocRevisions] = useState<DocumentRevisionItem[]>([]);
+  const [loadingRevisions, setLoadingRevisions] = useState(false);
+  const [revisionSummaryInput, setRevisionSummaryInput] = useState('');
+  const [revisionFile, setRevisionFile] = useState<File | null>(null);
+  const [uploadingRevision, setUploadingRevision] = useState(false);
+  const [revisionMessage, setRevisionMessage] = useState<string | null>(null);
 
 
   const pollIntervalRef = useRef<number | null>(null);
@@ -243,6 +256,38 @@ export const DocumentsView: React.FC = () => {
       setWorkspaceError(err.message || 'Failed to translate document text');
     } finally {
       setTranslating(false);
+    }
+  }
+
+  async function loadRevisions(docId: string) {
+    setLoadingRevisions(true);
+    setRevisionMessage(null);
+    try {
+      const revs = await fetchDocumentRevisions(docId);
+      setDocRevisions(revs);
+    } catch (err: any) {
+      console.error('Failed to load document revisions', err);
+    } finally {
+      setLoadingRevisions(false);
+    }
+  }
+
+  async function handleUploadRevision(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedDoc || !revisionFile) return;
+    setUploadingRevision(true);
+    setRevisionMessage(null);
+    try {
+      const rev = await uploadDocumentRevision(selectedDoc.id, revisionFile, revisionSummaryInput);
+      setRevisionMessage(`Revision v${rev.revision_number} uploaded successfully.`);
+      setRevisionFile(null);
+      setRevisionSummaryInput('');
+      await loadRevisions(selectedDoc.id);
+      await loadData();
+    } catch (err: any) {
+      setRevisionMessage(`Upload failed: ${err.message}`);
+    } finally {
+      setUploadingRevision(false);
     }
   }
 
@@ -704,6 +749,21 @@ export const DocumentsView: React.FC = () => {
                     {docLanguages.detected_language.toUpperCase()}
                   </span>
                 )}
+              </button>
+
+              <button
+                onClick={() => {
+                  setActiveTab('revisions');
+                  if (selectedDoc) loadRevisions(selectedDoc.id);
+                }}
+                className={`py-3 text-xs sm:text-sm font-bold border-b-2 flex items-center gap-2 transition-all cursor-pointer ${
+                  activeTab === 'revisions'
+                    ? 'border-[#7450D8] text-[#7450D8]'
+                    : 'border-transparent text-[#5F6485] hover:text-[#171B45]'
+                }`}
+              >
+                <GitBranch className="w-4 h-4" />
+                Revisions ({docRevisions.length > 0 ? docRevisions.length : '1'})
               </button>
             </div>
 
@@ -1204,6 +1264,158 @@ export const DocumentsView: React.FC = () => {
                   </div>
                 </>
               )}
+                </div>
+              )}
+
+              {/* TAB 5: Document Revisions */}
+              {activeTab === 'revisions' && (
+                <div className="space-y-5 max-w-4xl mx-auto">
+                  {/* Revision Context Header */}
+                  <div className="p-4 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <GitBranch className="w-5 h-5 text-[#7450D8]" />
+                        <h4 className="text-sm font-bold text-[#171B45]">Document Amendment & Revision Ledger</h4>
+                      </div>
+                      <p className="text-xs text-[#5F6485]">
+                        All amended uploads create immutable revision records. Sha256 hashes are verified cryptographically.
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => selectedDoc && loadRevisions(selectedDoc.id)}
+                      disabled={loadingRevisions}
+                      className="px-3 py-1.5 rounded-xl border border-[#DCD0F7] text-xs font-bold text-[#7450D8] hover:bg-[#FAF8FF] transition-all cursor-pointer flex items-center gap-1.5 self-start sm:self-auto"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${loadingRevisions ? 'animate-spin' : ''}`} />
+                      Refresh Revisions
+                    </button>
+                  </div>
+
+                  {/* Upload Amendment Form */}
+                  <form onSubmit={handleUploadRevision} className="p-5 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs space-y-4">
+                    <h5 className="text-xs font-bold uppercase tracking-wider text-[#171B45] flex items-center gap-1.5">
+                      <UploadCloud className="w-4 h-4 text-[#F04438]" />
+                      Upload Document Amendment (Creates New Revision)
+                    </h5>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-bold text-[#5F6485] uppercase">Amended Document File</label>
+                        <input
+                          type="file"
+                          accept=".pdf,.png,.jpg,.jpeg"
+                          required
+                          onChange={(e) => setRevisionFile(e.target.files?.[0] || null)}
+                          className="w-full text-xs p-2 rounded-xl border border-[#DCD0F7] bg-[#FAF9FC] file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#7450D8] file:text-white hover:file:bg-[#6039C8] cursor-pointer"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-bold text-[#5F6485] uppercase">Amendment Summary / Justification</label>
+                        <input
+                          type="text"
+                          required
+                          value={revisionSummaryInput}
+                          onChange={(e) => setRevisionSummaryInput(e.target.value)}
+                          placeholder="e.g. Corrected scan with clear revenue seal..."
+                          className="w-full text-xs p-2.5 rounded-xl border border-[#DCD0F7] bg-[#FAF9FC] text-[#171B45] focus:outline-none focus:border-[#7450D8]"
+                        />
+                      </div>
+                    </div>
+
+                    {revisionMessage && (
+                      <div className={`p-3 rounded-xl text-xs font-semibold ${
+                        revisionMessage.includes('failed') || revisionMessage.includes('identical')
+                          ? 'bg-[#FEF3F2] border border-[#FECDCA] text-[#B42318]'
+                          : 'bg-[#ECFDF3] border border-[#A6F4C5] text-[#027A48]'
+                      }`}>
+                        {revisionMessage}
+                      </div>
+                    )}
+
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={uploadingRevision || !revisionFile || !revisionSummaryInput.trim()}
+                        className="px-4 py-2 rounded-xl bg-[#F04438] text-white text-xs font-bold hover:bg-[#E34234] transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-xs"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        {uploadingRevision ? 'Uploading Amendment...' : 'Upload New Revision'}
+                      </button>
+                    </div>
+                  </form>
+
+                  {/* Revisions Table */}
+                  <div className="p-5 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs space-y-3">
+                    <h5 className="text-xs font-bold uppercase tracking-wider text-[#171B45]">
+                      Revision History Ledger ({docRevisions.length > 0 ? docRevisions.length : 1} revisions)
+                    </h5>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead>
+                          <tr className="border-b border-[#EEEAF5] bg-[#FAF9FC] text-[#8589A6] font-semibold text-[11px]">
+                            <th className="py-2.5 px-3">REVISION</th>
+                            <th className="py-2.5 px-3">STATUS</th>
+                            <th className="py-2.5 px-3">AMENDMENT SUMMARY</th>
+                            <th className="py-2.5 px-3">SHA-256 HASH</th>
+                            <th className="py-2.5 px-3">FILE SIZE</th>
+                            <th className="py-2.5 px-3">RECORDED AT</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#EEEAF5]">
+                          {docRevisions.length > 0 ? (
+                            docRevisions.map((rev, idx) => (
+                              <tr key={rev.id} className="hover:bg-[#FAF9FC]">
+                                <td className="py-2.5 px-3 font-mono font-bold text-[#7450D8]">
+                                  v{rev.revision_number}
+                                </td>
+                                <td className="py-2.5 px-3">
+                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                    idx === 0 ? 'bg-[#ECFDF3] text-[#027A48]' : 'bg-[#F2F4F7] text-[#475467]'
+                                  }`}>
+                                    {idx === 0 ? 'CURRENT' : 'HISTORICAL'}
+                                  </span>
+                                </td>
+                                <td className="py-2.5 px-3 text-[#171B45]">
+                                  {rev.change_reason || 'Initial upload'}
+                                </td>
+                                <td className="py-2.5 px-3 font-mono text-[10px] text-[#5F6485]">
+                                  {rev.sha256 ? `${rev.sha256.slice(0, 16)}...` : 'N/A'}
+                                </td>
+                                <td className="py-2.5 px-3 font-mono text-[11px] text-[#5F6485]">
+                                  {formatBytes(rev.file_size_bytes)}
+                                </td>
+                                <td className="py-2.5 px-3 text-[#5F6485] whitespace-nowrap">
+                                  {new Date(rev.created_at).toLocaleString('en-GB')}
+                                </td>
+                              </tr>
+                            ))
+                          ) : selectedDoc ? (
+                            <tr className="hover:bg-[#FAF9FC]">
+                              <td className="py-2.5 px-3 font-mono font-bold text-[#7450D8]">v1</td>
+                              <td className="py-2.5 px-3">
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#ECFDF3] text-[#027A48]">
+                                  CURRENT
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-3 text-[#171B45]">Initial upload baseline</td>
+                              <td className="py-2.5 px-3 font-mono text-[10px] text-[#5F6485]">
+                                {selectedDoc.sha256 ? `${selectedDoc.sha256.slice(0, 16)}...` : 'N/A'}
+                              </td>
+                              <td className="py-2.5 px-3 font-mono text-[11px] text-[#5F6485]">
+                                {formatBytes(selectedDoc.file_size_bytes)}
+                              </td>
+                              <td className="py-2.5 px-3 text-[#5F6485] whitespace-nowrap">
+                                {new Date(selectedDoc.created_at).toLocaleString('en-GB')}
+                              </td>
+                            </tr>
+                          ) : null}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
               )}
 

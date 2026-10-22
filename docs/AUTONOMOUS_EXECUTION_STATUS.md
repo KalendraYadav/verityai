@@ -77,4 +77,35 @@
   - Frontend integration: "Multilingual Scrutiny & Glossary" tab in `DocumentsView.tsx` with language badges, script distribution cards, extracted bilingual candidate fields table, and interactive regulatory glossary translation tester.
   - 7 automated unit and integration tests in `backend/tests/test_multilingual.py`. Full test suite: **108 passed, 0 failures**. Frontend production build passed with 0 errors (`vite build` in 8.52s).
 
+---
+
+### Phase 13 — Institutional Dossier History and Versioning
+- **Status:** VERIFIED
+- **Commit:** `pending`
+- **Scope & Implementation:**
+  - Database schema & models (`backend/app/models/versioning.py`):
+    - `ApplicationVersion`: Immutable application state snapshots (`version_number`, `change_summary`, `changed_fields`, `snapshot_data`, `created_by_id`, `created_at`).
+    - `DocumentRevision`: Revisions table for uploaded document amendments (`revision_number`, `original_filename`, `storage_key`, `file_size_bytes`, `sha256`, `change_reason`, `uploaded_by_id`, `created_at`).
+    - Migration: `a2b3c4d5e6f7_add_versioning_and_revisions_tables.py` applied cleanly.
+  - Versioning engine (`backend/app/services/versioning.py`):
+    - Automatic baseline version v1 capture on first query/update.
+    - Version increment on application amendments with field-level diff calculation (`academic_year`, `declared_data`, etc.).
+    - Idempotent duplicate version suppression when data is unchanged.
+    - Comparative version diff computation (`compare_application_versions`) with `v1_value`, `v2_value`, and `is_changed` classification.
+    - Document revision manager (`record_document_revision`): creates incremental revisions, rejects duplicate SHA-256 uploads with `ConflictException` (409), and logs append-only audit events.
+    - Dossier freshness auditor (`get_application_freshness_status`): detects whether validation runs or scrutiny reports are stale relative to newer application versions or document revisions.
+  - API Endpoints (`backend/app/api/v1/endpoints/versioning.py`):
+    - `GET /api/v1/applications/{id}/versions`
+    - `GET /api/v1/applications/{id}/versions/{version_number}`
+    - `GET /api/v1/applications/{id}/versions-compare?v1={v1}&v2={v2}`
+    - `GET /api/v1/applications/{id}/freshness`
+    - `GET /api/v1/documents/{id}/revisions`
+    - `POST /api/v1/documents/{id}/revisions`
+  - Frontend integration:
+    - 9th tab in `ApplicationDetailWorkspace.tsx`: "Dossier History & Versioning" featuring Dossier Freshness status card, interactive Comparative Version Diff Engine (side-by-side field diffs), and chronological Application Version Timeline.
+    - 5th tab in `DocumentsView.tsx`: "Revisions" ledger with historical revision table, SHA-256 hashes, file sizes, and Document Amendment upload form.
+  - Automated tests: 7 tests in `backend/tests/test_versioning.py`.
+  - Verification: Full backend test suite: **115 passed, 0 failures** in 19.60s; frontend production build passed cleanly in 5.76s.
+
+
 

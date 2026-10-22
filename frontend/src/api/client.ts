@@ -1592,6 +1592,141 @@ export async function fetchRegulatoryGlossary(): Promise<Record<string, string>>
   return response.json();
 }
 
+// ---------------------------------------------------------------------------
+// Phase 13 — Institutional Dossier History & Versioning
+// ---------------------------------------------------------------------------
 
+export interface ApplicationVersionItem {
+  id: string;
+  application_id: string;
+  version_number: number;
+  change_summary: string;
+  changed_fields?: Record<string, any> | null;
+  snapshot_data: Record<string, any>;
+  created_by_id?: string | null;
+  created_at: string;
+}
 
+export interface VersionDifferenceItem {
+  field: string;
+  v1_value: any;
+  v2_value: any;
+  is_changed: boolean;
+}
 
+export interface VersionComparisonResponse {
+  application_id: string;
+  v1_version: number;
+  v1_created_at: string;
+  v2_version: number;
+  v2_created_at: string;
+  total_fields: number;
+  changed_fields_count: number;
+  differences: VersionDifferenceItem[];
+}
+
+export interface DocumentRevisionItem {
+  id: string;
+  document_id: string;
+  revision_number: number;
+  storage_key: string;
+  original_filename: string;
+  file_size_bytes: number;
+  sha256: string;
+  change_reason?: string | null;
+  uploaded_by_id?: string | null;
+  created_at: string;
+}
+
+export interface ApplicationFreshnessResponse {
+  application_id: string;
+  current_version: number;
+  is_overall_fresh: boolean;
+  validation_status: string;
+  validation_stale: boolean;
+  latest_validation_run_id?: string | null;
+  report_status: string;
+  report_stale: boolean;
+  latest_report_id?: string | null;
+}
+
+export async function fetchApplicationVersions(applicationId: string): Promise<ApplicationVersionItem[]> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/versions`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to fetch application versions (${response.status})`);
+  }
+  return response.json();
+}
+
+export async function compareApplicationVersions(
+  applicationId: string,
+  v1: number,
+  v2: number
+): Promise<VersionComparisonResponse> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/versions-compare?v1=${v1}&v2=${v2}`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to compare application versions (${response.status})`);
+  }
+  return response.json();
+}
+
+export async function fetchApplicationFreshness(applicationId: string): Promise<ApplicationFreshnessResponse> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/freshness`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to fetch application freshness status (${response.status})`);
+  }
+  return response.json();
+}
+
+export async function fetchDocumentRevisions(documentId: string): Promise<DocumentRevisionItem[]> {
+  const response = await fetch(`/api/v1/documents/${documentId}/revisions`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to fetch document revisions (${response.status})`);
+  }
+  return response.json();
+}
+
+export async function uploadDocumentRevision(
+  documentId: string,
+  file: File,
+  changeReason?: string
+): Promise<DocumentRevisionItem> {
+  const formData = new FormData();
+  formData.append('file', file);
+  if (changeReason) formData.append('change_reason', changeReason);
+
+  const response = await fetch(`/api/v1/documents/${documentId}/revisions`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'X-Requested-With': 'VerityAI',
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.detail || err?.error?.message || `Failed to upload document revision (${response.status})`);
+  }
+  return response.json();
+}

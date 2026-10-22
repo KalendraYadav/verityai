@@ -11,6 +11,7 @@ from app.models.validation import ValidationRule, ValidationRun, RuleResult
 from app.models.finding import ExtractedField, Finding, FindingEvidence
 from app.models.report import ScrutinyReport
 from app.models.registry import RegistryRecord, RegistryVerificationRun, RegistryVerificationResult
+from app.models.versioning import ApplicationVersion, DocumentRevision
 
 __all__ = [
     "Base",
@@ -32,5 +33,7 @@ __all__ = [
     "RegistryRecord",
     "RegistryVerificationRun",
     "RegistryVerificationResult",
+    "ApplicationVersion",
+    "DocumentRevision",
 ]
 
