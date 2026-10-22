@@ -15,6 +15,7 @@ from app.api.v1.endpoints import (
     registry,
     multilingual,
     versioning,
+    integration,
 )
 
 api_router = APIRouter()
@@ -33,6 +34,7 @@ api_router.include_router(reports.router, tags=["Scrutiny Reports & Decision Sup
 api_router.include_router(registry.router, tags=["Registry Verification"])
 api_router.include_router(multilingual.router, tags=["Multilingual Scrutiny"])
 api_router.include_router(versioning.router, tags=["Institutional Dossier History & Versioning"])
+api_router.include_router(integration.router, tags=["External Regulatory Portal Interoperability"])
 
 
 

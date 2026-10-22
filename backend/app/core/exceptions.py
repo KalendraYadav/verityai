@@ -12,6 +12,8 @@ class VerityAPIException(HTTPException):
         details: Optional[List[ErrorDetail]] = None,
         headers: Optional[dict] = None,
     ):
+        self.code = code
+        self.message = message
         super().__init__(
             status_code=status_code,
             detail={
@@ -34,10 +36,10 @@ class BadRequestException(VerityAPIException):
 
 
 class ValidationException(VerityAPIException):
-    def __init__(self, message: str, details: Optional[List[ErrorDetail]] = None):
+    def __init__(self, message: str, details: Optional[List[ErrorDetail]] = None, code: str = "VALIDATION_ERROR"):
         super().__init__(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            code="VALIDATION_ERROR",
+            code=code,
             message=message,
             details=details,
         )

@@ -12,6 +12,7 @@ from app.models.finding import ExtractedField, Finding, FindingEvidence
 from app.models.report import ScrutinyReport
 from app.models.registry import RegistryRecord, RegistryVerificationRun, RegistryVerificationResult
 from app.models.versioning import ApplicationVersion, DocumentRevision
+from app.models.integration import ExternalPortalConfig, ExternalPortalSyncLog
 
 __all__ = [
     "Base",
@@ -35,5 +36,7 @@ __all__ = [
     "RegistryVerificationResult",
     "ApplicationVersion",
     "DocumentRevision",
+    "ExternalPortalConfig",
+    "ExternalPortalSyncLog",
 ]
 

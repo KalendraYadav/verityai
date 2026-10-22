@@ -1730,3 +1730,126 @@ export async function uploadDocumentRevision(
   }
   return response.json();
 }
+
+// ---------------------------------------------------------------------------
+// Phase 14 — External Regulatory Portal Interoperability
+// ---------------------------------------------------------------------------
+
+export interface ExternalPortalConfigItem {
+  id: string;
+  provider_id: string;
+  name: string;
+  provider_type: 'LOCAL_SYNTHETIC' | 'CONFIGURABLE_REST' | 'OFFICIAL_STUB';
+  description?: string | null;
+  base_url?: string | null;
+  is_enabled: boolean;
+  auth_type: string;
+  statutory_authority: string;
+  timeout_seconds: number;
+  is_synthetic: boolean;
+  health_status?: string | null;
+  health_message?: string | null;
+  latency_ms?: number | null;
+  created_at: string;
+}
+
+export interface ExternalPortalHealthData {
+  provider_id: string;
+  status: string;
+  latency_ms?: number | null;
+  statutory_authority: string;
+  is_synthetic: boolean;
+  message: string;
+  http_status?: number | null;
+}
+
+export interface ExternalPortalSyncLogItem {
+  id: string;
+  provider_id: string;
+  action: string;
+  target_identifier?: string | null;
+  status: string;
+  http_status_code?: number | null;
+  response_latency_ms?: number | null;
+  error_message?: string | null;
+  request_metadata?: Record<string, any> | null;
+  initiated_by_id?: string | null;
+  created_at: string;
+}
+
+export interface ExternalVerificationCheck {
+  check_name: string;
+  status: string;
+  declared_value?: any;
+  portal_value?: any;
+  explanation: string;
+}
+
+export interface ExternalVerificationData {
+  provider_id: string;
+  provider_name: string;
+  provider_type: string;
+  overall_status: string;
+  statutory_authority: string;
+  is_synthetic: boolean;
+  retrieved_at: string;
+  target_identifier: string;
+  checks: ExternalVerificationCheck[];
+  provenance: Record<string, any>;
+}
+
+export async function fetchRegulatoryPortals(): Promise<ExternalPortalConfigItem[]> {
+  const response = await fetch('/api/v1/integrations/providers', {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to fetch regulatory portals (${response.status})`);
+  }
+  return response.json();
+}
+
+export async function probeRegulatoryPortalHealth(providerId: string): Promise<ExternalPortalHealthData> {
+  const response = await fetch(`/api/v1/integrations/providers/${providerId}/status`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to probe regulatory portal health (${response.status})`);
+  }
+  return response.json();
+}
+
+export async function triggerExternalVerification(
+  applicationId: string,
+  providerId: string
+): Promise<ExternalVerificationData> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/external-verification`, {
+    method: 'POST',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+    body: JSON.stringify({ provider_id: providerId }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to execute external verification (${response.status})`);
+  }
+  return response.json();
+}
+
+export async function fetchPortalSyncHistory(limit = 50): Promise<ExternalPortalSyncLogItem[]> {
+  const response = await fetch(`/api/v1/integrations/history?limit=${limit}`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to fetch portal sync history (${response.status})`);
+  }
+  return response.json();
+}

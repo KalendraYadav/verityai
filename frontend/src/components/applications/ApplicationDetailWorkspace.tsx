@@ -25,6 +25,11 @@ import {
   Database,
   GitCompare,
   GitBranch,
+  Network,
+  Radio,
+  Lock,
+  ShieldAlert,
+  Info,
 } from 'lucide-react';
 import {
   fetchApplicationDetail,
@@ -52,6 +57,10 @@ import {
   fetchApplicationVersions,
   compareApplicationVersions,
   fetchApplicationFreshness,
+  fetchRegulatoryPortals,
+  probeRegulatoryPortalHealth,
+  triggerExternalVerification,
+  fetchPortalSyncHistory,
   type ApplicationDetailResponse,
   type DocumentListItem,
   type AuditEventItem,
@@ -70,6 +79,9 @@ import {
   type VersionComparisonResponse,
   type VersionDifferenceItem,
   type ApplicationFreshnessResponse,
+  type ExternalPortalConfigItem,
+  type ExternalPortalSyncLogItem,
+  type ExternalVerificationData,
 } from '../../api/client';
 import { DocumentUploadModal } from '../documents/DocumentUploadModal';
 
@@ -123,7 +135,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
   const [reportMessage, setReportMessage] = useState<string | null>(null);
   const [reportError, setReportError] = useState<string | null>(null);
 
-  const [activeSubTab, setActiveSubTab] = useState<'documents' | 'validation' | 'anomalies' | 'requirements' | 'audit' | 'institution' | 'reports' | 'registry' | 'history'>('documents');
+  const [activeSubTab, setActiveSubTab] = useState<'documents' | 'validation' | 'anomalies' | 'requirements' | 'audit' | 'institution' | 'reports' | 'registry' | 'history' | 'portals'>('documents');
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
   // Phase 11: Extended Verification & Registry Integration
@@ -147,11 +159,19 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
   const [comparingVersions, setComparingVersions] = useState(false);
   const [comparisonError, setComparisonError] = useState<string | null>(null);
 
+  // Phase 14: External Regulatory Portal Interoperability
+  const [portalsList, setPortalsList] = useState<ExternalPortalConfigItem[]>([]);
+  const [externalVerifData, setExternalVerifData] = useState<ExternalVerificationData | null>(null);
+  const [portalSyncLogs, setPortalSyncLogs] = useState<ExternalPortalSyncLogItem[]>([]);
+  const [verifyingPortal, setVerifyingPortal] = useState(false);
+  const [probingPortalId, setProbingPortalId] = useState<string | null>(null);
+  const [portalFeedback, setPortalFeedback] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
+
   async function loadWorkspaceData() {
     setLoading(true);
     setError(null);
     try {
-      const [appData, docsData, auditData, catsData, valData, analysisRes, wfData, readyData, revSum, repList, regRuns, regProviders, versData, freshData] = await Promise.all([
+      const [appData, docsData, auditData, catsData, valData, analysisRes, wfData, readyData, revSum, repList, regRuns, regProviders, versData, freshData, portalsData, logsData] = await Promise.all([
         fetchApplicationDetail(applicationId),
         fetchApplicationDocuments(applicationId, 1, 100),
         fetchApplicationAudit(applicationId),
@@ -166,6 +186,8 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
         fetchRegistryProviders().catch(() => []),
         fetchApplicationVersions(applicationId).catch(() => []),
         fetchApplicationFreshness(applicationId).catch(() => null),
+        fetchRegulatoryPortals().catch(() => []),
+        fetchPortalSyncHistory(10).catch(() => []),
       ]);
       setApplication(appData);
       setDocuments(docsData.data);
@@ -207,6 +229,12 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
       }
       if (freshData) {
         setFreshnessStatus(freshData);
+      }
+      if (portalsData && portalsData.length > 0) {
+        setPortalsList(portalsData);
+      }
+      if (logsData) {
+        setPortalSyncLogs(logsData);
       }
 
     } catch (err: any) {
@@ -267,6 +295,57 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
       setComparisonError(err.message || 'Failed to compare dossier versions');
     } finally {
       setComparingVersions(false);
+    }
+  }
+
+  async function handleTriggerExternalVerification(providerId: string) {
+    setVerifyingPortal(true);
+    setPortalFeedback(null);
+    try {
+      const res = await triggerExternalVerification(applicationId, providerId);
+      setExternalVerifData(res);
+      setPortalFeedback({
+        type: 'success',
+        text: `Verification against ${res.provider_name} completed: Overall status is ${res.overall_status}.`
+      });
+      const logs = await fetchPortalSyncHistory(10).catch(() => []);
+      setPortalSyncLogs(logs);
+      setActiveSubTab('portals');
+    } catch (err: any) {
+      setPortalFeedback({
+        type: 'error',
+        text: `External verification failed: ${err.message}`
+      });
+    } finally {
+      setVerifyingPortal(false);
+    }
+  }
+
+  async function handleProbePortalHealth(providerId: string) {
+    setProbingPortalId(providerId);
+    setPortalFeedback(null);
+    try {
+      const health = await probeRegulatoryPortalHealth(providerId);
+      setPortalFeedback({
+        type: health.status === 'OPERATIONAL' ? 'success' : 'info',
+        text: `[${health.provider_id}] Status: ${health.status}. ${health.message}`
+      });
+      setPortalsList((prev) =>
+        prev.map((p) =>
+          p.provider_id === providerId
+            ? { ...p, health_status: health.status, health_message: health.message, latency_ms: health.latency_ms }
+            : p
+        )
+      );
+      const logs = await fetchPortalSyncHistory(10).catch(() => []);
+      setPortalSyncLogs(logs);
+    } catch (err: any) {
+      setPortalFeedback({
+        type: 'error',
+        text: `Health probe failed: ${err.message}`
+      });
+    } finally {
+      setProbingPortalId(null);
     }
   }
 
@@ -997,6 +1076,20 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             <GitCompare className="w-4 h-4 text-[#7450D8]" />
             <span>
               Dossier History & Versioning {versionsList.length > 0 ? `(v${versionsList[0].version_number})` : ''}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('portals')}
+            className={`py-3.5 text-xs sm:text-sm font-bold border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+              activeSubTab === 'portals'
+                ? 'border-[#7450D8] text-[#7450D8]'
+                : 'border-transparent text-[#5F6485] hover:text-[#171B45]'
+            }`}
+          >
+            <Network className="w-4 h-4 text-[#7450D8]" />
+            <span>
+              Regulatory Gateways ({portalsList.length > 0 ? portalsList.length : '3'})
             </span>
           </button>
         </div>
@@ -2721,6 +2814,270 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                           </td>
                           <td className="py-3 px-3 font-mono text-[11px] text-[#8589A6]">
                             {ver.created_by_id || 'SYSTEM'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Tab 10: Regulatory Gateways & Interoperability */}
+        {activeSubTab === 'portals' && (
+          <div className="p-4 sm:p-6 space-y-6">
+            {/* Header & Interoperability Summary */}
+            <div className="p-4 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Network className="w-5 h-5 text-[#7450D8]" />
+                  <h4 className="text-sm font-bold text-[#171B45]">Regulatory Portal Interoperability & External Gateways</h4>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FAF8FF] text-[#7450D8] border border-[#DCD0F7]">
+                    SSRF Protected & TLS Enforced
+                  </span>
+                </div>
+                <p className="text-xs text-[#5F6485]">
+                  Exchange authorized compliance records with central institutional registries (AICTE, AISHE, State Boards). Private IP ranges and cloud metadata services are blocked.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => loadWorkspaceData()}
+                  className="px-3 py-1.5 rounded-xl border border-[#DCD0F7] text-xs font-bold text-[#7450D8] hover:bg-[#FAF8FF] transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Refresh Gateways
+                </button>
+              </div>
+            </div>
+
+            {/* Feedback Alert */}
+            {portalFeedback && (
+              <div className={`p-4 rounded-2xl border text-xs flex items-center gap-2.5 ${
+                portalFeedback.type === 'success'
+                  ? 'bg-[#ECFDF3] border-[#A6F4C5] text-[#027A48]'
+                  : portalFeedback.type === 'error'
+                  ? 'bg-[#FEF3F2] border-[#FECDCA] text-[#B42318]'
+                  : 'bg-[#FAF8FF] border-[#DCD0F7] text-[#7450D8]'
+              }`}>
+                {portalFeedback.type === 'success' ? (
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                ) : portalFeedback.type === 'error' ? (
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                ) : (
+                  <Info className="w-4 h-4 shrink-0" />
+                )}
+                <span className="font-medium">{portalFeedback.text}</span>
+              </div>
+            )}
+
+            {/* Gateways Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {portalsList.map((portal) => (
+                <div
+                  key={portal.id}
+                  className={`p-5 rounded-3xl border transition-all space-y-4 flex flex-col justify-between ${
+                    portal.provider_type === 'LOCAL_SYNTHETIC'
+                      ? 'bg-white border-[#DCD0F7] shadow-xs'
+                      : portal.provider_type === 'CONFIGURABLE_REST'
+                      ? 'bg-white border-[#E9E6F2] shadow-xs'
+                      : 'bg-[#FAF9FC] border-[#E9E6F2]'
+                  }`}
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        portal.provider_type === 'LOCAL_SYNTHETIC'
+                          ? 'bg-[#ECFDF3] text-[#027A48]'
+                          : portal.provider_type === 'CONFIGURABLE_REST'
+                          ? portal.is_enabled ? 'bg-[#EFF8FF] text-[#175CD3]' : 'bg-[#FEF0C7] text-[#B54708]'
+                          : 'bg-[#F2F4F7] text-[#475467]'
+                      }`}>
+                        {portal.provider_type}
+                      </span>
+                      <span className={`flex items-center gap-1 text-[11px] font-bold ${
+                        portal.health_status === 'OPERATIONAL'
+                          ? 'text-[#027A48]'
+                          : portal.health_status === 'UNCONFIGURED' || portal.health_status === 'UNCONFIGURED_PROTOTYPE_STUB'
+                          ? 'text-[#5F6485]'
+                          : 'text-[#B42318]'
+                      }`}>
+                        <Radio className="w-3 h-3" />
+                        {portal.health_status || 'UNKNOWN'}
+                      </span>
+                    </div>
+
+                    <h5 className="text-xs font-bold text-[#171B45] leading-snug">{portal.name}</h5>
+                    <p className="text-[11px] text-[#5F6485] leading-relaxed">{portal.description}</p>
+                    <div className="text-[10px] font-mono text-[#8589A6] pt-1 border-t border-[#EEEAF5]">
+                      Authority: <span className="text-[#171B45] font-semibold">{portal.statutory_authority}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 pt-2 border-t border-[#EEEAF5]">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-[#8589A6]">Latency:</span>
+                      <span className="font-mono font-bold text-[#171B45]">
+                        {portal.latency_ms !== null && portal.latency_ms !== undefined ? `${portal.latency_ms} ms` : 'N/A'}
+                      </span>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleProbePortalHealth(portal.provider_id)}
+                        disabled={probingPortalId === portal.provider_id}
+                        className="flex-1 py-1.5 rounded-xl border border-[#DCD0F7] text-[11px] font-bold text-[#7450D8] hover:bg-[#FAF8FF] transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {probingPortalId === portal.provider_id ? 'Probing...' : 'Probe Health'}
+                      </button>
+
+                      {portal.provider_type !== 'OFFICIAL_STUB' && (
+                        <button
+                          onClick={() => handleTriggerExternalVerification(portal.provider_id)}
+                          disabled={verifyingPortal || (!portal.is_enabled && portal.provider_type !== 'LOCAL_SYNTHETIC')}
+                          className="flex-1 py-1.5 rounded-xl bg-[#7450D8] text-white text-[11px] font-bold hover:bg-[#6039C8] transition-all cursor-pointer disabled:opacity-50 shadow-xs"
+                        >
+                          {verifyingPortal ? 'Verifying...' : 'Verify Now'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Active External Verification Results */}
+            {externalVerifData && (
+              <div className="p-5 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#EEEAF5] pb-3">
+                  <div>
+                    <h5 className="text-xs font-bold uppercase tracking-wider text-[#171B45] flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-[#7450D8]" />
+                      External Gateway Verification Outcome: {externalVerifData.provider_name}
+                    </h5>
+                    <p className="text-xs text-[#5F6485]">
+                      Retrieved on {formatDate(externalVerifData.retrieved_at)} | Authority: {externalVerifData.statutory_authority}
+                    </p>
+                  </div>
+
+                  <span className={`px-3 py-1 rounded-xl text-xs font-bold ${
+                    externalVerifData.overall_status === 'MATCH'
+                      ? 'bg-[#ECFDF3] text-[#027A48]'
+                      : 'bg-[#FEF3F2] text-[#B42318]'
+                  }`}>
+                    {externalVerifData.overall_status}
+                  </span>
+                </div>
+
+                {/* Provenance Banner */}
+                <div className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E9E6F2] flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <span className="font-semibold text-[#171B45]">
+                    Target Identifier: <span className="font-mono text-[#7450D8]">{externalVerifData.target_identifier}</span>
+                  </span>
+                  <div className="flex items-center gap-2 text-[11px] font-mono text-[#5F6485]">
+                    <span>Source: {externalVerifData.provenance?.source || 'Internal Gateway'}</span>
+                    <span>|</span>
+                    <span>Mode: {externalVerifData.provenance?.mode || 'Demo'}</span>
+                    {externalVerifData.provenance?.tls_verified && (
+                      <>
+                        <span>|</span>
+                        <span className="text-[#027A48] font-bold flex items-center gap-1">
+                          <Lock className="w-3 h-3" /> TLS Verified
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Checks Table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-[#EEEAF5] bg-[#FAF9FC] text-[#8589A6] font-semibold text-[11px]">
+                        <th className="py-2.5 px-3">COMPLIANCE CRITERION</th>
+                        <th className="py-2.5 px-3">STATUS</th>
+                        <th className="py-2.5 px-3">APPLICATION DECLARED</th>
+                        <th className="py-2.5 px-3">EXTERNAL PORTAL REFERENCE</th>
+                        <th className="py-2.5 px-3">REGULATORY EXPLANATION</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#EEEAF5]">
+                      {externalVerifData.checks.map((chk, i) => (
+                        <tr key={i} className="hover:bg-[#FAF9FC]">
+                          <td className="py-3 px-3 font-semibold text-[#171B45]">{chk.check_name}</td>
+                          <td className="py-3 px-3">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                              chk.status === 'MATCH' ? 'bg-[#ECFDF3] text-[#027A48]' : 'bg-[#FEF3F2] text-[#B42318]'
+                            }`}>
+                              {chk.status}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 font-mono text-[#171B45]">
+                            {chk.declared_value !== null && chk.declared_value !== undefined ? String(chk.declared_value) : 'N/A'}
+                          </td>
+                          <td className="py-3 px-3 font-mono font-bold text-[#7450D8]">
+                            {chk.portal_value !== null && chk.portal_value !== undefined ? String(chk.portal_value) : 'N/A'}
+                          </td>
+                          <td className="py-3 px-3 text-[#5F6485]">{chk.explanation}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Outbound Sync & Security Audit Logs */}
+            <div className="p-5 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs space-y-3">
+              <h5 className="text-xs font-bold uppercase tracking-wider text-[#171B45] flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-[#7450D8]" />
+                Outbound Gateway Activity & Security Audit Ledger
+              </h5>
+
+              {portalSyncLogs.length === 0 ? (
+                <div className="p-6 text-center text-xs text-[#8589A6]">
+                  No outbound gateway requests recorded yet. Click "Probe Health" or "Verify Now" to initiate a gateway exchange.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-[#EEEAF5] bg-[#FAF9FC] text-[#8589A6] font-semibold text-[11px]">
+                        <th className="py-2.5 px-3">GATEWAY PROVIDER</th>
+                        <th className="py-2.5 px-3">ACTION</th>
+                        <th className="py-2.5 px-3">STATUS</th>
+                        <th className="py-2.5 px-3">LATENCY</th>
+                        <th className="py-2.5 px-3">HTTP CODE</th>
+                        <th className="py-2.5 px-3">RECORDED AT</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#EEEAF5]">
+                      {portalSyncLogs.map((log) => (
+                        <tr key={log.id} className="hover:bg-[#FAF9FC]">
+                          <td className="py-2.5 px-3 font-mono font-bold text-[#171B45]">{log.provider_id}</td>
+                          <td className="py-2.5 px-3 font-semibold text-[#5F6485]">{log.action}</td>
+                          <td className="py-2.5 px-3">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                              log.status === 'SUCCESS' || log.status === 'OPERATIONAL'
+                                ? 'bg-[#ECFDF3] text-[#027A48]'
+                                : log.status === 'BLOCKED_SSRF'
+                                ? 'bg-[#FEF3F2] text-[#B42318]'
+                                : 'bg-[#FAF8FF] text-[#7450D8]'
+                            }`}>
+                              {log.status}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3 font-mono text-[11px] text-[#5F6485]">
+                            {log.response_latency_ms !== null && log.response_latency_ms !== undefined ? `${log.response_latency_ms} ms` : '-'}
+                          </td>
+                          <td className="py-2.5 px-3 font-mono text-[11px] text-[#5F6485]">
+                            {log.http_status_code || '-'}
+                          </td>
+                          <td className="py-2.5 px-3 text-[#5F6485] whitespace-nowrap">
+                            {formatDate(log.created_at)}
                           </td>
                         </tr>
                       ))}
