@@ -81,7 +81,7 @@
 
 ### Phase 13 — Institutional Dossier History and Versioning
 - **Status:** VERIFIED
-- **Commit:** `pending`
+- **Commit:** `d4c006a`
 - **Scope & Implementation:**
   - Database schema & models (`backend/app/models/versioning.py`):
     - `ApplicationVersion`: Immutable application state snapshots (`version_number`, `change_summary`, `changed_fields`, `snapshot_data`, `created_by_id`, `created_at`).
