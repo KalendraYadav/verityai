@@ -18,6 +18,10 @@ import {
   Layers,
   Info,
   ShieldAlert,
+  Languages,
+  Globe,
+  BookOpen,
+  Sparkles,
 } from 'lucide-react';
 import {
   fetchAllDocuments,
@@ -26,10 +30,18 @@ import {
   fetchDocumentProcessing,
   reprocessDocument,
   getDocumentFileUrl,
+  fetchDocumentLanguages,
+  fetchDocumentExtractedFields,
+  reprocessDocumentMultilingual,
+  translateDocumentText,
+  fetchRegulatoryGlossary,
   type DocumentListItem,
   type ApplicationListItem,
   type DocumentPageItem,
   type DocumentProcessingStatusData,
+  type DocumentLanguageResponse,
+  type MultilingualFieldItem,
+  type TranslationResponse,
 } from '../../api/client';
 import { DocumentUploadModal } from './DocumentUploadModal';
 
@@ -46,13 +58,24 @@ export const DocumentsView: React.FC = () => {
 
   // Document Detail Workspace State
   const [selectedDoc, setSelectedDoc] = useState<DocumentListItem | null>(null);
-  const [activeTab, setActiveTab] = useState<'text' | 'file' | 'pipeline'>('text');
+  const [activeTab, setActiveTab] = useState<'text' | 'file' | 'pipeline' | 'multilingual'>('text');
   const [pagesLoading, setPagesLoading] = useState(false);
   const [pages, setPages] = useState<DocumentPageItem[]>([]);
   const [processingData, setProcessingData] = useState<DocumentProcessingStatusData | null>(null);
   const [reprocessing, setReprocessing] = useState(false);
   const [copiedPageIndex, setCopiedPageIndex] = useState<number | null>(null);
   const [workspaceError, setWorkspaceError] = useState<string | null>(null);
+
+  // Phase 12 Multilingual Scrutiny State
+  const [docLanguages, setDocLanguages] = useState<DocumentLanguageResponse | null>(null);
+  const [extractedFields, setExtractedFields] = useState<MultilingualFieldItem[]>([]);
+  const [glossary, setGlossary] = useState<Record<string, string> | null>(null);
+  const [multilingualLoading, setMultilingualLoading] = useState(false);
+  const [reprocessingMultilingual, setReprocessingMultilingual] = useState(false);
+  const [translateInput, setTranslateInput] = useState('संस्थान का नाम: राजकीय महिला पॉलिटेक्निक। स्वीकृत क्षमता: १२०। शैक्षणिक सत्र: २०२४-२५।');
+  const [translationResult, setTranslationResult] = useState<TranslationResponse | null>(null);
+  const [translating, setTranslating] = useState(false);
+
 
   const pollIntervalRef = useRef<number | null>(null);
 
@@ -171,6 +194,58 @@ export const DocumentsView: React.FC = () => {
     setCopiedPageIndex(index);
     setTimeout(() => setCopiedPageIndex(null), 2000);
   }
+
+  async function loadMultilingualData(docId: string) {
+    setMultilingualLoading(true);
+    try {
+      const [langRes, fieldsRes, glossRes] = await Promise.all([
+        fetchDocumentLanguages(docId).catch(() => null),
+        fetchDocumentExtractedFields(docId).catch(() => []),
+        glossary ? Promise.resolve(glossary) : fetchRegulatoryGlossary().catch(() => null),
+      ]);
+      setDocLanguages(langRes);
+      setExtractedFields(fieldsRes);
+      if (glossRes && Object.keys(glossRes).length > 0) {
+        setGlossary(glossRes);
+      }
+    } catch (err: any) {
+      console.error('Failed to load multilingual data', err);
+    } finally {
+      setMultilingualLoading(false);
+    }
+  }
+
+  async function handleReprocessMultilingual() {
+    if (!selectedDoc) return;
+    setReprocessingMultilingual(true);
+    setWorkspaceError(null);
+    try {
+      await reprocessDocumentMultilingual(selectedDoc.id);
+      await loadMultilingualData(selectedDoc.id);
+    } catch (err: any) {
+      setWorkspaceError(err.message || 'Failed to reprocess multilingual document');
+    } finally {
+      setReprocessingMultilingual(false);
+    }
+  }
+
+  async function handleTranslate() {
+    if (!selectedDoc || !translateInput.trim()) return;
+    setTranslating(true);
+    setWorkspaceError(null);
+    try {
+      const res = await translateDocumentText(selectedDoc.id, {
+        text: translateInput.trim(),
+        provider: 'GLOSSARY',
+      });
+      setTranslationResult(res);
+    } catch (err: any) {
+      setWorkspaceError(err.message || 'Failed to translate document text');
+    } finally {
+      setTranslating(false);
+    }
+  }
+
 
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -610,7 +685,28 @@ export const DocumentsView: React.FC = () => {
                 <Layers className="w-4 h-4" />
                 Processing Run & Quality
               </button>
+
+              <button
+                onClick={() => {
+                  setActiveTab('multilingual');
+                  if (selectedDoc) loadMultilingualData(selectedDoc.id);
+                }}
+                className={`py-3 text-xs sm:text-sm font-bold border-b-2 flex items-center gap-2 transition-all cursor-pointer ${
+                  activeTab === 'multilingual'
+                    ? 'border-[#7450D8] text-[#7450D8]'
+                    : 'border-transparent text-[#5F6485] hover:text-[#171B45]'
+                }`}
+              >
+                <Languages className="w-4 h-4" />
+                Multilingual Scrutiny & Glossary
+                {docLanguages?.detected_language && (
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#F3EEFC] text-[#7450D8]">
+                    {docLanguages.detected_language.toUpperCase()}
+                  </span>
+                )}
+              </button>
             </div>
+
 
             {/* Error banner if any */}
             {workspaceError && (
@@ -870,6 +966,247 @@ export const DocumentsView: React.FC = () => {
                   </div>
                 </div>
               )}
+
+              {/* TAB 4: Multilingual Scrutiny & Statutory Glossary */}
+              {activeTab === 'multilingual' && (
+                <div className="space-y-6 max-w-4xl mx-auto">
+                  {multilingualLoading ? (
+                    <div className="py-16 text-center space-y-3 bg-white rounded-2xl border border-[#E9E6F2]">
+                      <RefreshCw className="w-6 h-6 animate-spin text-[#7450D8] mx-auto" />
+                      <p className="text-xs text-[#5F6485]">Analyzing document languages and candidate fields...</p>
+                    </div>
+                  ) : (
+                    <>
+                  {/* Overview Card */}
+                  <div className="p-5 rounded-2xl bg-white border border-[#E9E6F2] shadow-2xs space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2.5">
+                          <Languages className="w-5 h-5 text-[#7450D8]" />
+                          <h4 className="text-sm font-bold text-[#171B45]">
+                            Multilingual Script & Language Analysis
+                          </h4>
+                          {docLanguages?.detected_language ? (
+                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#F3EEFC] text-[#7450D8] border border-[#DCD0F7]">
+                              {docLanguages.detected_language === 'en'
+                                ? 'English (EN)'
+                                : docLanguages.detected_language === 'hi'
+                                ? 'Hindi / हिन्दी (HI)'
+                                : docLanguages.detected_language === 'mixed'
+                                ? 'Mixed Script (Hindi + English)'
+                                : 'Undetermined (UND)'}
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-[#FAF8FF] text-[#8589A6]">
+                              Not analyzed
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-[#5F6485] mt-1">
+                          Evaluates script distribution (Devanagari vs. Latin) across extracted document text.
+                          Short fragments and isolated codes are truthfully classified as undetermined (&quot;und&quot;).
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={handleReprocessMultilingual}
+                        disabled={reprocessingMultilingual}
+                        className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#7450D8] text-white text-xs font-semibold hover:bg-[#5D3BB8] transition-all disabled:opacity-50 cursor-pointer self-start sm:self-auto shrink-0 shadow-xs"
+                      >
+                        <RotateCcw className={`w-3.5 h-3.5 ${reprocessingMultilingual ? 'animate-spin' : ''}`} />
+                        <span>{reprocessingMultilingual ? 'Analyzing...' : 'Re-run Multilingual Analysis'}</span>
+                      </button>
+                    </div>
+
+                    {/* Script Distribution Bars */}
+                    {docLanguages?.language_distribution && Object.keys(docLanguages.language_distribution).length > 0 && (
+                      <div className="pt-2 border-t border-[#E9E6F2]">
+                        <span className="text-[11px] font-bold text-[#5F6485] uppercase tracking-wider">
+                          Document Page Distribution
+                        </span>
+                        <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          {Object.entries(docLanguages.language_distribution).map(([lang, ratio]) => (
+                            <div key={lang} className="p-2.5 rounded-xl bg-[#FAF8FF] border border-[#E9E6F2]">
+                              <span className="text-[10px] uppercase font-bold text-[#5F6485]">
+                                {lang === 'en' ? 'English' : lang === 'hi' ? 'Hindi' : lang === 'mixed' ? 'Mixed' : 'Undetermined'}
+                              </span>
+                              <p className="text-base font-extrabold text-[#171B45]">
+                                {(ratio * 100).toFixed(0)}%
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Page breakdown list */}
+                    {docLanguages?.page_languages && docLanguages.page_languages.length > 0 && (
+                      <div className="pt-2 border-t border-[#E9E6F2]">
+                        <span className="text-[11px] font-bold text-[#5F6485] uppercase tracking-wider">
+                          Page-Level Language Identification
+                        </span>
+                        <div className="mt-2 divide-y divide-[#E9E6F2] rounded-xl border border-[#E9E6F2] overflow-hidden">
+                          {docLanguages.page_languages.map((p) => (
+                            <div key={p.page_number} className="p-3 bg-white flex items-center justify-between text-xs">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-[#171B45]">Page {p.page_number}</span>
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#F3EEFC] text-[#7450D8]">
+                                  {p.detected_language ? p.detected_language.toUpperCase() : 'UND'}
+                                </span>
+                              </div>
+                              <div className="text-[11px] text-[#5F6485]">
+                                {p.language_confidence !== null && p.language_confidence !== undefined ? (
+                                  <span>Confidence: {(p.language_confidence * 100).toFixed(0)}%</span>
+                                ) : (
+                                  <span className="italic">Confidence: Not assessed (short text)</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Multilingual Extracted Candidate Fields */}
+                  <div className="p-5 rounded-2xl bg-white border border-[#E9E6F2] shadow-2xs space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-[#F04438]" />
+                      <h4 className="text-sm font-bold text-[#171B45]">
+                        Extracted Multilingual Candidate Fields ({extractedFields.length})
+                      </h4>
+                    </div>
+                    <p className="text-xs text-[#5F6485]">
+                      Structured fields extracted via bilingual Hindi/English regulatory patterns. Native Devanagari numerals (०-९) are normalized into ASCII (0-9) for deterministic validation checks.
+                    </p>
+
+                    {extractedFields.length === 0 ? (
+                      <div className="py-6 text-center text-xs text-[#8589A6] bg-[#FAF8FF] rounded-xl border border-[#E9E6F2]">
+                        No candidate fields discovered yet. Click &quot;Re-run Multilingual Analysis&quot; above to scan for bilingual fields.
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto rounded-xl border border-[#E9E6F2]">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead className="bg-[#FAF8FF] text-[11px] font-bold text-[#5F6485] uppercase border-b border-[#E9E6F2]">
+                            <tr>
+                              <th className="py-2.5 px-3">Field Key</th>
+                              <th className="py-2.5 px-3">Raw Evidence</th>
+                              <th className="py-2.5 px-3">Normalized Value</th>
+                              <th className="py-2.5 px-3">Page</th>
+                              <th className="py-2.5 px-3">Confidence</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-[#E9E6F2]">
+                            {extractedFields.map((field) => (
+                              <tr key={field.id} className="hover:bg-[#FAF8FF]/60">
+                                <td className="py-2.5 px-3 font-semibold text-[#171B45]">{field.field_name}</td>
+                                <td className="py-2.5 px-3 font-mono text-[#5F6485] max-w-xs truncate" title={field.raw_value}>
+                                  {field.raw_value}
+                                </td>
+                                <td className="py-2.5 px-3 font-mono font-bold text-[#7450D8]">
+                                  {field.normalized_value || field.raw_value}
+                                </td>
+                                <td className="py-2.5 px-3 text-[#5F6485]">p. {field.page_number || '—'}</td>
+                                <td className="py-2.5 px-3">
+                                  {field.confidence ? (
+                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#ECFDF3] text-[#027A48]">
+                                      {(field.confidence * 100).toFixed(0)}%
+                                    </span>
+                                  ) : '—'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Statutory Bilingual Glossary & Translation Inspector */}
+                  <div className="p-5 rounded-2xl bg-white border border-[#E9E6F2] shadow-2xs space-y-4">
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="w-4 h-4 text-[#7450D8]" />
+                      <h4 className="text-sm font-bold text-[#171B45]">
+                        Statutory Regulatory Bilingual Glossary & Translator
+                      </h4>
+                    </div>
+                    <p className="text-xs text-[#5F6485]">
+                      Standard statutory bilingual dictionary for AICTE and institutional approval terminology. Operates completely offline without external paid APIs.
+                    </p>
+
+                    {/* Interactive Translation Tester */}
+                    <div className="space-y-3 pt-2">
+                      <label className="block text-xs font-semibold text-[#171B45]">
+                        Scrutiny Translation Assistant (Local Glossary Adapter)
+                      </label>
+                      <div className="flex gap-2">
+                        <textarea
+                          rows={2}
+                          value={translateInput}
+                          onChange={(e) => setTranslateInput(e.target.value)}
+                          placeholder="Enter Hindi regulatory text (e.g., संस्थान का नाम, स्वीकृत क्षमता, शैक्षणिक सत्र)..."
+                          className="flex-1 p-2.5 text-xs rounded-xl border border-[#DCD0F7] bg-[#FAF8FF] font-sans focus:outline-hidden focus:border-[#7450D8]"
+                        />
+                        <button
+                          onClick={handleTranslate}
+                          disabled={translating || !translateInput.trim()}
+                          className="px-4 py-2 rounded-xl bg-[#F04438] text-white text-xs font-semibold hover:bg-[#E34234] transition-all disabled:opacity-50 cursor-pointer shrink-0 shadow-xs flex items-center gap-1.5"
+                        >
+                          <Globe className={`w-3.5 h-3.5 ${translating ? 'animate-spin' : ''}`} />
+                          <span>{translating ? 'Translating...' : 'Translate'}</span>
+                        </button>
+                      </div>
+
+                      {/* Translation Result Output */}
+                      {translationResult && (
+                        <div className="p-4 rounded-xl bg-[#FAF8FF] border border-[#DCD0F7] space-y-2">
+                          <div className="flex items-center justify-between text-[11px] text-[#5F6485]">
+                            <span className="font-bold text-[#7450D8]">Provider: {translationResult.provider}</span>
+                            <span>{translationResult.timestamp}</span>
+                          </div>
+                          <p className="text-xs font-mono font-medium text-[#171B45] leading-relaxed">
+                            {translationResult.translated_text}
+                          </p>
+                          {translationResult.glossary_terms_found.length > 0 && (
+                            <div className="pt-2 border-t border-[#E9E6F2]">
+                              <span className="text-[10px] font-bold text-[#5F6485] uppercase">
+                                Matched Regulatory Terms ({translationResult.glossary_terms_found.length}):
+                              </span>
+                              <div className="flex flex-wrap gap-1.5 mt-1">
+                                {translationResult.glossary_terms_found.map((term, i) => (
+                                  <span key={i} className="px-2 py-0.5 rounded text-[10px] bg-white border border-[#DCD0F7] text-[#171B45]">
+                                    <strong>{term.source}</strong> → {term.translated}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Pre-loaded Glossary Reference */}
+                    {glossary && Object.keys(glossary).length > 0 && (
+                      <div className="pt-3 border-t border-[#E9E6F2]">
+                        <span className="text-[11px] font-bold text-[#5F6485] uppercase tracking-wider">
+                          Statutory Bilingual Terminology Reference ({Object.keys(glossary).length} terms)
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 max-h-48 overflow-y-auto p-1">
+                          {Object.entries(glossary).map(([hi, en]) => (
+                            <div key={hi} className="p-2 rounded-lg bg-[#FAF8FF] border border-[#E9E6F2] flex items-center justify-between text-xs">
+                              <span className="font-semibold text-[#171B45]">{hi}</span>
+                              <span className="text-[#7450D8] font-medium text-[11px] text-right">{en}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+                </div>
+              )}
+
 
             </div>
           </div>

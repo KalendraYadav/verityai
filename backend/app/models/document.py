@@ -40,6 +40,8 @@ class Document(Base):
     )  # QUEUED, PROCESSING, COMPLETED, COMPLETED_WITH_WARNINGS, PARTIAL, FAILED, MANUAL_REVIEW_REQUIRED
     extraction_quality_band: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     latest_verification_status: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    detected_language: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    language_distribution: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
     uploaded_by: Mapped[str] = mapped_column(
         String(36), ForeignKey("users.id", ondelete="RESTRICT"), nullable=False
     )

@@ -32,6 +32,10 @@ class DocumentPage(Base):
     )  # SUCCEEDED, SUCCEEDED_WITH_WARNINGS, FAILED, TIMED_OUT, SKIPPED
     error_code: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     duration_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    detected_language: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # en, hi, mixed, und
+    language_confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    translated_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    translation_provider: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

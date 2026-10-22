@@ -1472,5 +1472,126 @@ export async function resolveRegistryDiscrepancy(
   return response.json();
 }
 
+// ---------------------------------------------------------------------------
+// Phase 12 — Advanced Multilingual Document Scrutiny
+// ---------------------------------------------------------------------------
+
+export interface PageLanguageInfo {
+  page_number: number;
+  detected_language?: string | null;
+  language_confidence?: number | null;
+  translated_text?: string | null;
+  translation_provider?: string | null;
+}
+
+export interface DocumentLanguageResponse {
+  document_id: string;
+  detected_language?: string | null;
+  language_distribution?: Record<string, number> | null;
+  page_languages: PageLanguageInfo[];
+}
+
+export interface MultilingualFieldItem {
+  id: string;
+  field_name: string;
+  raw_value: string;
+  normalized_value?: string | null;
+  confidence?: number | null;
+  extraction_method?: string | null;
+  page_number?: number | null;
+  document_id: string;
+}
+
+export interface MultilingualReprocessResponse {
+  document_id: string;
+  detected_language?: string | null;
+  language_distribution?: Record<string, number> | null;
+  page_count: number;
+  candidate_fields_discovered: number;
+}
+
+export interface GlossaryMatch {
+  source: string;
+  translated: string;
+}
+
+export interface TranslationResponse {
+  original_text: string;
+  translated_text: string;
+  glossary_terms_found: GlossaryMatch[];
+  provider: string;
+  timestamp: string;
+}
+
+export async function fetchDocumentLanguages(documentId: string): Promise<DocumentLanguageResponse> {
+  const response = await fetch(`/api/v1/documents/${documentId}/languages`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to fetch document languages (${response.status})`);
+  }
+  return response.json();
+}
+
+export async function fetchDocumentExtractedFields(documentId: string): Promise<MultilingualFieldItem[]> {
+  const response = await fetch(`/api/v1/documents/${documentId}/extracted-fields`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to fetch extracted fields (${response.status})`);
+  }
+  return response.json();
+}
+
+export async function reprocessDocumentMultilingual(documentId: string): Promise<MultilingualReprocessResponse> {
+  const response = await fetch(`/api/v1/documents/${documentId}/multilingual-reprocess`, {
+    method: 'POST',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to reprocess document multilingual content (${response.status})`);
+  }
+  return response.json();
+}
+
+export async function translateDocumentText(
+  documentId: string,
+  payload: { text?: string; page_number?: number; provider?: string }
+): Promise<TranslationResponse> {
+  const response = await fetch(`/api/v1/documents/${documentId}/translate`, {
+    method: 'POST',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to translate document text (${response.status})`);
+  }
+  return response.json();
+}
+
+export async function fetchRegulatoryGlossary(): Promise<Record<string, string>> {
+  const response = await fetch('/api/v1/multilingual/glossary', {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to fetch regulatory glossary (${response.status})`);
+  }
+  return response.json();
+}
+
+
 
 
