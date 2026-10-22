@@ -22,8 +22,8 @@
 | **Phase 9** | Explainable AI, Reviewer Decision Support & Reports | `prompt.md` L1243–1630 | `COMPLETED` | 86 passed (5 reports) | `c67ea8c` | PyMuPDF multi-page PDF & JSON dossiers, decision support summary, evidence trace |
 | **Phase 10** | Security Hardening, Performance & Production Readiness | `prompt.md` L1631–2052 | `COMPLETED` | 92 passed (6 security) | `7f5b2f1` | Security headers, sanitized errors, CSRF protection, safe environment defaults, DB health probe |
 | **Phase 11** | Extended Verification & Registry Integration | `prompt.md` L2053–2350 | `COMPLETED` | 101 passed (9 registry) | `d002cf4` | Registry provider adapter, Synthetic AISHE, official stub, safe CSV/JSON import, deterministic comparison, discrepancy resolution |
-| **Phase 12** | Advanced Multilingual Document Scrutiny | `prompt.md` L2351–2760 | `IN_PROGRESS` | Pending | TBD | Multilingual extraction, Hindi/English detection, script normalization |
-| **Phase 13** | Institutional Dossier History & Versioning | `prompt.md` | `NOT_STARTED` | N/A | N/A | Application/document versioning, diffs, report versions |
+| **Phase 12** | Advanced Multilingual Document Scrutiny | `prompt.md` L2351–2760 | `COMPLETED` | 108 passed (7 multilingual) | `80acd21` | Devanagari numeral normalization (०-९ to 0-9), script-distribution language detection (en/hi/mixed/und), bilingual candidate fields, statutory regulatory glossary, offline translation |
+| **Phase 13** | Institutional Dossier History & Versioning | `prompt.md` L2761–3150 | `IN_PROGRESS` | Pending | TBD | Application revisions, document versioning, stale evaluation detection, historical diffing |
 | **Phase 14** | External Regulatory Portal Interoperability | `prompt.md` | `NOT_STARTED` | N/A | N/A | External portal adapters, TLS, SSRF protection |
 | **Phase 15** | Final Pilot Demonstration & Evaluation Package | `prompt.md` | `NOT_STARTED` | N/A | N/A | Demo workflows, evaluation suite, judge packaging |
 
@@ -65,4 +65,16 @@
   - REST endpoints (`/api/v1/registry/providers`, `/registry/imports`, `/registry/records`, `/applications/{id}/registry-verification`, `/registry-verification/{id}/resolve`).
   - Frontend Scrutiny Workspace "Registry Verification" tab with provider selector, synthetic advisory disclaimer, overall outcome card, itemized results table, and Reviewer Adjudication modal dialog.
   - 9 automated unit/integration tests in `backend/tests/test_registry.py`. Full test suite: **101 passed, 0 failures**. Frontend production build passed cleanly (`vite build` in 4.45s).
+* **2026-10-22 11:55:** Phase 12 implementation:
+  - Database schema update: `Document.detected_language`, `Document.language_distribution`, `DocumentPage.detected_language`, `DocumentPage.language_confidence`, `DocumentPage.translated_text`, `DocumentPage.translation_provider`.
+  - Alembic migration `91b2c3d4e5f6_add_multilingual_fields_to_documents.py` applied cleanly.
+  - Multilingual scrutiny service (`backend/app/services/multilingual.py`):
+    - Unicode NFKC normalization and Devanagari digit converter (`०-९` -> `0-9`).
+    - Honest script distribution language classifier (`en`, `hi`, `mixed`, and `und` for short fragments < 15 letters without fabricated confidence).
+    - Bilingual regex pattern extraction for Hindi & English institutional aliases (`institution_name`, `approved_intake`, `academic_year`, `aishe_code`, `issue_date`).
+    - Statutory Indian regulatory glossary translator with local offline dictionary (`GlossaryTranslationProvider`) and unconfigured external cloud translation stub (`ExternalTranslationStub`).
+  - REST endpoints (`/api/v1/documents/{id}/languages`, `/documents/{id}/extracted-fields`, `/documents/{id}/multilingual-reprocess`, `/documents/{id}/translate`, `/multilingual/glossary`).
+  - Frontend integration: "Multilingual Scrutiny & Glossary" tab in `DocumentsView.tsx` with language badges, script distribution cards, extracted bilingual candidate fields table, and interactive regulatory glossary translation tester.
+  - 7 automated unit and integration tests in `backend/tests/test_multilingual.py`. Full test suite: **108 passed, 0 failures**. Frontend production build passed with 0 errors (`vite build` in 8.52s).
+
 
