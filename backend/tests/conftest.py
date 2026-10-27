@@ -33,8 +33,10 @@ def override_session_local(monkeypatch):
     """Ensure background tasks created during tests use the in-memory test database."""
     import app.db.session as dbs
     import app.services.extraction as exts
+    import app.api.v1.endpoints.scrutiny_jobs as sjobs
     monkeypatch.setattr(dbs, "SessionLocal", TestingSessionLocal)
     monkeypatch.setattr(exts, "SessionLocal", TestingSessionLocal)
+    monkeypatch.setattr(sjobs, "SessionLocal", TestingSessionLocal)
 
 
 @pytest.fixture(scope="function")

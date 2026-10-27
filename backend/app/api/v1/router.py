@@ -16,6 +16,8 @@ from app.api.v1.endpoints import (
     multilingual,
     versioning,
     integration,
+    scrutiny_jobs,
+    integrations,
 )
 
 api_router = APIRouter()
@@ -30,11 +32,13 @@ api_router.include_router(documents.router, tags=["Documents"])
 api_router.include_router(validation.router, tags=["Validation Engine"])
 api_router.include_router(anomalies.router, tags=["Anomaly Detection"])
 api_router.include_router(workflow.router, tags=["Workflow Orchestration"])
+api_router.include_router(scrutiny_jobs.router, tags=["Scrutiny Jobs"])
 api_router.include_router(reports.router, tags=["Scrutiny Reports & Decision Support"])
 api_router.include_router(registry.router, tags=["Registry Verification"])
 api_router.include_router(multilingual.router, tags=["Multilingual Scrutiny"])
 api_router.include_router(versioning.router, tags=["Institutional Dossier History & Versioning"])
 api_router.include_router(integration.router, tags=["External Regulatory Portal Interoperability"])
+api_router.include_router(integrations.router, prefix="/integrations", tags=["Independent VerityAI Integration Gateway"])
 
 
 

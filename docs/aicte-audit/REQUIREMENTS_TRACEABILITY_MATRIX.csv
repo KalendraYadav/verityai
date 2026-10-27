@@ -1,0 +1,56 @@
+Requirement_ID,Requirement_Title,Document_ID,Document_Code,Required_Field,Verification_Mechanism,Application_Module,Test_Case,Reviewer_Outcome
+REQ-0001,Prior Approval for New Institution,DOC-0001,DOC_DPR,dpr_text,NSWS Portal / AICTE Central Application,backend/app/services/workflow.py,tests/test_applications.py,MANDATORY_REVIEW
+REQ-0003,Eligible Promoter Entity,DOC-0002,DOC_TRUST_REG,registration_number,MCA21 / Charity Commissioner Portal,backend/app/services/validation.py,tests/test_validation.py,VERIFY_REGISTRATION
+REQ-0005,Mandatory Digital Signature (DSC),DOC-0011,DOC_AFFIDAVIT_2,digital_signature,CCA India X.509 Certificate Chain,backend/app/services/extraction.py,tests/test_documents.py,CONFIRM_SIGNATURE
+REQ-0006,Affidavit 2 Sworn Deposition,DOC-0011,DOC_AFFIDAVIT_2,stamp_paper_serial_number,State e-Stamp Verification Portal,backend/app/services/validation.py,tests/test_validation.py,ADJUDICATE_DEPOSITION
+REQ-0008,Lawful Land Possession Clear Title,DOC-0003,DOC_LAND_DEED,total_area_acres,State Land Records Registry (Mahabhulekh/Bhoomi),backend/app/services/validation.py,tests/test_validation.py,CONFIRM_TITLE
+REQ-0009,Architect Approved Building Plan,DOC-0006,DOC_BUILDING_PLAN,architect_coa_registration_no,Council of Architecture Member Directory,backend/app/services/validation.py,tests/test_validation.py,VERIFY_ARCHITECT
+REQ-0010,Minimum Operational Funds,DOC-0010,DOC_CERTIFICATE_3,total_fdr_amount_rs,Bank Certificate 3 Verification,backend/app/services/validation.py,tests/test_validation.py,CONFIRM_FUNDS
+REQ-0011,Prohibited Institution Names,DOC-0018,DOC_FORMAT_3,institution_name,Automated Abbreviation Blacklist Regex,backend/app/services/anomaly.py,tests/test_anomalies.py,FLAG_DISCREPANCY
+REQ-0012,Division & Intake Ceilings,DOC-0001,DOC_DPR,approved_intake,Deterministic Ceiling Check (Table 1.3),backend/app/services/validation.py,tests/test_validation.py,CHECK_CAPACITY
+REQ-0013,Core Engineering Branches,DOC-0001,DOC_DPR,course_nomenclatures,Annexure-11 Core Branch Matcher,backend/app/services/validation.py,tests/test_validation.py,VERIFY_CORE_BRANCH
+REQ-0015,Security Deposit Lock-In,DOC-0012,DOC_AFFIDAVIT_3,fdr_deposit_amount,AICTE Finance Portal Joint FDR Ledger,backend/app/services/registry.py,tests/test_registry.py,VERIFY_DEPOSIT
+REQ-0016,Extended EoA 3-Year Eligibility,DOC-0022,DOC_ACCRED_CERT,naac_cgpa_score,NBA / NAAC Public Accreditation Registry,backend/app/services/registry.py,tests/test_registry.py,GRANT_EXTENDED_EOA
+REQ-0017,Mandatory Annexure-2 Filing,DOC-0011,DOC_AFFIDAVIT_2,document_checklist_complete,Document Checklist Completeness Engine,backend/app/services/workflow.py,tests/test_workflow.py,CHECKLIST_COMPLETE
+REQ-0019,Core Branch Ratio for Expansion,DOC-0022,DOC_ACCRED_CERT,core_course_count,Deterministic Active Course Cross-Check,backend/app/services/validation.py,tests/test_validation.py,PERMIT_EXPANSION
+REQ-0020,NRI 5% Quota Ceiling,DOC-0018,DOC_FORMAT_3,nri_intake_capacity,Deterministic Formula: nri <= 0.05 * intake,backend/app/services/validation.py,tests/test_validation.py,VERIFY_NRI_QUOTA
+REQ-0021,Supernumerary FN/OCI 15% Quota,DOC-0018,DOC_FORMAT_3,foreign_intake_capacity,3-Year Enrollment History (>=80%) Check,backend/app/services/validation.py,tests/test_validation.py,VERIFY_FN_QUOTA
+REQ-0022,Off-Campus 10-Year Operation,DOC-0003,DOC_LAND_DEED,initial_loa_date,Inception Date Verification against Archive,backend/app/services/versioning.py,tests/test_versioning.py,VERIFY_TENURE
+REQ-0023,No Intra-Day Student Movement,DOC-0011,DOC_AFFIDAVIT_2,distance_between_plots_km,GIS Plot Distance Formula (<= 2 km),backend/app/services/anomaly.py,tests/test_anomalies.py,CHECK_PROXIMITY
+REQ-0024,Diploma to Degree 5-Yr Existence,DOC-0018,DOC_FORMAT_3,continuous_approval_years,Historical Approval Record Verification,backend/app/services/versioning.py,tests/test_versioning.py,VERIFY_ELIGIBILITY
+REQ-0025,Break in EoA 6-Year Cap,DOC-0011,DOC_AFFIDAVIT_2,years_since_last_eoa,Historical AICTE Portal Record Query,backend/app/services/workflow.py,tests/test_workflow.py,VALIDATE_BREAK
+REQ-0026,No Partial University Approval,DOC-0001,DOC_DPR,total_university_courses,Prospectus vs AICTE Filing Reconciliation,backend/app/services/validation.py,tests/test_validation.py,CONFIRM_ALL_COURSES
+REQ-0027,Faculty ECS Bank Salary Payment,DOC-0023,DOC_PAYROLL_ECS,bank_transaction_records,Annual Bank Statement Reconciliation,backend/app/services/validation.py,tests/test_validation.py,CONFIRM_PAYROLL
+REQ-0028,No Certificate Retention,DOC-0011,DOC_AFFIDAVIT_2,deponent_undertaking_clause_11,Affidavit 2 Clause 11 Verification,backend/app/services/validation.py,tests/test_validation.py,VERIFY_UNDERTAKING
+REQ-0029,30-Year Land Lease Duration,DOC-0003,DOC_LAND_DEED,lease_duration_years,Registered Lease Deed Term (>= 30 yrs),backend/app/services/validation.py,tests/test_validation.py,CONFIRM_LEASE_TERM
+REQ-0030,Contiguous Land Plot Rule,DOC-0003,DOC_LAND_DEED,plot_count,Revenue Map & Certificate 2 Check (<= 3 plots),backend/app/services/validation.py,tests/test_validation.py,VERIFY_CONTIGUITY
+REQ-0031,Valid Occupancy Certificate,DOC-0007,DOC_OCCUPANCY_CERT,issuing_authority_name,Annexure-14 Authority Jurisdiction Matcher,backend/app/services/validation.py,tests/test_validation.py,CONFIRM_OCCUPANCY
+REQ-0032,Structural Stability (>30 Yrs),DOC-0009,DOC_STRUCT_STABILITY,engineer_registration_no,Structural Engineer Credentials Verification,backend/app/services/validation.py,tests/test_validation.py,VERIFY_STABILITY
+REQ-0033,Valid Fire Safety Certificate,DOC-0008,DOC_FIRE_SAFETY,validity_expiry_date,State Fire Department NOC Verification,backend/app/services/validation.py,tests/test_validation.py,CONFIRM_FIRE_NOC
+REQ-0034,Capitation Fee Prohibition,DOC-0024,DOC_MANDATORY_DISC,capitation_fee_clause,Audited Financial Accounts Inspection,backend/app/services/reporting.py,tests/test_reports.py,AUDIT_COMPLIANCE
+REQ-0035,EWS 10% Reservation Multiplier,DOC-0018,DOC_FORMAT_3,ews_intake_multiplier,Deterministic Check: intake = 1.25 * base,backend/app/services/validation.py,tests/test_validation.py,VALIDATE_EWS_INTAKE
+REQ-0036,Tuition Fee Waiver (TFW 5%),DOC-0018,DOC_FORMAT_3,tfw_seat_allocation,Deterministic Check: tfw <= 0.05 * intake,backend/app/services/validation.py,tests/test_validation.py,VALIDATE_TFW_SEATS
+REQ-0037,Student Fee Refund Rule,DOC-0024,DOC_MANDATORY_DISC,refund_deduction_amount,PGRC Portal Grievance Register Query,backend/app/services/workflow.py,tests/test_workflow.py,AUDIT_REFUNDS
+REQ-0038,Anti-Ragging Committee & Squad,DOC-0011,DOC_AFFIDAVIT_2,anti_ragging_committee_constituted,National Anti-Ragging Portal (antiragging.in),backend/app/services/validation.py,tests/test_validation.py,CONFIRM_COMMITTEE
+REQ-0039,Internal Committee (IC) Gender,DOC-0011,DOC_AFFIDAVIT_2,presiding_officer_rank,Annual IC Report Filing (due June 30),backend/app/services/validation.py,tests/test_validation.py,CONFIRM_IC_OFFICER
+REQ-0040,SC/ST Committee Composition,DOC-0011,DOC_AFFIDAVIT_2,sc_st_members_count,Committee Member Roster Check (>=2 SC/ST, 1 Woman),backend/app/services/validation.py,tests/test_validation.py,CONFIRM_SC_ST
+REQ-0041,SGRC & University Ombudsman,DOC-0011,DOC_AFFIDAVIT_2,ombudsman_appointment_date,University Ombudsman Notification Registry,backend/app/services/validation.py,tests/test_validation.py,VERIFY_OMBUDSMAN
+REQ-0042,Institution Innovation Council,DOC-0024,DOC_MANDATORY_DISC,iic_registration_number,MoE's Innovation Cell (MIC) Portal Query,backend/app/services/registry.py,tests/test_registry.py,VERIFY_IIC_STATUS
+REQ-0043,Academic Bank of Credits (ABC),DOC-0024,DOC_MANDATORY_DISC,abc_institution_id,National Academic Depository (NAD) Registry,backend/app/services/registry.py,tests/test_registry.py,VERIFY_ABC_ID
+REQ-0044,24x7 Women Helpline,DOC-0024,DOC_MANDATORY_DISC,women_helpline_phone_no,Automated Website Signage Crawler,backend/app/services/reporting.py,tests/test_reports.py,VERIFY_HELPLINE
+REQ-0045,Qualified Regular Principal,DOC-0011,DOC_AFFIDAVIT_2,principal_appointment_date,Affiliating University Selection Minutes,backend/app/services/anomaly.py,tests/test_anomalies.py,VERIFY_PRINCIPAL
+REQ-0046,5x Fine for Excess Admission,DOC-0018,DOC_FORMAT_3,total_admitted_students,State Admission Return vs AICTE LoA Intake,backend/app/services/validation.py,tests/test_validation.py,FLAG_EXCESS_ADMISSION
+REQ-0047,Certificate 2 Architect Plan,DOC-0021,DOC_CERTIFICATE_2,architect_coa_registration_no,Council of Architecture Member Directory,backend/app/services/validation.py,tests/test_validation.py,CONFIRM_ARCHITECT
+REQ-0048,Certificate 3 Bank Fund Proof,DOC-0010,DOC_CERTIFICATE_3,total_fdr_amount_rs,Scheduled Commercial Bank Manager Certificate,backend/app/services/validation.py,tests/test_validation.py,CONFIRM_FDRS
+REQ-0049,Certificate 1 Advocate Title,DOC-0020,DOC_CERTIFICATE_1,advocate_bar_council_no,Bar Council of India Advocate Directory,backend/app/services/validation.py,tests/test_validation.py,CONFIRM_ADVOCATE
+REQ-0050,30-Min EVC Video Recording,DOC-0025,DOC_EVC_VIDEO,youtube_video_url,Automated YouTube Metadata & Duration Inspection,backend/app/services/extraction.py,tests/test_extraction.py,VERIFY_VIDEO_LENGTH
+REQ-0051,Classroom Carpet Area Norms,DOC-0006,DOC_BUILDING_PLAN,classroom_carpet_area_sqm,Architect Certificate 2 Table Validation (>= 66/33 sqm),backend/app/services/validation.py,tests/test_validation.py,VALIDATE_ROOM_AREAS
+REQ-0052,Administrative Area Norms,DOC-0006,DOC_BUILDING_PLAN,administrative_area_total_sqm,Architect Certificate 2 Table Validation (>= 750 sqm),backend/app/services/validation.py,tests/test_validation.py,VALIDATE_ADMIN_AREA
+REQ-0053,Amenities Area Norms,DOC-0006,DOC_BUILDING_PLAN,amenities_area_total_sqm,Architect Certificate 2 Table Validation (>= 500 sqm),backend/app/services/validation.py,tests/test_validation.py,VALIDATE_AMENITIES
+REQ-0054,PC to Student Ratios,DOC-0024,DOC_MANDATORY_DISC,total_operational_pcs,Deterministic Ratio: pcs >= intake / ratio,backend/app/services/validation.py,tests/test_validation.py,VALIDATE_PC_COUNT
+REQ-0055,Library Titles & Volumes,DOC-0024,DOC_MANDATORY_DISC,library_volumes_count,Formula Check: volumes >= 5 * titles * divisions,backend/app/services/validation.py,tests/test_validation.py,VALIDATE_LIBRARY
+REQ-0056,Scopus Journal Subscription,DOC-0024,DOC_MANDATORY_DISC,subscribed_journals_issn,Scopus / Web of Science Indexing Verification,backend/app/services/registry.py,tests/test_registry.py,CONFIRM_SCOPUS_INDEX
+REQ-0057,Faculty Cadre Ratio 1:2:6,DOC-0023,DOC_PAYROLL_ECS,prof_assoc_asst_counts,Formula Check: FSR 1:20 UG; Cadre 1:2:6,backend/app/services/validation.py,tests/test_validation.py,VALIDATE_CADRE_RATIO
+REQ-0058,PGDM Admission Weightages,DOC-0024,DOC_MANDATORY_DISC,cat_mat_weightage_percentage,Published Brochure Formula Verification,backend/app/services/validation.py,tests/test_validation.py,VERIFY_WEIGHTS
+REQ-0059,Mandatory 18-Point Disclosure,DOC-0024,DOC_MANDATORY_DISC,public_disclosure_pdf_url,Automated Web Crawler Verifying 18 Sections,backend/app/services/reporting.py,tests/test_reports.py,AUDIT_DISCLOSURE
+REQ-0060,State Government Format 1 NOC,DOC-0016,DOC_FORMAT_1,state_noc_dispatch_number,State Directorate of Technical Education Dispatch,backend/app/services/validation.py,tests/test_validation.py,CONFIRM_STATE_NOC

@@ -10,19 +10,23 @@ import {
 import {
   FileText,
   Building2,
-  AlertTriangle,
   ChevronRight,
   Clock,
-  CheckCircle2,
   RefreshCw,
   Plus,
   Upload,
   ClipboardCheck,
-  Layers,
   ArrowRight,
   ShieldCheck,
   History,
 } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { StatCard } from '@/components/common/StatCard';
+import { StatusBadge } from '@/components/common/StatusBadge';
+import { EmptyState } from '@/components/common/EmptyState';
 
 interface Props {
   onOpenNewApplication: () => void;
@@ -30,6 +34,7 @@ interface Props {
   onSelectApplication: (id: string) => void;
   onNavigateToTab?: (tab: string) => void;
   onInspectDocument?: (doc: DocumentListItem) => void;
+  userRole?: string;
 }
 
 export const DashboardView: React.FC<Props> = ({
@@ -38,6 +43,7 @@ export const DashboardView: React.FC<Props> = ({
   onSelectApplication,
   onNavigateToTab,
   onInspectDocument,
+  userRole,
 }) => {
   const [applications, setApplications] = useState<ApplicationListItem[]>([]);
   const [documents, setDocuments] = useState<DocumentListItem[]>([]);
@@ -47,10 +53,11 @@ export const DashboardView: React.FC<Props> = ({
 
   async function loadDashboardData() {
     try {
+      const isPrivilegedAdmin = userRole === 'ADMIN';
       const [appsRes, docsRes, auditsRes] = await Promise.all([
         fetchApplications({ page_size: 10 }),
         fetchAllDocuments({ pageSize: 50 }),
-        fetchAuditEvents(6),
+        isPrivilegedAdmin ? fetchAuditEvents(6) : Promise.resolve([]),
       ]);
       setApplications(appsRes.data);
       setDocuments(docsRes.data);
@@ -88,7 +95,6 @@ export const DashboardView: React.FC<Props> = ({
     (d) => d.processing_status === 'MANUAL_REVIEW_REQUIRED' || d.processing_status === 'FAILED'
   ).length;
 
-  // Format timestamp helper
   function formatDate(iso: string) {
     try {
       return new Date(iso).toLocaleDateString('en-GB', {
@@ -103,432 +109,400 @@ export const DashboardView: React.FC<Props> = ({
     }
   }
 
-  const renderStatusBadge = (status: string) => {
-    switch (status) {
-      case 'DRAFT':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FAF8FF] text-[#7450D8] border border-[#DCD0F7]">
-            <Clock className="w-3 h-3" />
-            DRAFT
-          </span>
-        );
-      case 'SUBMITTED':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-300">
-            <CheckCircle2 className="w-3 h-3 text-sky-600" />
-            SUBMITTED
-          </span>
-        );
-      case 'UNDER_REVIEW':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#F3EEFC] text-[#5633B8] border border-[#CBB3E8]">
-            <Layers className="w-3 h-3" />
-            UNDER SCRUTINY
-          </span>
-        );
-      case 'FLAGGED':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FFF0EF] text-[#B42318] border border-[#FECDCA]">
-            <AlertTriangle className="w-3 h-3 text-[#F04438]" />
-            FLAGGED
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FAF9FC] text-[#5F6485] border border-[#E9E6F2]">
-            {status}
-          </span>
-        );
-    }
-  };
-
   return (
-    <div className="p-4 lg:p-8 space-y-6 max-w-7xl mx-auto">
-      
-      {/* 1. Header: Purpose-Driven for Government Scrutiny Reviewer */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+      {/* 1. Header & Quick Actions */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-extrabold text-[#171B45]">
-              Institutional Scrutiny Overview
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1B1411]">
+              {userRole === 'ADMIN'
+                ? 'Executive Governance & Scrutiny Overview'
+                : 'Scrutiny Officer Workspace Overview'}
             </h1>
-            <span className="hidden sm:inline-flex px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-[#F3EEFC] text-[#7450D8] border border-[#DCD0F7]">
-              AICTE Prototype
-            </span>
           </div>
-          <p className="text-xs sm:text-sm text-[#5F6485] mt-0.5">
-            Real-time institutional application intake, document text extraction status, and evidence-linked scrutiny workflow.
+          <p className="text-xs text-[#66574F] mt-1">
+            Operational overview of institutional applications, document processing, and scrutiny queue status.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap self-start sm:self-auto">
+        <div className="flex items-center gap-2.5 self-stretch sm:self-auto">
           <button
+            type="button"
             onClick={handleRefresh}
-            disabled={refreshing}
-            className="p-2.5 rounded-xl bg-white border border-[#E9E6F2] text-[#5F6485] hover:text-[#7450D8] hover:border-[#DCD0F7] shadow-2xs transition-all cursor-pointer"
-            title="Refresh overview data"
+            title="Refresh overview metrics"
+            className="h-9 px-3.5 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#66574F] hover:text-[#1B1411] inline-flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap shrink-0 transition-colors cursor-pointer"
           >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-[#7450D8]' : ''}`} />
+            <RefreshCw className={`size-3.5 ${refreshing ? 'animate-spin text-[#33CC7A]' : ''}`} />
+            <span className="hidden sm:inline">Refresh</span>
           </button>
 
-          {onOpenUploadDocument && (
+          {userRole !== 'REVIEWER' && onOpenUploadDocument && (
             <button
+              type="button"
               onClick={onOpenUploadDocument}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#DCD0F7] bg-white text-xs font-semibold text-[#171B45] hover:bg-[#F3EEFC] hover:text-[#7450D8] transition-all cursor-pointer shadow-2xs"
+              className="h-9 px-4 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#1B1411] inline-flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap shrink-0 transition-colors cursor-pointer"
             >
-              <Upload className="w-4 h-4 text-[#7450D8]" />
+              <Upload className="size-3.5 text-[#1F3954]" />
               <span>Upload Document</span>
             </button>
           )}
 
-          <button
-            onClick={onOpenNewApplication}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-[#6941C6] text-white hover:bg-[#5631A8] transition-all shadow-xs cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>New Application</span>
-          </button>
+          {userRole !== 'REVIEWER' ? (
+            <button
+              type="button"
+              onClick={onOpenNewApplication}
+              className="h-9 px-4 rounded-full bg-[#33CC7A] hover:bg-[#2EB86E] text-[#1B1411] inline-flex items-center gap-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition-all shadow-[0_2px_10px_rgba(51,204,122,0.25)] cursor-pointer"
+            >
+              <Plus className="size-3.5" />
+              <span>New Application</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onNavigateToTab?.('scrutiny')}
+              className="h-9 px-4 rounded-full bg-[#33CC7A] hover:bg-[#2EB86E] text-[#1B1411] inline-flex items-center gap-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition-all shadow-[0_2px_10px_rgba(51,204,122,0.25)] cursor-pointer"
+            >
+              <ClipboardCheck className="size-3.5" />
+              <span>Open Scrutiny Queue</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* 2. Real Workload Summary Cards (Strictly factual, no fabricated percentages) */}
+      {/* 2. Real Workload Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Applications */}
-        <div
+        <StatCard
+          title="Total Applications"
+          value={loading ? '—' : totalApps}
+          subtitle="Registered institutional dossiers"
+          icon={FileText}
           onClick={() => onNavigateToTab?.('applications')}
-          className="bg-white p-5 rounded-2xl border border-[#E9E6F2] shadow-xs flex items-center justify-between hover:border-[#DCD0F7] transition-all cursor-pointer group"
-        >
-          <div className="space-y-1">
-            <span className="text-xs font-bold text-[#5F6485] uppercase tracking-wider text-[10px]">
-              Total Applications
-            </span>
-            <div className="text-2xl font-extrabold text-[#171B45] group-hover:text-[#7450D8] transition-colors">
-              {loading ? '—' : totalApps}
-            </div>
-            <p className="text-[11px] text-[#8589A6]">Registered approval requests</p>
-          </div>
-          <div className="w-11 h-11 rounded-2xl bg-[#F3EEFC] flex items-center justify-center text-[#7450D8] shrink-0">
-            <FileText className="w-5 h-5" />
-          </div>
-        </div>
-
-        {/* Awaiting Scrutiny */}
-        <div
+        />
+        <StatCard
+          title="Awaiting Scrutiny"
+          value={loading ? '—' : submittedApps}
+          subtitle="Submitted & review ready"
+          icon={ClipboardCheck}
+          trend={{ value: 'Prioritized Queue', isPositive: true }}
           onClick={() => onNavigateToTab?.('scrutiny')}
-          className="bg-white p-5 rounded-2xl border border-[#E9E6F2] shadow-xs flex items-center justify-between hover:border-[#DCD0F7] transition-all cursor-pointer group"
-        >
-          <div className="space-y-1">
-            <span className="text-xs font-bold text-[#5F6485] uppercase tracking-wider text-[10px]">
-              Awaiting Scrutiny
-            </span>
-            <div className="text-2xl font-extrabold text-[#171B45] group-hover:text-[#7450D8] transition-colors">
-              {loading ? '—' : submittedApps}
-            </div>
-            <p className="text-[11px] text-sky-700 font-semibold">Ready for review</p>
-          </div>
-          <div className="w-11 h-11 rounded-2xl bg-sky-50 flex items-center justify-center text-sky-700 shrink-0">
-            <ClipboardCheck className="w-5 h-5" />
-          </div>
-        </div>
-
-        {/* Draft Applications */}
-        <div
+        />
+        <StatCard
+          title="Draft Applications"
+          value={loading ? '—' : draftApps}
+          subtitle="Intake & upload in progress"
+          icon={Clock}
           onClick={() => onNavigateToTab?.('applications')}
-          className="bg-white p-5 rounded-2xl border border-[#E9E6F2] shadow-xs flex items-center justify-between hover:border-[#DCD0F7] transition-all cursor-pointer group"
-        >
-          <div className="space-y-1">
-            <span className="text-xs font-bold text-[#5F6485] uppercase tracking-wider text-[10px]">
-              Draft Applications
-            </span>
-            <div className="text-2xl font-extrabold text-[#171B45] group-hover:text-[#7450D8] transition-colors">
-              {loading ? '—' : draftApps}
-            </div>
-            <p className="text-[11px] text-[#8589A6]">Intake in progress</p>
-          </div>
-          <div className="w-11 h-11 rounded-2xl bg-[#FAF8FF] flex items-center justify-center text-[#7450D8] shrink-0">
-            <Clock className="w-5 h-5" />
-          </div>
-        </div>
-
-        {/* Ingested Documents & Extraction State */}
-        <div
+        />
+        <StatCard
+          title="Ingested Documents"
+          value={loading ? '—' : totalDocs}
+          subtitle={`${extractedDocs} extracted · ${reviewRequiredDocs} require review`}
+          icon={ShieldCheck}
           onClick={() => onNavigateToTab?.('documents')}
-          className="bg-white p-5 rounded-2xl border border-[#E9E6F2] shadow-xs flex items-center justify-between hover:border-[#DCD0F7] transition-all cursor-pointer group"
-        >
-          <div className="space-y-1">
-            <span className="text-xs font-bold text-[#5F6485] uppercase tracking-wider text-[10px]">
-              Ingested Documents
-            </span>
-            <div className="text-2xl font-extrabold text-[#171B45] group-hover:text-[#7450D8] transition-colors">
-              {loading ? '—' : totalDocs}
-            </div>
-            <p className="text-[11px] text-[#027A48] font-semibold">
-              {extractedDocs} extracted • {reviewRequiredDocs > 0 ? `${reviewRequiredDocs} review` : '0 issues'}
-            </p>
-          </div>
-          <div className="w-11 h-11 rounded-2xl bg-[#ECFDF3] flex items-center justify-center text-[#027A48] shrink-0">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
-        </div>
+        />
       </div>
 
       {/* 3. Central Application Scrutiny Queue Table */}
-      <div className="bg-white rounded-3xl border border-[#E9E6F2] shadow-xs overflow-hidden">
-        <div className="px-6 py-4 border-b border-[#EEEAF5] flex items-center justify-between">
+      <div className="bg-white rounded-2xl border border-[#E5DACF] shadow-[0_4px_24px_-4px_rgba(27,20,17,0.04)] overflow-hidden">
+        <div className="p-5 border-b border-[#E5DACF] flex flex-row items-center justify-between bg-[#FAF5F0]/40">
           <div>
-            <h2 className="text-sm font-bold text-[#171B45] flex items-center gap-2">
-              <ClipboardCheck className="w-4 h-4 text-[#7450D8]" />
-              Active Application Workload & Scrutiny Queue
+            <h2 className="text-sm font-bold flex items-center gap-2 text-[#1B1411]">
+              <ClipboardCheck className="size-4 text-[#1F3954] shrink-0" />
+              Active Application Workload &amp; Scrutiny Queue
             </h2>
-            <p className="text-[11px] text-[#5F6485]">
-              Institutional submissions requiring regulatory document review, field checks, and verification.
+            <p className="text-xs text-[#66574F] mt-0.5">
+              Institutional dossiers requiring statutory document verification and officer review.
             </p>
           </div>
 
           <button
+            type="button"
             onClick={() => onNavigateToTab?.('applications')}
-            className="text-xs font-semibold text-[#7450D8] hover:text-[#5633B8] flex items-center gap-1 cursor-pointer"
+            className="text-xs font-semibold text-[#1F3954] hover:text-[#1B1411] bg-[#EEE5DC]/70 hover:bg-[#EEE5DC] h-7 px-3 rounded-full inline-flex items-center transition-colors cursor-pointer"
           >
-            <span>View All Applications</span>
-            <ChevronRight className="w-3.5 h-3.5" />
+            <span>View All</span>
+            <ChevronRight className="size-3.5 ml-1" />
           </button>
         </div>
 
-        {loading ? (
-          <div className="p-12 text-center text-xs text-[#5F6485] space-y-2">
-            <RefreshCw className="w-6 h-6 animate-spin text-[#7450D8] mx-auto" />
-            <p>Loading application scrutiny queue...</p>
-          </div>
-        ) : applications.length === 0 ? (
-          <div className="p-12 text-center text-xs text-[#5F6485] space-y-2">
-            <FileText className="w-8 h-8 text-[#8589A6] mx-auto" />
-            <p className="font-semibold text-[#171B45]">No applications registered in this environment</p>
-            <p className="text-[11px] max-w-sm mx-auto">
-              Create an institutional application or run the database seeder to begin scrutiny testing.
-            </p>
-            <button
-              onClick={onOpenNewApplication}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#F04438] text-white text-xs font-semibold mt-2 cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" /> Create Application
-            </button>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-[#EEEAF5] bg-[#FAF9FC] text-[#8589A6] font-semibold text-[11px]">
-                  <th className="py-3 px-5">APPLICATION REFERENCE</th>
-                  <th className="py-3 px-4">INSTITUTION</th>
-                  <th className="py-3 px-4">CATEGORY</th>
-                  <th className="py-3 px-4">STATUS</th>
-                  <th className="py-3 px-4">DOCUMENTS</th>
-                  <th className="py-3 px-5 text-right">ACTION</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#EEEAF5]">
+        <div className="p-0">
+          {loading ? (
+            <div className="p-6 space-y-3">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          ) : applications.length === 0 ? (
+            <div className="p-6">
+              <EmptyState
+                icon={FileText}
+                title="No applications registered in this environment"
+                description="Initialize an institutional application or seed synthetic data to begin scrutiny testing."
+                actionLabel="Create Application"
+                onAction={onOpenNewApplication}
+              />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-[#FAF5F0] border-b border-[#E5DACF] text-[11px] font-mono font-bold text-[#66574F] uppercase tracking-wider hover:bg-transparent">
+                  <TableHead className="py-3 px-4 text-[#66574F]">
+                    APPLICATION REFERENCE
+                  </TableHead>
+                  <TableHead className="py-3 px-4 text-[#66574F]">
+                    INSTITUTION
+                  </TableHead>
+                  <TableHead className="py-3 px-4 text-[#66574F]">
+                    CATEGORY
+                  </TableHead>
+                  <TableHead className="py-3 px-4 text-[#66574F]">
+                    LIFECYCLE STATUS
+                  </TableHead>
+                  <TableHead className="py-3 px-4 text-[#66574F]">
+                    SUPPORTING DOCS
+                  </TableHead>
+                  <TableHead className="py-3 px-4 text-right text-[#66574F]">
+                    ACTION
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {applications.map((app) => (
-                  <tr
+                  <TableRow
                     key={app.id}
                     onClick={() => onSelectApplication(app.id)}
-                    className="hover:bg-[#FAF8FF] transition-colors cursor-pointer group"
+                    className="cursor-pointer hover:bg-[#FAF5F0]/60 border-b border-[#E5DACF]/60 transition-colors"
                   >
-                    <td className="py-3.5 px-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[#F3EEFC] text-[#7450D8] flex items-center justify-center font-bold text-[10px] shrink-0">
-                          APP
-                        </div>
-                        <div>
-                          <p className="font-mono font-bold text-[#171B45] group-hover:text-[#7450D8] transition-colors">
-                            {app.application_reference}
-                          </p>
-                          <p className="text-[10px] text-[#8589A6]">
-                            Academic Year {app.academic_year || '2026-27'}
-                          </p>
-                        </div>
+                    <TableCell className="py-3 px-4">
+                      <div>
+                        <p className="font-mono font-bold text-xs text-[#1B1411]">
+                          {app.application_reference}
+                        </p>
+                        <p className="text-[10px] text-[#66574F]">
+                          AY {app.academic_year || '2026-27'}
+                        </p>
                       </div>
-                    </td>
+                    </TableCell>
 
-                    <td className="py-3.5 px-4">
-                      <div className="font-semibold text-[#171B45] flex items-center gap-1.5">
-                        <Building2 className="w-3.5 h-3.5 text-[#8589A6] shrink-0" />
+                    <TableCell className="py-3 px-4">
+                      <div className="font-medium text-xs text-[#1B1411] flex items-center gap-1.5">
+                        <Building2 className="size-3.5 text-[#66574F] shrink-0" />
                         <span className="truncate max-w-[200px]" title={app.institution.institution_name}>
                           {app.institution.institution_name}
                         </span>
                       </div>
-                      <div className="text-[10px] text-[#8589A6] font-mono pl-5">
-                        {app.institution.institution_identifier || app.institution.id}
+                      <div className="text-[10px] text-[#66574F] font-mono pl-5">
+                        {app.institution.institution_identifier || app.institution.id.slice(0, 8)}
                       </div>
-                    </td>
+                    </TableCell>
 
-                    <td className="py-3.5 px-4">
-                      <span className="font-mono text-[11px] font-semibold text-[#7450D8] bg-[#F3EEFC] px-2 py-0.5 rounded">
+                    <TableCell className="py-3 px-4">
+                      <span className="font-mono text-[10px] rounded-full bg-[#EEE5DC] text-[#1B1411] px-2.5 py-0.5 font-bold">
                         {app.category_code}
                       </span>
-                    </td>
+                    </TableCell>
 
-                    <td className="py-3.5 px-4">
-                      {renderStatusBadge(app.lifecycle_status)}
-                    </td>
+                    <TableCell className="py-3 px-4">
+                      <StatusBadge status={app.lifecycle_status} category="lifecycle" />
+                    </TableCell>
 
-                    <td className="py-3.5 px-4 text-[#5F6485]">
-                      <span className="font-semibold text-[#171B45]">
-                        {documents.filter((d) => d.application_id === app.id).length} uploaded
-                      </span>
-                    </td>
+                    <TableCell className="py-3 px-4 text-xs text-[#66574F]">
+                      <span className="font-bold text-[#1B1411]">
+                        {documents.filter((d) => d.application_id === app.id).length}
+                      </span>{' '}
+                      documents
+                    </TableCell>
 
-                    <td className="py-3.5 px-5 text-right" onClick={(e) => e.stopPropagation()}>
-                      <button
+                    <TableCell className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => onSelectApplication(app.id)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#DCD0F7] bg-white text-xs font-semibold text-[#7450D8] hover:bg-[#F3EEFC] transition-colors cursor-pointer shadow-2xs"
+                        className="h-7 text-xs gap-1 rounded-full border border-[#E5DACF] bg-[#FAF5F0] hover:bg-[#EEE5DC] text-[#1B1411] transition-colors"
                       >
-                        <span>Open Workspace</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </button>
-                    </td>
-                  </tr>
+                        <span>Inspect</span>
+                        <ArrowRight className="size-3 text-[#66574F]" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              </TableBody>
+            </Table>
+          )}
+        </div>
       </div>
 
-      {/* 4. Two Real Operational Panels: Document Processing Pipeline & Regulatory Audit Log */}
+      {/* 4. Operational Panels: Document Pipeline & Audit Trail */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
-        {/* Left Column (7 cols): Document Processing & OCR Intake Breakdown */}
-        <div className="lg:col-span-7 bg-white rounded-3xl border border-[#E9E6F2] shadow-xs p-5 sm:p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-[#EEEAF5] pb-3">
+        {/* Document Intake & OCR Pipeline */}
+        <Card className="lg:col-span-7 border-border shadow-[0_1px_3px_0_rgba(23,27,69,0.04)]">
+          <CardHeader className="p-4 sm:p-5 border-b border-border flex flex-row items-center justify-between space-y-0">
             <div>
-              <h3 className="text-sm font-bold text-[#171B45] flex items-center gap-2">
-                <FileText className="w-4 h-4 text-[#7450D8]" />
-                Document Intake & OCR Pipeline
-              </h3>
-              <p className="text-[11px] text-[#5F6485]">
-                PyMuPDF digital extraction and RapidOCR scanned fallback status.
-              </p>
+              <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground">
+                <FileText className="size-4 text-primary shrink-0" />
+                Document Intake & Extraction Pipeline
+              </CardTitle>
+              <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                PyMuPDF digital extraction and RapidOCR scanned fallback tracking.
+              </CardDescription>
             </div>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => onNavigateToTab?.('documents')}
-              className="text-xs font-semibold text-[#7450D8] hover:underline"
+              className="text-xs text-primary hover:text-primary hover:bg-secondary h-7 px-2"
             >
-              All Documents ({totalDocs}) →
-            </button>
-          </div>
+              All Docs ({totalDocs}) →
+            </Button>
+          </CardHeader>
 
-          {/* Extraction Breakdown Metrics */}
-          <div className="grid grid-cols-3 gap-2 text-center text-xs">
-            <div className="p-3 rounded-xl bg-[#ECFDF3] border border-[#D1FADF]">
-              <span className="text-[10px] font-bold text-[#027A48] block">EXTRACTED</span>
-              <p className="text-lg font-extrabold text-[#027A48] mt-0.5">{extractedDocs}</p>
-            </div>
-            <div className="p-3 rounded-xl bg-[#EFF8FF] border border-[#B2DDFF]">
-              <span className="text-[10px] font-bold text-[#175CD3] block">IN PROGRESS</span>
-              <p className="text-lg font-extrabold text-[#175CD3] mt-0.5">{processingDocs}</p>
-            </div>
-            <div className="p-3 rounded-xl bg-[#FFF6ED] border border-[#FECDCA]">
-              <span className="text-[10px] font-bold text-[#C4320A] block">NEEDS REVIEW</span>
-              <p className="text-lg font-extrabold text-[#C4320A] mt-0.5">{reviewRequiredDocs}</p>
-            </div>
-          </div>
-
-          {/* Recent Document List */}
-          <div className="space-y-2 pt-1">
-            <span className="text-[10px] uppercase font-bold text-[#8589A6] block">
-              Recent Ingested Files:
-            </span>
-
-            {documents.slice(0, 4).map((doc) => (
-              <div
-                key={doc.id}
-                onClick={() => onInspectDocument?.(doc)}
-                className="p-3 rounded-xl bg-[#FAF9FC] border border-[#E9E6F2] hover:border-[#DCD0F7] transition-all flex items-center justify-between cursor-pointer group"
-              >
-                <div className="flex items-center gap-2.5 overflow-hidden">
-                  <div className="w-7 h-7 rounded-lg bg-[#F3EEFC] text-[#7450D8] flex items-center justify-center shrink-0">
-                    <FileText className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="overflow-hidden">
-                    <p className="font-bold text-xs text-[#171B45] group-hover:text-[#7450D8] transition-colors truncate" title={doc.original_filename}>
-                      {doc.original_filename}
-                    </p>
-                    <p className="text-[10px] font-mono text-[#8589A6]">
-                      App: {doc.application_id}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      doc.processing_status === 'COMPLETED'
-                        ? 'bg-[#ECFDF3] text-[#027A48]'
-                        : doc.processing_status === 'MANUAL_REVIEW_REQUIRED'
-                        ? 'bg-[#FFF6ED] text-[#C4320A]'
-                        : 'bg-[#F3EEFC] text-[#7450D8]'
-                    }`}
-                  >
-                    {doc.processing_status}
-                  </span>
-                  <ChevronRight className="w-3.5 h-3.5 text-[#8589A6]" />
-                </div>
+          <CardContent className="p-4 sm:p-5 space-y-4">
+            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+              <div className="p-3 rounded-lg bg-emerald-50/80 border border-emerald-200">
+                <span className="text-[10px] font-bold text-emerald-800 block">EXTRACTED</span>
+                <p className="text-lg font-bold text-emerald-700 mt-0.5">{extractedDocs}</p>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Right Column (5 cols): Immutable Regulatory Audit Trail Feed */}
-        <div className="lg:col-span-5 bg-white rounded-3xl border border-[#E9E6F2] shadow-xs p-5 sm:p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-[#EEEAF5] pb-3">
-            <div>
-              <h3 className="text-sm font-bold text-[#171B45] flex items-center gap-2">
-                <History className="w-4 h-4 text-[#7450D8]" />
-                Recent Audit Trail Events
-              </h3>
-              <p className="text-[11px] text-[#5F6485]">
-                Immutable, append-only regulatory log.
-              </p>
+              <div className="p-3 rounded-lg bg-blue-50/80 border border-blue-200">
+                <span className="text-[10px] font-bold text-blue-800 block">IN PROGRESS</span>
+                <p className="text-lg font-bold text-blue-700 mt-0.5">{processingDocs}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-amber-50/80 border border-amber-200">
+                <span className="text-[10px] font-bold text-amber-800 block">NEEDS REVIEW</span>
+                <p className="text-lg font-bold text-amber-700 mt-0.5">{reviewRequiredDocs}</p>
+              </div>
             </div>
-            <button
-              onClick={() => onNavigateToTab?.('audit')}
-              className="text-xs font-semibold text-[#7450D8] hover:underline"
-            >
-              Full Log →
-            </button>
-          </div>
 
-          {auditEvents.length === 0 ? (
-            <div className="p-8 text-center text-xs text-[#5F6485]">
-              No audit events recorded yet.
-            </div>
-          ) : (
-            <div className="space-y-2.5">
-              {auditEvents.map((evt) => (
+            <div className="space-y-2 pt-1">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground block tracking-wider">
+                Recent Ingested Dossier Files
+              </span>
+
+              {documents.slice(0, 4).map((doc) => (
                 <div
-                  key={evt.id}
-                  className="p-3 rounded-xl bg-[#FAF8FF] border border-[#E9E6F2] space-y-1 text-xs"
+                  key={doc.id}
+                  onClick={() => onInspectDocument?.(doc)}
+                  className="p-2.5 rounded-lg border border-border bg-card hover:bg-muted/40 transition-colors flex items-center justify-between cursor-pointer group"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-[10px] font-bold text-[#7450D8] bg-white px-2 py-0.5 rounded border border-[#E9E6F2]">
-                      {evt.event_type}
-                    </span>
-                    <span className="text-[10px] text-[#8589A6]">
-                      {formatDate(evt.occurred_at)}
-                    </span>
+                  <div className="flex items-center gap-2.5 overflow-hidden">
+                    <div className="size-7 rounded-md bg-secondary text-primary flex items-center justify-center shrink-0">
+                      <FileText className="size-3.5" />
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="font-medium text-xs text-foreground group-hover:text-primary transition-colors truncate" title={doc.original_filename}>
+                        {doc.original_filename}
+                      </p>
+                      <p className="text-[10px] font-mono text-muted-foreground truncate">
+                        Format: {doc.media_type || 'application/pdf'} · {doc.page_count ? `${doc.page_count} pages` : 'Uploaded'}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-[11px] text-[#5F6485]">
-                    Actor: <span className="font-semibold text-[#171B45]">{evt.actor_id || 'System Worker'}</span>
-                    {evt.application_id && <span> • App: {evt.application_id}</span>}
-                  </p>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <StatusBadge status={doc.processing_status} category="pipeline" showIcon={false} />
+                    <ChevronRight className="size-3.5 text-muted-foreground" />
+                  </div>
                 </div>
               ))}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Right Column: Scrutiny Guidelines OR Recent Audit Trail */}
+        <Card className="lg:col-span-5 border-border shadow-[0_1px_3px_0_rgba(23,27,69,0.04)]">
+          {userRole === 'ADMIN' ? (
+            <>
+              <CardHeader className="p-4 sm:p-5 border-b border-border flex flex-row items-center justify-between space-y-0">
+                <div>
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground">
+                    <History className="size-4 text-primary shrink-0" />
+                    Recent Audit Trail Events
+                  </CardTitle>
+                  <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                    Immutable append-only regulatory log.
+                  </CardDescription>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onNavigateToTab?.('audit')}
+                  className="text-xs text-primary hover:text-primary hover:bg-secondary h-7 px-2"
+                >
+                  Full Log →
+                </Button>
+              </CardHeader>
+
+              <CardContent className="p-4 sm:p-5 space-y-3">
+                {auditEvents.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-muted-foreground">
+                    No audit events recorded yet.
+                  </div>
+                ) : (
+                  auditEvents.map((evt) => (
+                    <div
+                      key={evt.id}
+                      className="p-2.5 rounded-lg border border-border bg-muted/20 text-xs space-y-1"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-foreground text-[11px] font-mono">
+                          {evt.event_type}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {formatDate(evt.occurred_at)}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground truncate">
+                        Actor: {evt.actor_id || 'SYSTEM'} · Target: {evt.actor_type}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </>
+          ) : (
+            <>
+              <CardHeader className="p-4 sm:p-5 border-b border-border">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground">
+                  <ShieldCheck className="size-4 text-primary shrink-0" />
+                  Statutory Scrutiny Directives
+                </CardTitle>
+                <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                  Standard operating procedures for decision-support evaluation.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-5 space-y-3 text-xs">
+                <div className="p-3 rounded-lg bg-secondary/60 border border-primary/20 space-y-1">
+                  <span className="font-bold text-primary block text-[11px]">
+                    1. Traceability Principle
+                  </span>
+                  <p className="text-muted-foreground text-[11px] leading-relaxed">
+                    Every automated finding must link directly to the source document, page, and bounding box coordinates.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-lg bg-amber-50/70 border border-amber-200/80 space-y-1">
+                  <span className="font-bold text-amber-900 block text-[11px]">
+                    2. Human Authority Mandate
+                  </span>
+                  <p className="text-amber-800 text-[11px] leading-relaxed">
+                    AI flags and anomaly alerts are advisory indicators. Rejection and deficiency decisions require human officer sign-off.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-lg bg-muted/50 border border-border space-y-1">
+                  <span className="font-bold text-foreground block text-[11px]">
+                    3. Registry Ground Truth
+                  </span>
+                  <p className="text-muted-foreground text-[11px] leading-relaxed">
+                    AISHE, Land, and GST checks use simulated external registries labeled honestly with verified timestamps.
+                  </p>
+                </div>
+              </CardContent>
+            </>
           )}
-        </div>
-
+        </Card>
       </div>
-
     </div>
   );
 };

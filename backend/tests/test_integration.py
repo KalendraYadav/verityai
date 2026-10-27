@@ -207,3 +207,16 @@ def test_integration_sync_history(db_session, integration_application, integrati
     assert len(history) >= 2
     assert any(h["action"] == "HEALTH_CHECK" for h in history)
     assert any(h["action"] == "APPLICATION_VERIFY" for h in history)
+
+
+def test_probe_portal_health_nonexistent_provider_error(client, integration_user):
+    """Regression test: verify non-existent provider returns structured 404 rather than 500."""
+    from app.core.security import create_access_token
+    admin_token = create_access_token(integration_user.id, integration_user.role, integration_user.email)
+    client.cookies.set("access_token", admin_token)
+
+    res = client.get("/api/v1/integrations/providers/NON_EXISTENT_GATEWAY_XYZ/status")
+    assert res.status_code == 404
+    body = res.json()
+    assert body["error"]["code"] == "PROVIDER_NOT_FOUND"
+    assert "NON_EXISTENT_GATEWAY_XYZ" in body["error"]["message"]

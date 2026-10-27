@@ -52,6 +52,32 @@ class AnomalyReadiness(BaseModel):
     resolved_findings: int
 
 
+class ChecklistItemResponse(BaseModel):
+    document_code: str
+    title: str
+    status: str  # REQUIRED_MISSING, REQUIRED_UPLOADED, CONDITIONAL_NEEDS_REVIEW, NOT_APPLICABLE, PENDING_VERIFICATION, NEEDS_HUMAN_REVIEW
+    mandatory_or_conditional: str  # MANDATORY, CONDITIONAL
+    condition_rationale: str
+    activating_condition: Optional[str] = None
+    source_clause: str
+    pdf_page: int
+    is_present: bool = False
+    uploaded_document_id: Optional[str] = None
+    uploaded_document_name: Optional[str] = None
+    human_review_required: bool = False
+
+
+class ApplicationChecklistResponse(BaseModel):
+    application_id: str
+    category_code: str
+    category_name: str
+    total_required: int
+    total_present: int
+    total_conditional: int
+    total_not_applicable: int
+    items: List[ChecklistItemResponse] = Field(default_factory=list)
+
+
 class ApplicationReadinessResponse(BaseModel):
     application_id: str
     is_ready_for_scrutiny: bool
@@ -62,6 +88,7 @@ class ApplicationReadinessResponse(BaseModel):
     anomaly_readiness: AnomalyReadiness
     blockers: List[str] = Field(default_factory=list)
     recommended_action: str
+    checklist: Optional[ApplicationChecklistResponse] = None
 
 
 class WorkflowTransitionRequest(BaseModel):
@@ -75,6 +102,7 @@ class ScrutinyQueueItem(BaseModel):
     application_reference: str
     institution_id: str
     institution_name: str
+    institution_identifier: Optional[str] = None
     category_code: str
     academic_year: Optional[str] = None
     lifecycle_status: str

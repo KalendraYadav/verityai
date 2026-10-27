@@ -119,6 +119,20 @@ async def upload_document_revision(
             detail=f"Document '{document_id}' not found."
         )
 
+    if current_user and current_user.role == "REVIEWER":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": "FORBIDDEN", "message": "Reviewers are not permitted to upload document revisions."}
+        )
+
+    if current_user and current_user.role == "INSTITUTION_USER":
+        app_obj = db.get(Application, doc.application_id)
+        if not app_obj or current_user.institution_id != app_obj.institution_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={"code": "FORBIDDEN", "message": "Access to upload revisions for another institution is denied."}
+            )
+
     actor_id = current_user.id if current_user else doc.uploaded_by
     revision_doc_id = f"REV-{uuid.uuid4().hex[:8].upper()}"
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import {
   fetchHealth,
   fetchInstitutions,
@@ -12,23 +12,43 @@ import {
 } from './api/client';
 import { useAppRouter } from './router/useAppRouter';
 import { AppShell, type NavItemKey } from './components/layout/AppShell';
-import { LandingPage } from './components/landing/LandingPage';
-import { LoginPage } from './components/auth/LoginPage';
-import { DashboardView } from './components/dashboard/DashboardView';
-import { ApplicationList } from './components/ApplicationList';
-import { ApplicationDetailWorkspace } from './components/applications/ApplicationDetailWorkspace';
-import { ScrutinyQueueView } from './components/scrutiny/ScrutinyQueueView';
-import { ValidationComplianceView } from './components/compliance/ValidationComplianceView';
-import { EntitiesView } from './components/entities/EntitiesView';
-import { AuditTimelineView } from './components/audit/AuditTimelineView';
-import { ApplicationCreateModal } from './components/ApplicationCreateModal';
-import { DocumentsView } from './components/documents/DocumentsView';
-import { DocumentUploadModal } from './components/documents/DocumentUploadModal';
-import { AuthModal } from './components/auth/AuthModal';
-import { RegistryVerificationView } from './components/registry/RegistryVerificationView';
-import { RegulatoryGatewaysView } from './components/gateways/RegulatoryGatewaysView';
 import { VerityAIExcelLogo } from './components/brand/VerityAIExcelLogo';
+import { AccessDeniedView } from './components/common/AccessDeniedView';
 import { ShieldCheck, RefreshCw, X } from 'lucide-react';
+
+/* ── Code-Split Dynamic Views for High-Performance Initial Bundle ─── */
+const LandingPage = lazy(() => import('./components/landing/LandingPage').then((m) => ({ default: m.LandingPage })));
+const LoginPage = lazy(() => import('./components/auth/LoginPage').then((m) => ({ default: m.LoginPage })));
+const DashboardView = lazy(() => import('./components/dashboard/DashboardView').then((m) => ({ default: m.DashboardView })));
+const ApplicationList = lazy(() => import('./components/ApplicationList').then((m) => ({ default: m.ApplicationList })));
+const ApplicationDetailWorkspace = lazy(() => import('./components/applications/ApplicationDetailWorkspace').then((m) => ({ default: m.ApplicationDetailWorkspace })));
+const ScrutinyQueueView = lazy(() => import('./components/scrutiny/ScrutinyQueueView').then((m) => ({ default: m.ScrutinyQueueView })));
+const ValidationComplianceView = lazy(() => import('./components/compliance/ValidationComplianceView').then((m) => ({ default: m.ValidationComplianceView })));
+const EntitiesView = lazy(() => import('./components/entities/EntitiesView').then((m) => ({ default: m.EntitiesView })));
+const AuditTimelineView = lazy(() => import('./components/audit/AuditTimelineView').then((m) => ({ default: m.AuditTimelineView })));
+const ApplicationCreateModal = lazy(() => import('./components/ApplicationCreateModal').then((m) => ({ default: m.ApplicationCreateModal })));
+const DocumentsView = lazy(() => import('./components/documents/DocumentsView').then((m) => ({ default: m.DocumentsView })));
+const DocumentUploadModal = lazy(() => import('./components/documents/DocumentUploadModal').then((m) => ({ default: m.DocumentUploadModal })));
+const AuthModal = lazy(() => import('./components/auth/AuthModal').then((m) => ({ default: m.AuthModal })));
+const RegistryVerificationView = lazy(() => import('./components/registry/RegistryVerificationView').then((m) => ({ default: m.RegistryVerificationView })));
+const RegulatoryGatewaysView = lazy(() => import('./components/gateways/RegulatoryGatewaysView').then((m) => ({ default: m.RegulatoryGatewaysView })));
+const UsersView = lazy(() => import('./components/admin/UsersView').then((m) => ({ default: m.UsersView })));
+const AdminDashboardView = lazy(() => import('./components/admin/AdminDashboardView').then((m) => ({ default: m.AdminDashboardView })));
+const ApplicantDashboardView = lazy(() => import('./components/applicant/ApplicantDashboardView').then((m) => ({ default: m.ApplicantDashboardView })));
+const ApplicantIntakeWizard = lazy(() => import('./components/applicant/ApplicantIntakeWizard').then((m) => ({ default: m.ApplicantIntakeWizard })));
+const ApplicantStatusView = lazy(() => import('./components/applicant/ApplicantStatusView').then((m) => ({ default: m.ApplicantStatusView })));
+const VerityAIPlatformWorkspace = lazy(() => import('./components/platform/VerityAIPlatformWorkspace').then((m) => ({ default: m.VerityAIPlatformWorkspace })));
+
+function ViewFallback() {
+  return (
+    <div className="flex-1 flex items-center justify-center min-h-[360px] p-8">
+      <div className="flex flex-col items-center gap-3">
+        <div className="size-7 rounded-full border-2 border-[#1B1411]/20 border-t-[#33CC7A] animate-spin" />
+        <span className="text-xs font-mono font-medium text-[#66574F]">Loading workspace module...</span>
+      </div>
+    </div>
+  );
+}
 
 export function App() {
   const { pathname, search, route, navigate, navigateToTab } = useAppRouter();
@@ -40,6 +60,9 @@ export function App() {
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(
     route.type === 'workspace' && route.applicationId ? route.applicationId : null
   );
+
+  const [showApplicantWizard, setShowApplicantWizard] = useState(false);
+  const [applicantWizardAppId, setApplicantWizardAppId] = useState<string | null>(null);
 
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [healthLoading, setHealthLoading] = useState(false);
@@ -64,26 +87,30 @@ export function App() {
   // Synchronize descriptive document title per route (WCAG 2.4.2 Page Titled / GIGW 3.0)
   useEffect(() => {
     if (route.type === 'landing') {
-      document.title = 'VerityAI Excel — Institutional Application Scrutiny Platform';
+      document.title = 'VerityAI — Institutional Application Scrutiny Platform';
     } else if (route.type === 'login') {
-      document.title = 'Sign In — VerityAI Excel Scrutiny Portal';
+      document.title = 'Sign In — VerityAI Scrutiny Portal';
     } else if (route.type === 'workspace') {
       const tabTitles: Record<NavItemKey, string> = {
-        overview: 'Workspace Overview — VerityAI Excel',
+        overview: currentUser?.role === 'ADMIN'
+          ? 'Executive Platform Overview — VerityAI'
+          : 'Scrutiny Workspace Overview — VerityAI',
+        users: 'User & Role Administration — VerityAI',
         applications: route.applicationId
-          ? `Application ${route.applicationId} — VerityAI Excel`
-          : 'Application Register — VerityAI Excel',
-        scrutiny: 'Scrutiny Queue — VerityAI Excel',
-        documents: 'Document Repository — VerityAI Excel',
-        compliance: 'Validation Rules & Compliance — VerityAI Excel',
-        institutions: 'Institutional Register — VerityAI Excel',
-        registry: 'Registry Verification — VerityAI Excel',
-        gateways: 'Regulatory Gateways — VerityAI Excel',
-        audit: 'Audit Trail & Compliance Log — VerityAI Excel',
+          ? `Application ${route.applicationId} — VerityAI`
+          : 'Application Register — VerityAI',
+        scrutiny: 'Scrutiny Queue — VerityAI',
+        documents: 'Document Repository — VerityAI',
+        compliance: 'Validation Rules & Compliance — VerityAI',
+        institutions: 'Institutional Register — VerityAI',
+        registry: 'Registry Verification — VerityAI',
+        gateways: 'Regulatory Gateways — VerityAI',
+        audit: 'Audit Trail & Compliance Log — VerityAI',
+        platform: 'VerityAI Scrutiny Platform & APIs — VerityAI',
       };
-      document.title = tabTitles[route.tab] || 'Workspace — VerityAI Excel';
+      document.title = tabTitles[route.tab] || 'Workspace — VerityAI';
     }
-  }, [route]);
+  }, [route, currentUser?.role]);
 
   async function checkHealth() {
     setHealthLoading(true);
@@ -182,32 +209,45 @@ export function App() {
     }
 
     return (
-      <LoginPage
-        onSuccess={(user) => {
-          setCurrentUser(user);
-          navigate(route.returnUrl || '/app/overview');
-        }}
-        onBackToLanding={() => navigate('/')}
-        returnUrl={route.returnUrl}
-      />
+      <Suspense fallback={<ViewFallback />}>
+        <LoginPage
+          onSuccess={(user) => {
+            setCurrentUser(user);
+            navigate(route.returnUrl || '/app/overview');
+          }}
+          onBackToLanding={() => navigate('/')}
+          returnUrl={route.returnUrl}
+          portal={route.portal}
+        />
+      </Suspense>
     );
   }
 
   /* ── 4. Public Landing Page (/) ─────────────────────────────── */
   if (route.type === 'landing') {
     return (
-      <LandingPage
-        onGetStarted={() => {
-          if (currentUser) {
-            navigate('/app/overview');
-          } else {
-            navigate('/login');
-          }
-        }}
-        onSignIn={() => navigate('/login')}
-        onEnterWorkspace={() => navigate('/app/overview')}
-        currentUser={currentUser}
-      />
+      <Suspense fallback={<ViewFallback />}>
+        <LandingPage
+          onGetStarted={() => {
+            if (currentUser) {
+              navigate('/app/overview');
+            } else {
+              navigate('/login?portal=applicant');
+            }
+          }}
+          onOpenApplicantPortal={() => {
+            if (currentUser) {
+              navigate('/app/overview');
+            } else {
+              navigate('/login?portal=applicant');
+            }
+          }}
+          onSignIn={() => navigate('/login')}
+          onOfficerSignIn={() => navigate('/login?portal=officer')}
+          onEnterWorkspace={() => navigate('/app/overview')}
+          currentUser={currentUser}
+        />
+      </Suspense>
     );
   }
 
@@ -231,54 +271,140 @@ export function App() {
       onNavigateToLanding={() => navigate('/')}
       onLogout={handleLogout}
     >
-      {/* Overview / Dashboard */}
+      <Suspense fallback={<ViewFallback />}>
+        {/* Route Guard for Administrative Tabs */}
+      {(['users', 'gateways', 'audit', 'institutions'] as NavItemKey[]).includes(activeTab) &&
+        currentUser?.role !== 'ADMIN' && (
+          <AccessDeniedView
+            onReturn={() => navigateToTab('overview')}
+            attemptedResource={
+              activeTab === 'users'
+                ? 'User & Role Administration'
+                : activeTab === 'gateways'
+                ? 'Regulatory Gateways'
+                : activeTab === 'audit'
+                ? 'Global Audit Trail'
+                : 'Institutional Profiles'
+            }
+          />
+        )}
+
+      {/* Route Guard for Reviewer/Admin Scrutiny Tabs from Applicant */}
+      {(['scrutiny', 'compliance', 'registry'] as NavItemKey[]).includes(activeTab) &&
+        currentUser?.role === 'INSTITUTION_USER' && (
+          <AccessDeniedView
+            onReturn={() => navigateToTab('overview')}
+            attemptedResource={
+              activeTab === 'scrutiny'
+                ? 'Regulatory Scrutiny Queue'
+                : activeTab === 'compliance'
+                ? 'Validation Norms & Rules'
+                : 'Statutory Registry Verification'
+            }
+          />
+        )}
+
+      {/* Overview / Dashboard (Role-Tailored) */}
       {activeTab === 'overview' && (
-        <DashboardView
-          onOpenNewApplication={() => setCreateModalOpen(true)}
-          onOpenUploadDocument={() => setUploadModalOpen(true)}
-          onSelectApplication={(id) => {
-            setSelectedApplicationId(id);
-            navigateToTab('applications', id);
-          }}
-          onNavigateToTab={(tab) => navigateToTab(tab as NavItemKey)}
-        />
+        currentUser?.role === 'ADMIN' ? (
+          <AdminDashboardView
+            onNavigateToTab={(tab) => navigateToTab(tab as NavItemKey)}
+            onSelectApplication={(id) => {
+              setSelectedApplicationId(id);
+              navigateToTab('applications', id);
+            }}
+          />
+        ) : currentUser?.role === 'INSTITUTION_USER' ? (
+          <ApplicantDashboardView
+            currentUser={currentUser}
+            onOpenNewApplication={() => {
+              setApplicantWizardAppId(null);
+              setShowApplicantWizard(true);
+            }}
+            onResumeDraft={(id) => {
+              setApplicantWizardAppId(id);
+              setShowApplicantWizard(true);
+            }}
+            onSelectApplication={(id) => {
+              setSelectedApplicationId(id);
+              navigateToTab('applications', id);
+            }}
+          />
+        ) : (
+          <DashboardView
+            onOpenNewApplication={() => setCreateModalOpen(true)}
+            onOpenUploadDocument={() => setUploadModalOpen(true)}
+            onSelectApplication={(id) => {
+              setSelectedApplicationId(id);
+              navigateToTab('applications', id);
+            }}
+            onNavigateToTab={(tab) => navigateToTab(tab as NavItemKey)}
+            userRole={currentUser?.role}
+          />
+        )
       )}
+
+      {/* User & Role Administration (Admin Only) */}
+      {activeTab === 'users' && currentUser?.role === 'ADMIN' && <UsersView />}
 
       {/* Applications Register & Detail Workspace */}
       {activeTab === 'applications' && (
-        <>
-          {selectedApplicationId ? (
-            <ApplicationDetailWorkspace
+        currentUser?.role === 'INSTITUTION_USER' ? (
+          selectedApplicationId ? (
+            <ApplicantStatusView
               applicationId={selectedApplicationId}
               onBack={() => {
                 setSelectedApplicationId(null);
                 navigateToTab('applications');
               }}
+              currentUser={currentUser}
+              onResumeDraft={(id) => {
+                setApplicantWizardAppId(id);
+                setShowApplicantWizard(true);
+              }}
             />
           ) : (
-            <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-4">
-              <div>
-                <h1 className="text-xl sm:text-2xl font-extrabold text-[#111827]">
-                  Application Register
-                </h1>
-                <p className="text-xs sm:text-sm text-[#667085] mt-0.5">
-                  Institutional approval applications, declared fields, and scrutiny status.
-                  Click any application to open the Scrutiny Dossier.
-                </p>
-              </div>
+            <ApplicantDashboardView
+              currentUser={currentUser}
+              onOpenNewApplication={() => {
+                setApplicantWizardAppId(null);
+                setShowApplicantWizard(true);
+              }}
+              onResumeDraft={(id) => {
+                setApplicantWizardAppId(id);
+                setShowApplicantWizard(true);
+              }}
+              onSelectApplication={(id) => {
+                setSelectedApplicationId(id);
+                navigateToTab('applications', id);
+              }}
+            />
+          )
+        ) : (
+          <>
+            {selectedApplicationId ? (
+              <ApplicationDetailWorkspace
+                applicationId={selectedApplicationId}
+                onBack={() => {
+                  setSelectedApplicationId(null);
+                  navigateToTab('applications');
+                }}
+              />
+            ) : (
               <ApplicationList
                 onSelectApplication={(id) => {
                   setSelectedApplicationId(id);
                   navigateToTab('applications', id);
                 }}
+                userRole={currentUser?.role}
               />
-            </div>
-          )}
-        </>
+            )}
+          </>
+        )
       )}
 
-      {/* Scrutiny Queue */}
-      {activeTab === 'scrutiny' && (
+      {/* Scrutiny Queue (Reviewer & Admin only) */}
+      {activeTab === 'scrutiny' && currentUser?.role !== 'INSTITUTION_USER' && (
         <ScrutinyQueueView
           onSelectApplication={(id) => {
             setSelectedApplicationId(id);
@@ -288,13 +414,21 @@ export function App() {
       )}
 
       {/* Documents */}
-      {activeTab === 'documents' && <DocumentsView />}
+      {activeTab === 'documents' && (
+        <DocumentsView
+          userRole={currentUser?.role}
+          onOpenDossier={(id) => {
+            setSelectedApplicationId(id);
+            navigateToTab('applications', id);
+          }}
+        />
+      )}
 
       {/* Validation Rules */}
       {activeTab === 'compliance' && <ValidationComplianceView />}
 
-      {/* Institutions */}
-      {activeTab === 'institutions' && <EntitiesView />}
+      {/* Institutions (Admin Only) */}
+      {activeTab === 'institutions' && currentUser?.role === 'ADMIN' && <EntitiesView />}
 
       {/* Registry Verification */}
       {activeTab === 'registry' && (
@@ -307,11 +441,14 @@ export function App() {
         />
       )}
 
-      {/* Regulatory Gateways */}
-      {activeTab === 'gateways' && <RegulatoryGatewaysView />}
+      {/* Regulatory Gateways (Admin Only) */}
+      {activeTab === 'gateways' && currentUser?.role === 'ADMIN' && <RegulatoryGatewaysView />}
 
-      {/* Audit Trail */}
-      {activeTab === 'audit' && <AuditTimelineView />}
+      {/* Audit Trail (Admin Only) */}
+      {activeTab === 'audit' && currentUser?.role === 'ADMIN' && <AuditTimelineView />}
+
+      {/* Independent VerityAI Scrutiny Platform & API Gateway */}
+      {activeTab === 'platform' && <VerityAIPlatformWorkspace />}
 
       {/* Diagnostics Modal */}
       {showHealthModal && (
@@ -407,6 +544,25 @@ export function App() {
         onSuccess={() => {}}
       />
 
+      {/* Applicant Intake Wizard Modal */}
+      {showApplicantWizard && (
+        <ApplicantIntakeWizard
+          applicationId={applicantWizardAppId}
+          onClose={() => {
+            setShowApplicantWizard(false);
+            setApplicantWizardAppId(null);
+          }}
+          onComplete={(submitted) => {
+            loadMetadata();
+            setSelectedApplicationId(submitted.id);
+            navigateToTab('applications', submitted.id);
+          }}
+          currentUser={currentUser}
+          categories={categories}
+          institutions={institutions}
+        />
+      )}
+
       {/* Auth Modal (within workspace for password changes and account details) */}
       <AuthModal
         isOpen={authModalOpen}
@@ -420,6 +576,7 @@ export function App() {
           navigate('/');
         }}
       />
+      </Suspense>
     </AppShell>
   );
 }

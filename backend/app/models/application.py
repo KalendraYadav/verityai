@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from app.models.audit import AuditEvent
     from app.models.document import Document
     from app.models.validation import ValidationRun, RuleResult
+    from app.models.scrutiny_job import ScrutinyJob
 
 
 class Application(Base):
@@ -65,4 +66,7 @@ class Application(Base):
     )
     rule_results: Mapped[List["RuleResult"]] = relationship(
         "RuleResult", back_populates="application", cascade="all, delete-orphan", order_by="desc(RuleResult.evaluated_at)"
+    )
+    scrutiny_jobs: Mapped[List["ScrutinyJob"]] = relationship(
+        "ScrutinyJob", back_populates="application", cascade="all, delete-orphan", order_by="desc(ScrutinyJob.created_at)"
     )

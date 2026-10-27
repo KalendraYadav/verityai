@@ -1,12 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
-  X,
   Upload,
   FileText,
   AlertCircle,
   CheckCircle2,
   AlertTriangle,
   Loader2,
+  Search,
+  BookOpen,
+  Info,
 } from 'lucide-react';
 import {
   fetchApplications,
@@ -14,6 +16,24 @@ import {
   type ApplicationListItem,
   type DocumentUploadResponseData,
 } from '../../api/client';
+import {
+  REGULATORY_GROUPS,
+  getDocumentByCode,
+  searchDocuments,
+  type RegulatoryDocumentType,
+} from '../../data/documentRegistry';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface Props {
   isOpen: boolean;
@@ -25,17 +45,6 @@ interface Props {
 const MAX_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB
 const ALLOWED_EXTENSIONS = ['.pdf', '.png', '.jpg', '.jpeg'];
 
-const DOCUMENT_TYPES = [
-  { value: '', label: 'Auto-Detect / Unspecified' },
-  { value: 'LAND_DOCUMENT', label: 'Land Document & Title Deed' },
-  { value: 'AFFILIATION_CERTIFICATE', label: 'University Affiliation Certificate' },
-  { value: 'NOC', label: 'State Government NOC' },
-  { value: 'BUILDING_PLAN', label: 'Approved Building Plan' },
-  { value: 'FIRE_SAFETY_CERTIFICATE', label: 'Fire Safety Certificate' },
-  { value: 'BALANCE_SHEET', label: 'Audited Financial Balance Sheet' },
-  { value: 'FACULTY_LIST', label: 'Faculty List & Qualifications' },
-];
-
 export const DocumentUploadModal: React.FC<Props> = ({
   isOpen,
   onClose,
@@ -46,6 +55,7 @@ export const DocumentUploadModal: React.FC<Props> = ({
   const [loadingApps, setLoadingApps] = useState(false);
   const [selectedAppId, setSelectedAppId] = useState<string>(initialApplicationId || '');
   const [declaredType, setDeclaredType] = useState<string>('');
+  const [categorySearch, setCategorySearch] = useState<string>('');
 
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -57,6 +67,52 @@ export const DocumentUploadModal: React.FC<Props> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Identify currently selected application object
+  const selectedApp = useMemo(() => {
+    return applications.find((a) => a.id === selectedAppId);
+  }, [applications, selectedAppId]);
+
+  // Filtered documents grounded in AICTE APH 2024-27
+  const filteredDocuments = useMemo(() => {
+    return searchDocuments(categorySearch, selectedApp?.category_code);
+  }, [categorySearch, selectedApp?.category_code]);
+
+  // Group filtered documents by regulatory head
+  const groupedDocuments = useMemo(() => {
+    const groups: Record<string, RegulatoryDocumentType[]> = {};
+    for (const group of REGULATORY_GROUPS) {
+      groups[group] = [];
+    }
+    for (const doc of filteredDocuments) {
+      if (!groups[doc.categoryGroup]) {
+        groups[doc.categoryGroup] = [];
+      }
+      groups[doc.categoryGroup].push(doc);
+    }
+    return groups;
+  }, [filteredDocuments]);
+
+  // Currently selected statutory document entry
+  const selectedDocMetadata = useMemo(() => {
+    return getDocumentByCode(declaredType);
+  }, [declaredType]);
+
+  // Sort applications cleanly: primary demo apps first
+  const sortedApplications = useMemo(() => {
+    return [...applications].sort((a, b) => {
+      const refA = a.application_reference || '';
+      const refB = b.application_reference || '';
+
+      const isDemoA = /^VAI-2026-001[0-5]$/.test(refA);
+      const isDemoB = /^VAI-2026-001[0-5]$/.test(refB);
+
+      if (isDemoA && !isDemoB) return -1;
+      if (!isDemoA && isDemoB) return 1;
+
+      return refA.localeCompare(refB);
+    });
+  }, [applications]);
+
   useEffect(() => {
     if (isOpen) {
       setLoadingApps(true);
@@ -66,7 +122,16 @@ export const DocumentUploadModal: React.FC<Props> = ({
           if (initialApplicationId) {
             setSelectedAppId(initialApplicationId);
           } else if (res.data.length > 0 && !selectedAppId) {
-            setSelectedAppId(res.data[0].id);
+            const sorted = [...res.data].sort((a, b) => {
+              const refA = a.application_reference || '';
+              const refB = b.application_reference || '';
+              const isDemoA = /^VAI-2026-001[0-5]$/.test(refA);
+              const isDemoB = /^VAI-2026-001[0-5]$/.test(refB);
+              if (isDemoA && !isDemoB) return -1;
+              if (!isDemoA && isDemoB) return 1;
+              return refA.localeCompare(refB);
+            });
+            setSelectedAppId(sorted[0].id);
           }
         })
         .catch((err) => {
@@ -82,10 +147,9 @@ export const DocumentUploadModal: React.FC<Props> = ({
       setServerError(null);
       setUploadResult(null);
       setDeclaredType('');
+      setCategorySearch('');
     }
   }, [isOpen, initialApplicationId]);
-
-  if (!isOpen) return null;
 
   function validateFile(selectedFile: File): boolean {
     setClientError(null);
@@ -99,7 +163,9 @@ export const DocumentUploadModal: React.FC<Props> = ({
 
     // 2. Max size
     if (selectedFile.size > MAX_SIZE_BYTES) {
-      setClientError(`File exceeds maximum size limit of 20MB (${(selectedFile.size / (1024 * 1024)).toFixed(1)}MB).`);
+      setClientError(
+        `File exceeds maximum size limit of 20MB (${(selectedFile.size / (1024 * 1024)).toFixed(1)}MB).`
+      );
       return false;
     }
 
@@ -146,6 +212,11 @@ export const DocumentUploadModal: React.FC<Props> = ({
       return;
     }
 
+    if (!declaredType) {
+      setClientError('Please select an official AICTE statutory document category.');
+      return;
+    }
+
     if (!file) {
       setClientError('Please choose a file to upload.');
       return;
@@ -156,11 +227,7 @@ export const DocumentUploadModal: React.FC<Props> = ({
     setClientError(null);
 
     try {
-      const res = await uploadDocument(
-        selectedAppId,
-        file,
-        declaredType || undefined
-      );
+      const res = await uploadDocument(selectedAppId, file, declaredType);
       setUploadResult(res);
       onSuccess(res);
     } catch (err: any) {
@@ -180,126 +247,212 @@ export const DocumentUploadModal: React.FC<Props> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#171B45]/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-3xl border border-[#E9E6F2] shadow-2xl w-full max-w-lg overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
-        
-        {/* Header */}
-        <div className="p-6 border-b border-[#E9E6F2] flex items-center justify-between bg-[#F8F6FE]/50">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-xl max-h-[92vh] overflow-y-auto bg-card border-border shadow-xl">
+        <DialogHeader>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#F3EEFC] text-[#7450D8] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Upload className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-extrabold text-[#171B45]">Upload Document</h2>
-              <p className="text-xs text-[#5F6485]">Multi-tenant secure document intake & verification</p>
+              <DialogTitle className="text-lg font-bold text-foreground">
+                Upload Statutory Document
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                AICTE Approval Process Handbook (APH 2024–27) Intake
+              </DialogDescription>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            disabled={uploading}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-[#5F6485] hover:text-[#171B45] hover:bg-[#E9E6F2] transition-colors cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+        </DialogHeader>
 
-        {/* Content */}
-        <div className="p-6 space-y-5">
+        <div className="py-2 space-y-4">
           {/* Success State */}
           {uploadResult ? (
             <div className="space-y-4">
-              <div className="p-5 rounded-2xl bg-[#E6F8F0] border border-[#12B886]/30 space-y-3">
-                <div className="flex items-center gap-2.5 text-[#12B886] font-bold text-sm">
+              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 space-y-3">
+                <div className="flex items-center gap-2.5 text-emerald-600 font-bold text-sm">
                   <CheckCircle2 className="w-5 h-5" />
                   <span>Document Uploaded Successfully</span>
                 </div>
-                <p className="text-xs text-[#171B45] leading-relaxed">
+                <p className="text-xs text-foreground leading-relaxed">
                   File received, encrypted, and registered under reference{' '}
-                  <span className="font-mono font-bold text-[#7450D8]">{uploadResult.id}</span>.
-                  Processing run has been queued in status <span className="font-bold">{uploadResult.processing_status}</span>.
+                  <span className="font-mono font-bold text-primary">{uploadResult.id}</span>.
+                  Processing run queued in status{' '}
+                  <Badge variant="outline" className="font-semibold">{uploadResult.processing_status}</Badge>.
                 </p>
 
                 {uploadResult.possible_duplicate && (
-                  <div className="p-3 rounded-xl bg-[#FEF0C7] border border-[#F59E0B]/30 flex items-start gap-2 text-xs text-[#92400E]">
-                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                    <span>
-                      <strong>Duplicate Detected:</strong> An identical document checksum was found in institutional records. Flagged for review scrutiny.
-                    </span>
-                  </div>
+                  <Alert variant="destructive" className="border-amber-500/30 bg-amber-500/10 text-amber-900">
+                    <AlertTriangle className="w-4 h-4 text-amber-600" />
+                    <AlertTitle className="text-xs font-bold">Duplicate Detected</AlertTitle>
+                    <AlertDescription className="text-[11px]">
+                      An identical document checksum was found in institutional records. Flagged for scrutiny review.
+                    </AlertDescription>
+                  </Alert>
                 )}
 
-                <div className="pt-2 border-t border-[#12B886]/20 text-[11px] text-[#5F6485] space-y-1 font-mono">
+                <div className="pt-2 border-t border-emerald-500/20 text-[11px] text-muted-foreground space-y-0.5 font-mono">
                   <div>SHA-256: {uploadResult.sha256.substring(0, 24)}...</div>
                   <div>Size: {formatBytes(uploadResult.file_size_bytes)}</div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-2">
-                <button
+              <DialogFooter className="gap-2 sm:justify-end">
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => {
                     setUploadResult(null);
                     setFile(null);
+                    setDeclaredType('');
                   }}
-                  className="px-4 py-2.5 rounded-xl border border-[#DCD0F7] text-xs font-semibold text-[#7450D8] hover:bg-[#F3EEFC] transition-all cursor-pointer"
                 >
                   Upload Another
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  size="sm"
                   onClick={onClose}
-                  className="px-5 py-2.5 rounded-xl bg-[#F04438] text-white text-xs font-semibold hover:bg-[#E34234] transition-all cursor-pointer shadow-xs"
                 >
                   Done
-                </button>
-              </div>
+                </Button>
+              </DialogFooter>
             </div>
           ) : (
             <form onSubmit={handleUpload} className="space-y-4">
-              
-              {/* Application Selector */}
+              {/* Target Application Selector */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#171B45] flex items-center justify-between">
+                <label className="text-xs font-semibold text-foreground flex items-center justify-between">
                   <span>Target Application *</span>
-                  {loadingApps && <span className="text-[10px] text-[#7450D8] font-normal">Loading...</span>}
+                  {loadingApps && (
+                    <span className="text-[10px] text-primary font-normal">Loading dossiers...</span>
+                  )}
                 </label>
                 <select
                   value={selectedAppId}
                   onChange={(e) => setSelectedAppId(e.target.value)}
                   disabled={uploading || loadingApps}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#DCD0F7] bg-white text-xs text-[#171B45] focus:outline-none focus:ring-2 focus:ring-[#7450D8] focus:border-transparent transition-all cursor-pointer"
+                  className="w-full px-3 py-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-hidden focus:ring-2 focus:ring-ring transition-all cursor-pointer"
                 >
                   <option value="">— Select an Application —</option>
-                  {applications.map((app) => (
-                    <option key={app.id} value={app.id}>
-                      {app.application_reference} — {app.institution?.institution_name || 'Institution'} ({app.category_code})
-                    </option>
-                  ))}
+                  {sortedApplications.map((app) => {
+                    const instName = app.institution?.institution_name || 'Institution';
+                    const instCode = app.institution?.institution_identifier || app.institution?.id || '';
+                    const label = instCode
+                      ? `${app.application_reference} — ${instName} [${instCode}]`
+                      : `${app.application_reference} — ${instName}`;
+                    return (
+                      <option key={app.id} value={app.id}>
+                        {label}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 
-              {/* Document Type Selector (Optional Declared Type) */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#171B45]">
-                  Document Category / Regulatory Type
-                </label>
+              {/* Regulatory Document Category */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-foreground">
+                    Regulatory Document Category *
+                  </label>
+                  <span className="text-[10px] text-muted-foreground">
+                    AICTE APH 2024–27 Compliant
+                  </span>
+                </div>
+
+                {/* Filter Search Input */}
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <Input
+                    type="text"
+                    value={categorySearch}
+                    onChange={(e) => setCategorySearch(e.target.value)}
+                    placeholder="Search category (e.g. affidavit, stability, fire, accounts)..."
+                    className="pl-8 text-xs h-8"
+                  />
+                  {categorySearch && (
+                    <button
+                      type="button"
+                      onClick={() => setCategorySearch('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+
+                {/* Grouped Category Dropdown */}
                 <select
                   value={declaredType}
                   onChange={(e) => setDeclaredType(e.target.value)}
                   disabled={uploading}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#DCD0F7] bg-white text-xs text-[#171B45] focus:outline-none focus:ring-2 focus:ring-[#7450D8] focus:border-transparent transition-all cursor-pointer"
+                  className="w-full px-3 py-2 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-hidden focus:ring-2 focus:ring-ring transition-all cursor-pointer"
                 >
-                  {DOCUMENT_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
+                  <option value="">— Select Official Statutory Category —</option>
+                  {REGULATORY_GROUPS.map((group) => {
+                    const docsInGroup = groupedDocuments[group] || [];
+                    if (docsInGroup.length === 0) return null;
+                    return (
+                      <optgroup key={group} label={group}>
+                        {docsInGroup.map((d) => (
+                          <option key={d.code} value={d.code}>
+                            {d.shortTitle} {d.mandatoryOrConditional === 'MANDATORY' ? '• (Mandatory)' : '• (Conditional)'}
+                          </option>
+                        ))}
+                      </optgroup>
+                    );
+                  })}
                 </select>
+
+                {/* Statutory Detail Card */}
+                {selectedDocMetadata && (
+                  <div className="p-3.5 rounded-xl bg-accent/40 border border-border space-y-2 text-xs">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-1.5 font-bold text-foreground">
+                        <BookOpen className="w-4 h-4 text-primary shrink-0" />
+                        <span>{selectedDocMetadata.shortTitle}</span>
+                      </div>
+                      <Badge
+                        variant={selectedDocMetadata.mandatoryOrConditional === 'MANDATORY' ? 'default' : 'secondary'}
+                        className="text-[10px] shrink-0"
+                      >
+                        {selectedDocMetadata.mandatoryOrConditional === 'MANDATORY'
+                          ? 'Mandatory'
+                          : 'Conditionally Required'}
+                      </Badge>
+                    </div>
+
+                    <div className="text-[11px] text-muted-foreground leading-relaxed">
+                      <span className="font-semibold text-foreground">Official APH Title: </span>
+                      <em className="text-foreground">"{selectedDocMetadata.officialTitle}"</em>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground pt-1.5 border-t border-border">
+                      <div>
+                        <span className="font-semibold text-foreground">Source Reference: </span>
+                        <span className="font-mono text-primary">
+                          {selectedDocMetadata.sourceReference}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-foreground">Handbook Page: </span>
+                        <span>p. {selectedDocMetadata.pdfPage}</span>
+                      </div>
+                    </div>
+
+                    <div className="text-[11px] bg-background/80 p-2.5 rounded-lg border border-border text-muted-foreground leading-relaxed flex items-start gap-1.5">
+                      <Info className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                      <span>{selectedDocMetadata.conditionDescription}</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Drag and Drop Dropzone */}
+              {/* Drag and Drop Zone */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#171B45]">
+                <label className="text-xs font-semibold text-foreground">
                   Select or Drop Document *
                 </label>
                 <div
@@ -307,12 +460,12 @@ export const DocumentUploadModal: React.FC<Props> = ({
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                   onClick={() => fileInputRef.current?.click()}
-                  className={`relative border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
+                  className={`relative border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
                     isDragging
-                      ? 'border-[#7450D8] bg-[#F3EEFC]'
+                      ? 'border-primary bg-primary/10'
                       : file
-                      ? 'border-[#12B886]/50 bg-[#F0FDF4]'
-                      : 'border-[#DCD0F7] bg-[#FAF8FF] hover:bg-[#F3EEFC]/50'
+                      ? 'border-emerald-500/50 bg-emerald-500/5'
+                      : 'border-border bg-muted/30 hover:bg-muted/50'
                   }`}
                 >
                   <input
@@ -330,39 +483,40 @@ export const DocumentUploadModal: React.FC<Props> = ({
                   {file ? (
                     <div className="flex items-center justify-between gap-3 text-left">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-white border border-[#DCD0F7] flex items-center justify-center text-[#7450D8]">
+                        <div className="w-10 h-10 rounded-xl bg-card border border-border flex items-center justify-center text-primary">
                           <FileText className="w-5 h-5" />
                         </div>
                         <div className="overflow-hidden">
-                          <p className="text-xs font-bold text-[#171B45] truncate max-w-[240px]">
+                          <p className="text-xs font-bold text-foreground truncate max-w-[280px]">
                             {file.name}
                           </p>
-                          <p className="text-[11px] text-[#5F6485]">
+                          <p className="text-[11px] text-muted-foreground">
                             {formatBytes(file.size)} • {file.type || 'Document'}
                           </p>
                         </div>
                       </div>
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
                           setFile(null);
                         }}
-                        className="px-2.5 py-1 rounded-lg border border-[#DCD0F7] text-[11px] font-semibold text-[#5F6485] hover:text-[#F04438] hover:border-[#F04438] bg-white transition-all cursor-pointer"
                       >
                         Change
-                      </button>
+                      </Button>
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <div className="w-12 h-12 rounded-2xl bg-white shadow-2xs border border-[#E9E6F2] flex items-center justify-center mx-auto text-[#7450D8]">
-                        <Upload className="w-6 h-6" />
+                      <div className="w-10 h-10 rounded-xl bg-card shadow-2xs border border-border flex items-center justify-center mx-auto text-primary">
+                        <Upload className="w-5 h-5" />
                       </div>
                       <div className="space-y-0.5">
-                        <p className="text-xs font-bold text-[#171B45]">
-                          Drag & drop document here, or <span className="text-[#7450D8] underline">browse</span>
+                        <p className="text-xs font-semibold text-foreground">
+                          Drag & drop document here, or <span className="text-primary underline">browse</span>
                         </p>
-                        <p className="text-[11px] text-[#5F6485]">
+                        <p className="text-[11px] text-muted-foreground">
                           Accepted: PDF, PNG, JPEG. Max file size: 20 MB.
                         </p>
                       </div>
@@ -371,35 +525,36 @@ export const DocumentUploadModal: React.FC<Props> = ({
                 </div>
               </div>
 
-              {/* Client or Server Errors */}
+              {/* Errors */}
               {clientError && (
-                <div className="p-3 rounded-xl bg-[#FFF4F3] border border-[#F04438]/30 flex items-center gap-2 text-xs text-[#F04438]">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{clientError}</span>
-                </div>
+                <Alert variant="destructive" className="py-2.5">
+                  <AlertCircle className="w-4 h-4" />
+                  <AlertDescription className="text-xs">{clientError}</AlertDescription>
+                </Alert>
               )}
 
               {serverError && (
-                <div className="p-3 rounded-xl bg-[#FFF4F3] border border-[#F04438]/30 flex items-center gap-2 text-xs text-[#F04438]">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{serverError}</span>
-                </div>
+                <Alert variant="destructive" className="py-2.5">
+                  <AlertCircle className="w-4 h-4" />
+                  <AlertDescription className="text-xs">{serverError}</AlertDescription>
+                </Alert>
               )}
 
-              {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E9E6F2]">
-                <button
+              {/* Footer actions */}
+              <DialogFooter className="gap-2 pt-2">
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={onClose}
                   disabled={uploading}
-                  className="px-4 py-2.5 rounded-xl border border-[#DCD0F7] text-xs font-semibold text-[#5F6485] hover:text-[#171B45] hover:bg-[#F8F6FE] transition-all cursor-pointer"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
-                  disabled={uploading || !file || !selectedAppId}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#F04438] text-white text-xs font-semibold hover:bg-[#E34234] transition-all shadow-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  size="sm"
+                  disabled={uploading || !file || !selectedAppId || !declaredType}
                 >
                   {uploading ? (
                     <>
@@ -412,12 +567,12 @@ export const DocumentUploadModal: React.FC<Props> = ({
                       <span>Upload Document</span>
                     </>
                   )}
-                </button>
-              </div>
+                </Button>
+              </DialogFooter>
             </form>
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

@@ -13,8 +13,10 @@ from app.schemas.validation import (
     ValidationSummaryResponse,
     ValidationTriggerRequest,
 )
-from app.core.exceptions import NotFoundException
+from app.core.exceptions import NotFoundException, ForbiddenException
 from app.services.validation import run_application_validation, ensure_default_rules
+from app.api.deps import require_roles, get_current_user
+from app.models.user import User
 
 router = APIRouter()
 
@@ -56,6 +58,7 @@ def trigger_validation(
     application_id: str,
     payload: Optional[ValidationTriggerRequest] = None,
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("REVIEWER", "ADMIN")),
 ):
     """Trigger the deterministic validation engine for an application."""
     app = db.scalar(select(Application).where(Application.id == application_id))
@@ -97,11 +100,18 @@ def trigger_validation(
 def get_validation_summary(
     application_id: str,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Retrieve the latest validation summary and rule results for an application."""
     app = db.scalar(select(Application).where(Application.id == application_id))
     if not app:
         raise NotFoundException(code="APPLICATION_NOT_FOUND", message=f"Application '{application_id}' not found.")
+
+    if current_user.role == "INSTITUTION_USER":
+        if app.institution_id != current_user.institution_id:
+            raise ForbiddenException(code="FORBIDDEN", message="Access to validation summary from another institution is denied.")
+    elif current_user.role not in ("ADMIN", "REVIEWER"):
+        raise ForbiddenException(code="FORBIDDEN", message=f"Role '{current_user.role}' is not authorized to access validation summary.")
 
     # Find current run
     current_run = db.scalar(
@@ -164,11 +174,19 @@ def get_validation_results(
     application_id: str,
     status_filter: Optional[str] = Query(None, alias="status", description="Filter by result status"),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Retrieve rule results for an application from the current validation run."""
     app = db.scalar(select(Application).where(Application.id == application_id))
     if not app:
         raise NotFoundException(code="APPLICATION_NOT_FOUND", message=f"Application '{application_id}' not found.")
+
+    if current_user.role == "INSTITUTION_USER":
+        if app.institution_id != current_user.institution_id:
+            raise ForbiddenException(code="FORBIDDEN", message="Access to validation results from another institution is denied.")
+    elif current_user.role not in ("ADMIN", "REVIEWER"):
+        raise ForbiddenException(code="FORBIDDEN", message=f"Role '{current_user.role}' is not authorized to access validation results.")
+
 
     current_run = db.scalar(
         select(ValidationRun)

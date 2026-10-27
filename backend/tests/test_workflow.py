@@ -14,8 +14,11 @@ from app.models.audit import AuditEvent
 from app.core.security import hash_password
 
 
+from app.core.security import create_access_token
+
+
 @pytest.fixture
-def workflow_seed(db_session: Session):
+def workflow_seed(client: TestClient, db_session: Session):
     """Seed data for workflow testing."""
     reviewer = User(
         id="usr-wf-reviewer",
@@ -55,6 +58,11 @@ def workflow_seed(db_session: Session):
     )
     db_session.add_all([reviewer, inst, cat, app])
     db_session.commit()
+
+    token = create_access_token(reviewer.id, reviewer.role, reviewer.email)
+    client.cookies.set("access_token", token)
+    client.headers["X-Requested-With"] = "VerityAI"
+
     return {"reviewer": reviewer, "institution": inst, "category": cat, "application": app}
 
 

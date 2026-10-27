@@ -23,7 +23,7 @@ from app.services.reporting import (
     generate_scrutiny_pdf,
     generate_scrutiny_json,
 )
-from app.api.deps import get_current_user_optional, get_current_user
+from app.api.deps import get_current_user_optional, get_current_user, require_roles
 
 router = APIRouter()
 
@@ -32,10 +32,10 @@ router = APIRouter()
 def get_review_summary(
     application_id: str,
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user_optional),
+    current_user: User = Depends(require_roles("REVIEWER", "ADMIN")),
 ):
     """
-    Get explainable decision support review summary for an application.
+    Get explainable decision support review summary for an application. Strictly requires REVIEWER or ADMIN.
     """
     summary = get_application_review_summary(db, application_id)
     if not summary:
@@ -50,10 +50,10 @@ def get_review_summary(
 def get_evidence_trace(
     application_id: str,
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user_optional),
+    current_user: User = Depends(require_roles("REVIEWER", "ADMIN")),
 ):
     """
-    Get itemized evidence trace items for an application.
+    Get itemized evidence trace items for an application. Strictly requires REVIEWER or ADMIN.
     """
     app = db.query(Application).filter(Application.id == application_id).first()
     if not app:
@@ -69,10 +69,10 @@ def create_scrutiny_report(
     application_id: str,
     request: ReportGenerationRequest,
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user_optional),
+    current_user: User = Depends(require_roles("REVIEWER", "ADMIN")),
 ):
     """
-    Generate a new regulatory scrutiny report (PDF or JSON).
+    Generate a new regulatory scrutiny report (PDF or JSON). Strictly requires REVIEWER or ADMIN role.
     """
     app = db.query(Application).filter(Application.id == application_id).first()
     if not app:
@@ -81,7 +81,7 @@ def create_scrutiny_report(
             detail=f"Application {application_id} not found",
         )
 
-    actor_id = current_user.id if current_user else None
+    actor_id = current_user.id
     fmt = request.format.upper()
 
     try:
@@ -102,10 +102,10 @@ def create_scrutiny_report(
 def list_application_reports(
     application_id: str,
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user_optional),
+    current_user: User = Depends(require_roles("REVIEWER", "ADMIN")),
 ):
     """
-    List all generated scrutiny reports for an application.
+    List all generated scrutiny reports for an application. Strictly requires REVIEWER or ADMIN.
     """
     app = db.query(Application).filter(Application.id == application_id).first()
     if not app:
@@ -123,20 +123,36 @@ def list_application_reports(
     return reports
 
 
+
 @router.get("/reports/{report_id}/download")
 def download_scrutiny_report(
     report_id: str,
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user_optional),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Safely download a generated scrutiny report file with security headers.
+    Enforces authorization: REVIEWER and ADMIN have cross-institutional scrutiny access.
+    INSTITUTION_USER is strictly locked to their own registered institution.
     """
     report = db.query(ScrutinyReport).filter(ScrutinyReport.id == report_id).first()
     if not report:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Report {report_id} not found",
+        )
+
+    if current_user.role == "INSTITUTION_USER":
+        app_obj = db.get(Application, report.application_id)
+        if not app_obj or not current_user.institution_id or current_user.institution_id != app_obj.institution_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={"code": "FORBIDDEN", "message": "Access to report from another institution is denied."}
+            )
+    elif current_user.role not in ("ADMIN", "REVIEWER"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": "FORBIDDEN", "message": f"User role '{current_user.role}' is not authorized to download reports."}
         )
 
     file_path = report.storage_path

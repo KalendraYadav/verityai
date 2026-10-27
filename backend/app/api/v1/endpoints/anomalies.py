@@ -15,6 +15,8 @@ from app.schemas.finding import (
 )
 from app.core.exceptions import NotFoundException, BadRequestException
 from app.services.anomaly import run_application_analysis, review_finding
+from app.api.deps import require_roles
+from app.models.user import User
 
 router = APIRouter()
 
@@ -28,6 +30,7 @@ router = APIRouter()
 def trigger_analysis(
     application_id: str,
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("REVIEWER", "ADMIN")),
 ):
     """Executes candidate field extraction, cross-document discrepancy checks,
     and anomaly detection for all uploaded documents of an application.
@@ -37,7 +40,7 @@ def trigger_analysis(
         raise NotFoundException(code="APPLICATION_NOT_FOUND", message=f"Application '{application_id}' not found.")
 
     try:
-        result = run_application_analysis(application_id=application_id, db=db, actor_id="SYSTEM")
+        result = run_application_analysis(application_id=application_id, db=db, actor_id=current_user.id)
     except ValueError as e:
         raise BadRequestException(code="ANALYSIS_FAILED", message=str(e))
 
@@ -66,6 +69,7 @@ def trigger_analysis(
 def get_analysis_summary(
     application_id: str,
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("REVIEWER", "ADMIN")),
 ):
     """Retrieve the current analysis overview, active findings, and candidate fields."""
     app = db.get(Application, application_id)
@@ -142,6 +146,7 @@ def list_application_anomalies(
     category: Optional[str] = Query(None, description="Filter by category"),
     review_status: Optional[str] = Query(None, description="Filter by review status"),
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("REVIEWER", "ADMIN")),
 ):
     """List current findings and anomalies for an application with optional filtering."""
     app = db.get(Application, application_id)
@@ -174,6 +179,7 @@ def list_application_anomalies(
 def get_finding(
     finding_id: str,
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("REVIEWER", "ADMIN")),
 ):
     """Retrieve single finding with full evidence citations and snapshot data."""
     finding = db.get(Finding, finding_id)
@@ -193,6 +199,7 @@ def review_anomaly_finding(
     finding_id: str,
     payload: FindingReviewRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("REVIEWER", "ADMIN")),
 ):
     """Reviewers can mark findings as OPEN, UNDER_REVIEW, CONFIRMED, DISMISSED,
     RESOLVED, or AWAITING_EVIDENCE with an explanatory audit note.
@@ -202,7 +209,7 @@ def review_anomaly_finding(
             finding_id=finding_id,
             review_status=payload.review_status.upper(),
             comment=payload.comment,
-            reviewer_id=payload.reviewer_id,
+            reviewer_id=current_user.id,
             db=db,
         )
     except ValueError as e:
@@ -224,6 +231,7 @@ def list_extracted_fields(
     field_key: Optional[str] = Query(None, description="Filter by candidate field key"),
     document_id: Optional[str] = Query(None, description="Filter by specific document"),
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("REVIEWER", "ADMIN")),
 ):
     """Retrieve normalized extracted candidate fields across documents with provenance."""
     app = db.get(Application, application_id)

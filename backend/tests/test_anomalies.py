@@ -491,7 +491,10 @@ def test_anomaly_api_endpoints(client: TestClient, db_session: Session, anomaly_
         text="Certificate No: NBA/ENGG/2025/1111\nApproved Intake: 480\n",
         conf=0.97,
     )
-    db_session.commit()
+    from app.core.security import create_access_token
+    token = create_access_token(user.id, user.role, user.email)
+    client.cookies.set("access_token", token)
+    client.headers["X-Requested-With"] = "VerityAI"
 
     # 1. Trigger analysis via API
     resp = client.post(f"/api/v1/applications/{app.id}/analyze")

@@ -16,6 +16,11 @@ import {
   type ExternalPortalSyncLogItem,
   type ExternalPortalHealthData,
 } from '../../api/client';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export const RegulatoryGatewaysView: React.FC = () => {
   const [portals, setPortals] = useState<ExternalPortalConfigItem[]>([]);
@@ -49,7 +54,6 @@ export const RegulatoryGatewaysView: React.FC = () => {
     try {
       const res = await probeRegulatoryPortalHealth(providerId);
       setProbeResults((prev) => ({ ...prev, [providerId]: res }));
-      // Also refresh sync history to show the audit record
       const updatedHistory = await fetchPortalSyncHistory(50);
       setSyncHistory(updatedHistory);
     } catch (err: unknown) {
@@ -60,244 +64,281 @@ export const RegulatoryGatewaysView: React.FC = () => {
   }
 
   return (
-    <div className="p-4 lg:p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
       {/* 1. Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-[#171B45] flex items-center gap-2.5">
-            <Network className="w-6 h-6 text-[#7450D8]" />
-            Regulatory Gateways & Outbound SSRF Defenses
-          </h1>
-          <p className="text-xs sm:text-sm text-[#5F6485] mt-0.5">
-            Interoperability layer for statutory authorities, external registries, and AICTE approval databases with strict SSRF controls.
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+              <Network className="size-6 text-primary shrink-0" />
+              Regulatory Gateways
+            </h1>
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Manage external regulatory connections, statutory registries, and secured verification endpoints.
           </p>
         </div>
 
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           onClick={loadData}
-          className="p-2 rounded-xl border border-[#E9E6F2] text-[#5F6485] hover:bg-[#FAF8FF] hover:text-[#7450D8] transition-colors cursor-pointer self-start sm:self-auto"
+          disabled={loading}
+          className="h-8 gap-1.5 text-xs text-muted-foreground self-start sm:self-auto"
           title="Refresh Gateways"
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-        </button>
+          <RefreshCw className={`size-3.5 ${loading ? 'animate-spin text-primary' : ''}`} />
+          <span>Refresh Gateways</span>
+        </Button>
       </div>
 
-      {/* 2. SSRF Shield Security Architecture Card */}
-      <div className="bg-white rounded-3xl border border-[#E9E6F2] p-5 sm:p-6 shadow-xs space-y-4">
-        <div className="flex items-center justify-between flex-wrap gap-2 border-b border-[#EEEAF5] pb-4">
+      {/* 2. SSRF Protection Architecture Card */}
+      <Card className="border-border shadow-[0_1px_3px_0_rgba(23,27,69,0.04)]">
+        <CardHeader className="p-4 sm:p-5 border-b border-border flex flex-row items-center justify-between space-y-0 flex-wrap gap-2">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#ECFDF3] text-[#027A48] flex items-center justify-center">
-              <ShieldCheck className="w-5 h-5" />
+            <div className="size-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+              <ShieldCheck className="size-4" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-[#171B45]">
+              <CardTitle className="text-sm font-semibold text-foreground">
                 Outbound SSRF Protection Engine Active
-              </h2>
-              <span className="text-[11px] text-[#027A48] font-semibold">
+              </CardTitle>
+              <CardDescription className="text-xs text-emerald-700 font-medium">
                 RFC-1918 Private IP Filter · Cloud Metadata Blocker · Bounded Response Ceiling
-              </span>
+              </CardDescription>
             </div>
           </div>
 
-          <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-[#ECFDF3] text-[#027A48] border border-[#A6F4C5] flex items-center gap-1.5">
-            <Lock className="w-3.5 h-3.5" />
+          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs font-semibold gap-1">
+            <Lock className="size-3" />
             PROTECTION ENFORCED
-          </span>
-        </div>
+          </Badge>
+        </CardHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-          <div className="p-3.5 rounded-xl bg-[#FAF9FC] border border-[#E9E6F2] space-y-1">
-            <span className="text-[10px] uppercase font-bold text-[#7450D8] block">Destination Scheme & Host Validation</span>
-            <p className="text-[11px] text-[#5F6485]">
+        <CardContent className="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+          <div className="p-3 rounded-lg bg-muted/40 border border-border space-y-1">
+            <span className="text-[10px] uppercase font-bold text-primary block">Destination Scheme & Host Validation</span>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
               Enforces strict HTTPS schemes. Hostnames are resolved through secure DNS and checked against RFC-1918 and loopback CIDRs before connecting.
             </p>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-[#FAF9FC] border border-[#E9E6F2] space-y-1">
-            <span className="text-[10px] uppercase font-bold text-[#B42318] block">Cloud Metadata Defense</span>
-            <p className="text-[11px] text-[#5F6485]">
+          <div className="p-3 rounded-lg bg-muted/40 border border-border space-y-1">
+            <span className="text-[10px] uppercase font-bold text-destructive block">Cloud Metadata Defense</span>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
               Blocks <code>169.254.169.254</code> (AWS/GCP/Azure instance metadata), link-local IPv6, and internal subnets (<code>10.0.0.0/8</code>, <code>172.16.0.0/12</code>, <code>192.168.0.0/16</code>).
             </p>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-[#FAF9FC] border border-[#E9E6F2] space-y-1">
-            <span className="text-[10px] uppercase font-bold text-[#175CD3] block">Response Ceiling & Timeout</span>
-            <p className="text-[11px] text-[#5F6485]">
+          <div className="p-3 rounded-lg bg-muted/40 border border-border space-y-1">
+            <span className="text-[10px] uppercase font-bold text-blue-700 block">Response Ceiling & Timeout</span>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
               Strict 10-second request timeout ceiling with 1MB maximum response payload streaming cap to prevent denial-of-service from malicious endpoints.
             </p>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* 3. The Gateway Adapters Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {portals.map((portal) => {
-          const probe = probeResults[portal.provider_id];
-          const isProbing = probingId === portal.provider_id;
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {loading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="border-border p-5 space-y-3">
+              <Skeleton className="h-6 w-1/2" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-8 w-full" />
+            </Card>
+          ))
+        ) : (
+          portals.map((portal) => {
+            const probe = probeResults[portal.provider_id];
+            const isProbing = probingId === portal.provider_id;
 
-          return (
-            <div
-              key={portal.id}
-              className="bg-white rounded-2xl border border-[#E9E6F2] p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-[#DCD0F7] transition-all"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-xl bg-[#F3EEFC] text-[#7450D8] flex items-center justify-center font-bold text-xs">
-                      <Radio className="w-4 h-4" />
+            return (
+              <Card
+                key={portal.id}
+                className="border-border shadow-[0_1px_3px_0_rgba(23,27,69,0.04)] flex flex-col justify-between hover:border-primary/40 transition-colors"
+              >
+                <CardHeader className="p-4 sm:p-5 pb-3">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <div className="flex items-center gap-2">
+                      <div className="size-8 rounded-lg bg-secondary text-primary flex items-center justify-center font-bold text-xs shrink-0">
+                        <Radio className="size-4" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-xs font-bold text-foreground leading-tight">
+                          {portal.name}
+                        </CardTitle>
+                        <CardDescription className="font-mono text-[10px] text-primary">
+                          {portal.provider_id}
+                        </CardDescription>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-xs font-bold text-[#171B45] leading-tight">
-                        {portal.name}
-                      </h3>
-                      <span className="font-mono text-[10px] text-[#7450D8]">
-                        {portal.provider_id}
-                      </span>
+
+                    <Badge
+                      variant="outline"
+                      className={`text-[9px] font-bold uppercase ${
+                        portal.provider_type === 'LOCAL_SYNTHETIC'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : portal.provider_type === 'CONFIGURABLE_REST'
+                          ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : 'bg-red-50 text-destructive border-red-200'
+                      }`}
+                    >
+                      {portal.provider_type.replace('_', ' ')}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed pt-1">
+                    {portal.description}
+                  </p>
+                </CardHeader>
+
+                <CardContent className="px-4 sm:px-5 py-2 space-y-3">
+                  <div className="p-3 rounded-lg bg-muted/40 border border-border space-y-1 text-[11px]">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Authority:</span>
+                      <span className="font-semibold text-foreground">{portal.statutory_authority}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Auth Protocol:</span>
+                      <span className="font-mono text-primary">{portal.auth_type}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Timeout Ceiling:</span>
+                      <span className="font-mono text-foreground">{portal.timeout_seconds}s</span>
                     </div>
                   </div>
 
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                    portal.provider_type === 'LOCAL_SYNTHETIC'
-                      ? 'bg-[#ECFDF3] text-[#027A48] border border-[#A6F4C5]'
-                      : portal.provider_type === 'CONFIGURABLE_REST'
-                      ? 'bg-[#EFF8FF] text-[#175CD3] border border-[#B2DDFF]'
-                      : 'bg-[#FFF0EF] text-[#B42318] border border-[#FECDCA]'
-                  }`}>
-                    {portal.provider_type.replace('_', ' ')}
-                  </span>
-                </div>
-
-                <p className="text-xs text-[#5F6485] leading-relaxed">
-                  {portal.description}
-                </p>
-
-                <div className="p-3 rounded-xl bg-[#FAF9FC] border border-[#E9E6F2] space-y-1.5 text-[11px]">
-                  <div className="flex justify-between">
-                    <span className="text-[#8589A6]">Authority:</span>
-                    <span className="font-semibold text-[#171B45]">{portal.statutory_authority}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[#8589A6]">Auth Protocol:</span>
-                    <span className="font-mono text-[#7450D8]">{portal.auth_type}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[#8589A6]">Timeout Limit:</span>
-                    <span className="font-mono text-[#171B45]">{portal.timeout_seconds}s</span>
-                  </div>
-                </div>
-
-                {/* Probe result indicator */}
-                {probe && (
-                  <div className={`p-2.5 rounded-xl border text-[11px] space-y-1 ${
-                    probe.status === 'ONLINE'
-                      ? 'bg-[#ECFDF3] border-[#A6F4C5] text-[#027A48]'
-                      : probe.status === 'UNCONFIGURED'
-                      ? 'bg-[#FFF6ED] border-[#FECDCA] text-[#C4320A]'
-                      : 'bg-[#FFF0EF] border-[#FECDCA] text-[#B42318]'
-                  }`}>
-                    <div className="flex items-center justify-between font-bold">
-                      <span className="flex items-center gap-1">
-                        <Activity className="w-3.5 h-3.5" />
-                        Status: {probe.status}
-                      </span>
-                      {probe.latency_ms !== null && probe.latency_ms !== undefined && (
-                        <span className="font-mono text-[10px]">{probe.latency_ms}ms</span>
-                      )}
+                  {probe && (
+                    <div className={`p-2.5 rounded-lg border text-[11px] space-y-1 ${
+                      probe.status === 'ONLINE'
+                        ? 'bg-emerald-50/80 border-emerald-200 text-emerald-800'
+                        : probe.status === 'UNCONFIGURED'
+                        ? 'bg-amber-50/80 border-amber-200 text-amber-800'
+                        : 'bg-red-50/80 border-red-200 text-red-800'
+                    }`}>
+                      <div className="flex items-center justify-between font-bold">
+                        <span className="flex items-center gap-1">
+                          <Activity className="size-3" />
+                          Status: {probe.status}
+                        </span>
+                        {probe.latency_ms !== null && probe.latency_ms !== undefined && (
+                          <span className="font-mono text-[10px]">{probe.latency_ms}ms</span>
+                        )}
+                      </div>
+                      <p className="text-[10px] leading-tight opacity-90">{probe.message}</p>
                     </div>
-                    <p className="text-[10px] leading-tight opacity-90">{probe.message}</p>
-                  </div>
-                )}
-              </div>
+                  )}
+                </CardContent>
 
-              {/* Probe Action Button */}
-              <div className="pt-2 border-t border-[#EEEAF5]">
-                <button
-                  onClick={() => handleProbeHealth(portal.provider_id)}
-                  disabled={isProbing}
-                  className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#FAF8FF] border border-[#DCD0F7] hover:bg-[#F3EEFC] text-[#7450D8] text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isProbing ? 'animate-spin' : ''}`} />
-                  {isProbing ? 'Probing Gateway...' : 'Probe Live Health'}
-                </button>
-              </div>
-            </div>
-          );
-        })}
+                <CardFooter className="p-4 sm:p-5 pt-2 border-t border-border">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleProbeHealth(portal.provider_id)}
+                    disabled={isProbing}
+                    className="w-full h-8 text-xs gap-1.5"
+                  >
+                    <RefreshCw className={`size-3 ${isProbing ? 'animate-spin' : ''}`} />
+                    <span>{isProbing ? 'Probing Gateway...' : 'Probe Live Health'}</span>
+                  </Button>
+                </CardFooter>
+              </Card>
+            );
+          })
+        )}
       </div>
 
       {/* 4. Outbound Synchronization & Verification Audit Trail */}
-      <div className="bg-white rounded-2xl border border-[#E9E6F2] shadow-xs overflow-hidden">
-        <div className="p-4 sm:p-5 border-b border-[#EEEAF5] flex items-center justify-between">
+      <Card className="border-border shadow-[0_1px_3px_0_rgba(23,27,69,0.04)] overflow-hidden">
+        <CardHeader className="p-4 sm:p-5 border-b border-border flex flex-row items-center justify-between space-y-0">
           <div className="flex items-center gap-2">
-            <Server className="w-5 h-5 text-[#7450D8]" />
-            <h2 className="text-sm font-bold text-[#171B45]">
+            <Server className="size-4 text-primary shrink-0" />
+            <CardTitle className="text-sm font-semibold text-foreground">
               Outbound Regulatory Gateway Sync & Health Audit ({syncHistory.length})
-            </h2>
+            </CardTitle>
           </div>
-          <span className="text-[11px] text-[#8589A6]">
-            Immutable Outbound Call Ledger · Zero Secret Exposure
-          </span>
-        </div>
+          <Badge variant="outline" className="font-mono text-[10px] text-muted-foreground border-border">
+            Zero Secret Exposure · Ephemeral TLS
+          </Badge>
+        </CardHeader>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-[#FAF9FC] border-b border-[#EEEAF5] text-[11px] font-bold text-[#5F6485] uppercase tracking-wider">
-                <th className="py-3 px-4">Timestamp</th>
-                <th className="py-3 px-4">Provider ID</th>
-                <th className="py-3 px-4">Action</th>
-                <th className="py-3 px-4">Target Ref</th>
-                <th className="py-3 px-4">Outcome</th>
-                <th className="py-3 px-4">HTTP Status</th>
-                <th className="py-3 px-4">Latency</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#EEEAF5]">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader className="bg-muted/40">
+              <TableRow className="border-b border-border hover:bg-transparent">
+                <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4">
+                  TIMESTAMP
+                </TableHead>
+                <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4">
+                  PROVIDER ID
+                </TableHead>
+                <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4">
+                  ACTION
+                </TableHead>
+                <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4">
+                  TARGET REF
+                </TableHead>
+                <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4">
+                  OUTCOME
+                </TableHead>
+                <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4">
+                  HTTP STATUS
+                </TableHead>
+                <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4">
+                  LATENCY
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {syncHistory.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center text-[#8589A6]">
+                <TableRow>
+                  <TableCell colSpan={7} className="py-12 text-center text-xs text-muted-foreground">
                     No outbound gateway synchronizations recorded yet.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 syncHistory.map((item) => (
-                  <tr key={item.id} className="hover:bg-[#FAF8FF] transition-colors">
-                    <td className="py-3 px-4 text-[#8589A6] font-mono text-[11px]">
+                  <TableRow key={item.id} className="hover:bg-muted/40 transition-colors">
+                    <TableCell className="py-3 px-4 text-muted-foreground font-mono text-[11px]">
                       {new Date(item.created_at).toLocaleString()}
-                    </td>
-                    <td className="py-3 px-4 font-mono font-bold text-[#7450D8]">
+                    </TableCell>
+                    <TableCell className="py-3 px-4 font-mono font-bold text-xs text-primary">
                       {item.provider_id}
-                    </td>
-                    <td className="py-3 px-4 font-semibold text-[#171B45]">
+                    </TableCell>
+                    <TableCell className="py-3 px-4 font-medium text-xs text-foreground">
                       {item.action}
-                    </td>
-                    <td className="py-3 px-4 font-mono text-xs text-[#5F6485]">
+                    </TableCell>
+                    <TableCell className="py-3 px-4 font-mono text-xs text-muted-foreground">
                       {item.target_identifier || 'N/A'}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        item.status === 'SUCCESS' || item.status === 'ONLINE'
-                          ? 'bg-[#ECFDF3] text-[#027A48] border border-[#A6F4C5]'
-                          : item.status === 'BLOCKED_SSRF'
-                          ? 'bg-[#FFF0EF] text-[#B42318] border border-[#FECDCA]'
-                          : 'bg-[#FAF9FC] text-[#5F6485] border border-[#E9E6F2]'
-                      }`}>
+                    </TableCell>
+                    <TableCell className="py-3 px-4">
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] font-medium ${
+                          item.status === 'SUCCESS' || item.status === 'ONLINE'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : item.status === 'BLOCKED_SSRF'
+                            ? 'bg-red-50 text-destructive border-red-200'
+                            : 'bg-muted text-muted-foreground border-border'
+                        }`}
+                      >
                         {item.status}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 font-mono text-[11px] text-[#171B45]">
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-3 px-4 font-mono text-[11px] text-foreground">
                       {item.http_status_code || '—'}
-                    </td>
-                    <td className="py-3 px-4 font-mono text-[11px] text-[#8589A6]">
+                    </TableCell>
+                    <TableCell className="py-3 px-4 font-mono text-[11px] text-muted-foreground">
                       {item.response_latency_ms !== null && item.response_latency_ms !== undefined ? `${item.response_latency_ms} ms` : '—'}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 };

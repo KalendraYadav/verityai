@@ -3,7 +3,7 @@ import type { NavItemKey } from '../components/layout/AppShell';
 
 export type AppRoute =
   | { type: 'landing' }
-  | { type: 'login'; returnUrl?: string }
+  | { type: 'login'; returnUrl?: string; portal?: 'applicant' | 'officer' }
   | { type: 'workspace'; tab: NavItemKey; applicationId?: string };
 
 const VALID_TABS: Record<string, NavItemKey> = {
@@ -16,6 +16,7 @@ const VALID_TABS: Record<string, NavItemKey> = {
   registry: 'registry',
   gateways: 'gateways',
   audit: 'audit',
+  users: 'users',
 };
 
 /**
@@ -29,9 +30,17 @@ export function parseRoute(pathname: string, search: string): AppRoute {
     return { type: 'landing' };
   }
 
+  // Direct applicant entrance alias (/applicant, /apply)
+  if (cleanPath === '/applicant' || cleanPath === '/apply') {
+    return { type: 'login', portal: 'applicant', returnUrl: '/app/overview' };
+  }
+
   if (cleanPath === '/login' || cleanPath === '/signin') {
     const returnUrl = searchParams.get('returnUrl') || undefined;
-    return { type: 'login', returnUrl };
+    const portalParam = searchParams.get('portal');
+    const portal: 'applicant' | 'officer' | undefined =
+      portalParam === 'applicant' || portalParam === 'officer' ? portalParam : undefined;
+    return { type: 'login', returnUrl, portal };
   }
 
   // Workspace protected routes: /app, /app/:tab, /dashboard, etc.
@@ -58,10 +67,13 @@ export function routeToPath(route: AppRoute): string {
   switch (route.type) {
     case 'landing':
       return '/';
-    case 'login':
-      return route.returnUrl
-        ? `/login?returnUrl=${encodeURIComponent(route.returnUrl)}`
-        : '/login';
+    case 'login': {
+      const params = new URLSearchParams();
+      if (route.returnUrl) params.set('returnUrl', route.returnUrl);
+      if (route.portal) params.set('portal', route.portal);
+      const q = params.toString();
+      return q ? `/login?${q}` : '/login';
+    }
     case 'workspace':
       if (route.applicationId && route.tab === 'applications') {
         return `/app/applications/${route.applicationId}`;

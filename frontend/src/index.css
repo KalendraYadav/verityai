@@ -1,173 +1,263 @@
 @import "tailwindcss";
 
 @theme {
-  --color-lavender-primary: #CBB3E8;
-  --color-lavender-light: #F3EEFC;
-  --color-lavender-surface: #FAF8FF;
-  --color-purple-primary: #7450D8;
-  --color-purple-deep: #5633B8;
-  --color-purple-border: #DCD0F7;
+  /* Linea Primary Semantic Tokens */
+  --color-background: #FAF5F0;
+  --color-foreground: #1B1411;
+  --color-card: #FFFFFF;
+  --color-card-foreground: #1B1411;
+  --color-popover: #FAF5F0;
+  --color-popover-foreground: #1B1411;
+  --color-primary: #33CC7A;
+  --color-primary-foreground: #1B1411;
+  --color-secondary: #EEE5DC;
+  --color-secondary-foreground: #1B1411;
+  --color-muted: #EEE5DC;
+  --color-muted-foreground: #66574F;
+  --color-accent: #33CC7A;
+  --color-accent-foreground: #1B1411;
+  --color-destructive: #DC2626;
+  --color-destructive-foreground: #FFFFFF;
+  --color-border: #E5DDD5;
+  --color-input: #E5DDD5;
+  --color-ring: #33CC7A;
 
-  --color-tomato: #E34234;
-  --color-button-red: #F04438;
-  --color-red-light: #FFF0EF;
-  --color-red-error: #B42318;
+  /* Linea Palette Extensions */
+  --color-linea-noir: #1B1411;
+  --color-linea-paper: #FAF5F0;
+  --color-linea-sand: #EEE5DC;
+  --color-linea-sand-dark: #E2D7CC;
+  --color-linea-mint: #33CC7A;
+  --color-linea-umber: #66574F;
+  --color-linea-navy: #1F3954;
+  --color-linea-ice: #BACDE0;
+  --color-linea-card-dark: #2E241F;
+  --color-linea-border-dark: #B8ABA3;
 
-  --color-bg-main: #FAF9FC;
+  /* Legacy Compatibility Semantic Aliases mapped to Linea */
+  --color-lavender-primary: #33CC7A;
+  --color-lavender-light: #EEE5DC;
+  --color-lavender-surface: #FAF5F0;
+  --color-purple-primary: #1F3954;
+  --color-purple-deep: #1B1411;
+  --color-purple-border: #E5DDD5;
+
+  --color-tomato: #DC2626;
+  --color-button-red: #DC2626;
+  --color-red-light: #FEE2E2;
+  --color-red-error: #991B1B;
+
+  --color-bg-main: #FAF5F0;
   --color-card-bg: #FFFFFF;
-  --color-text-primary: #171B45;
-  --color-text-secondary: #5F6485;
-  --color-text-muted: #8589A6;
-  --color-border-main: #E9E6F2;
-  --color-divider-main: #EEEAF5;
+  --color-text-primary: #1B1411;
+  --color-text-secondary: #66574F;
+  --color-text-muted: #8F7E75;
+  --color-border-main: #E5DDD5;
+  --color-divider-main: #EEE5DC;
 
-  --color-status-success: #12B886;
-  --color-status-warning: #F5B942;
-  --color-status-error: #E34234;
-  --color-status-info: #4C7DFA;
+  --color-status-success: #33CC7A;
+  --color-status-warning: #D97706;
+  --color-status-error: #DC2626;
+  --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'JetBrains Mono', monospace;
 
-  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --radius-hero: 3.5rem;
+  --radius-card: 1.75rem;
+  --radius-pill: 62.5rem;
+  --radius-panel: 1.25rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.0rem;
+  --radius-xl: 1.25rem;
 }
 
 :root {
-  --lavender-primary: #CBB3E8;
-  --lavender-light: #F3EEFC;
-  --lavender-surface: #FAF8FF;
-  --purple-primary: #7450D8;
-  --purple-deep: #5633B8;
-  --purple-border: #DCD0F7;
+  --background: #FAF5F0;
+  --foreground: #1B1411;
+  --card: #FFFFFF;
+  --card-foreground: #1B1411;
+  --popover: #FAF5F0;
+  --popover-foreground: #1B1411;
+  --primary: #33CC7A;
+  --primary-foreground: #1B1411;
+  --secondary: #EEE5DC;
+  --secondary-foreground: #1B1411;
+  --muted: #EEE5DC;
+  --muted-foreground: #66574F;
+  --accent: #33CC7A;
+  --accent-foreground: #1B1411;
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+  --border: #E5DDD5;
+  --input: #E5DDD5;
+  --ring: #33CC7A;
+  --radius: 1.25rem;
 
-  --tomato-red: #E34234;
-  --button-red: #F04438;
-  --red-light: #FFF0EF;
-  --red-error: #B42318;
+  --color-1: #1B1411;
+  --color-2: #FAF5F0;
+  --color-3: #EEE5DC;
+  --color-4: #33CC7A;
+  --color-5: #66574F;
+  --color-6: #1F3954;
+  --color-7: #BACDE0;
+  --color-8: #2E241F;
+  --color-9: #B8ABA3;
 
-  --bg-main: #FAF9FC;
+  --bg-main: #FAF5F0;
   --card-bg: #FFFFFF;
-  --text-primary: #171B45;
-  --text-secondary: #5F6485;
-  --text-muted: #8589A6;
-  --border-main: #E9E6F2;
-  --divider-main: #EEEAF5;
+  --text-primary: #1B1411;
+  --text-secondary: #66574F;
+  --text-muted: #8F7E75;
+  --border-main: #E5DDD5;
+  --divider-main: #EEE5DC;
 
-  --status-success: #12B886;
-  --status-warning: #F5B942;
-  --status-error: #E34234;
-  --status-info: #4C7DFA;
+  --status-success: #33CC7A;
+  --status-warning: #D97706;
+  --status-error: #DC2626;
+  --status-info: #1F3954;
 }
 
 body {
   margin: 0;
   background-color: var(--bg-main);
   color: var(--text-primary);
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar styled for Linea warm paper */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
-  background: #FAF8FF;
+  background: #FAF5F0;
 }
 ::-webkit-scrollbar-thumb {
-  background: #DCD0F7;
-  border-radius: 4px;
+  background: #E2D7CC;
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #CBB3E8;
+  background: #B8ABA3;
 }
 
-/* ── Landing Page Decorative & Workflow Card Enhancements ─────────────────── */
-.workflow-card {
-  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 220ms cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform, box-shadow;
-  cursor: default;
+/* ── Linea Editorial Button Styles ─────────────────────────────────────────── */
+.linea-btn-mint {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: #33CC7A;
+  color: #1B1411;
+  font-weight: 600;
+  box-shadow: 0 10px 24px -8px rgba(51, 204, 122, 0.7);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.linea-btn-mint:hover {
+  background-color: #2BB66C;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px -6px rgba(51, 204, 122, 0.8);
 }
 
-.workflow-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 16px 32px -8px rgba(23, 27, 69, 0.12), 0 6px 16px -4px rgba(23, 27, 69, 0.06);
+.linea-btn-dark {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: #1B1411;
+  color: #FAF5F0;
+  font-weight: 600;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.linea-btn-dark:hover {
+  background-color: #2E241F;
+  transform: translateY(-1px);
 }
 
-.workflow-card .workflow-icon {
-  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
-              background-color 220ms ease,
-              box-shadow 220ms ease;
+.linea-btn-sand {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: #EEE5DC;
+  color: #1B1411;
+  font-weight: 600;
+  border: 1px solid rgba(27, 20, 17, 0.08);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.linea-btn-sand:hover {
+  background-color: #E2D7CC;
+  transform: translateY(-1px);
 }
 
-.workflow-card:hover .workflow-icon {
-  transform: translateY(-3px) scale(1.05);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+/* ── Linea Floating Pill Navigation Bar ────────────────────────────────────── */
+.linea-nav-pill {
+  background: rgba(27, 20, 17, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(250, 245, 240, 0.12);
+  border-radius: 9999px;
+  box-shadow: 0 16px 36px -10px rgba(27, 20, 17, 0.45);
 }
 
-.capability-card {
-  transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 240ms cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 240ms ease;
-  will-change: transform, box-shadow;
-  cursor: default;
+/* ── Card & Surface Elevation ─────────────────────────────────────────────── */
+.linea-card {
+  background: #FFFFFF;
+  border: 1px solid #E5DDD5;
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 20px -2px rgba(27, 20, 17, 0.03);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.linea-card:hover {
+  border-color: #D3C7BD;
+  box-shadow: 0 12px 30px -6px rgba(27, 20, 17, 0.06);
 }
 
-.capability-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 14px 28px -6px rgba(23, 27, 69, 0.10), 0 4px 12px -2px rgba(23, 27, 69, 0.05);
+.linea-card-dark {
+  background: #1B1411;
+  color: #FAF5F0;
+  border: 1px solid rgba(250, 245, 240, 0.12);
+  border-radius: 1.5rem;
 }
 
-.capability-card .capability-icon {
-  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 220ms ease;
+.linea-card-navy {
+  background: #1F3954;
+  color: #FAF5F0;
+  border: 1px solid rgba(186, 205, 224, 0.16);
+  border-radius: 1.5rem;
 }
 
-.capability-card:hover .capability-icon {
-  transform: translateY(-2px) scale(1.08);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .workflow-card,
-  .workflow-card:hover,
-  .workflow-card .workflow-icon,
-  .workflow-card:hover .workflow-icon,
-  .capability-card,
-  .capability-card:hover,
-  .capability-card .capability-icon,
-  .capability-card:hover .capability-icon {
-    transform: none !important;
-    transition: none !important;
-  }
-}
-
-/* ── Accessibility & GIGW 3.0 Conformance Enhancements ────────────────────── */
+/* ── Accessibility & Focus Rings ──────────────────────────────────────────── */
 .skip-link {
   position: absolute;
   top: -100px;
   left: 1rem;
-  background-color: #172554;
-  color: #FFFFFF;
-  padding: 0.5rem 1rem;
+  background-color: #1B1411;
+  color: #FAF5F0;
+  padding: 0.5rem 1.25rem;
   font-weight: 600;
-  font-size: 0.75rem;
-  border-radius: 0.375rem;
+  font-size: 0.8125rem;
+  border-radius: 9999px;
   z-index: 9999;
   text-decoration: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   transition: top 150ms ease-in-out;
 }
 
 .skip-link:focus {
-  top: 0.75rem;
-  outline: 3px solid #F59E0B;
+  top: 1rem;
+  outline: 3px solid #33CC7A;
   outline-offset: 2px;
 }
 
-/* Accessible standard focus indicator conforming to WCAG 2.1 Focus Visible (2.4.7) */
 *:focus-visible {
-  outline: 2px solid #6941C6;
+  outline: 2px solid #33CC7A;
   outline-offset: 2px;
 }
 
@@ -176,6 +266,53 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid #6941C6;
+  outline: 2px solid #33CC7A;
   outline-offset: 2px;
+}
+
+/* ── Centralized Typography Hierarchy & Scale ───────────────────────────── */
+body {
+  font-family: var(--font-sans);
+  letter-spacing: -0.011em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-sans, .font-body {
+  font-family: var(--font-sans);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+  font-feature-settings: "zero" 1;
+}
+
+/* Headings with calibrated Space Grotesk metrics */
+h1, .h1 {
+  font-family: var(--font-display);
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+}
+
+h2, .h2 {
+  font-family: var(--font-display);
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+h3, .h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+/* Technical Identifiers, Hashes, Rule Codes & PDF Spans */
+.technical-id, .hash-code, code, kbd, samp {
+  font-family: var(--font-mono);
+  letter-spacing: -0.015em;
+  font-feature-settings: "zero" 1;
 }

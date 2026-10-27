@@ -13,6 +13,9 @@ from app.models.report import ScrutinyReport
 from app.models.registry import RegistryRecord, RegistryVerificationRun, RegistryVerificationResult
 from app.models.versioning import ApplicationVersion, DocumentRevision
 from app.models.integration import ExternalPortalConfig, ExternalPortalSyncLog
+from app.models.scrutiny_job import ScrutinyJob
+from app.models.integration_client import IntegrationClient
+from app.models.integration_job import IntegrationScrutinyJob
 
 __all__ = [
     "Base",
@@ -38,5 +41,8 @@ __all__ = [
     "DocumentRevision",
     "ExternalPortalConfig",
     "ExternalPortalSyncLog",
+    "ScrutinyJob",
+    "IntegrationClient",
+    "IntegrationScrutinyJob",
 ]
 

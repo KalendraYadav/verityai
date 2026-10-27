@@ -4,18 +4,22 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.models.user import User
+from app.models.application import Application
+from app.core.exceptions import NotFoundException, ForbiddenException
 from app.schemas.common import DataResponse, PaginatedResponse, MetaPagination
 from app.schemas.workflow import (
     WorkflowStatusResponse,
     ApplicationReadinessResponse,
     WorkflowTransitionRequest,
     ScrutinyQueueItem,
+    ApplicationChecklistResponse,
 )
 from app.api.deps import get_current_user, get_optional_current_user, require_roles
 from app.services.workflow import (
     start_or_resume_workflow,
     get_workflow_status,
     get_application_readiness,
+    evaluate_conditional_checklist,
     transition_application_state,
     list_scrutiny_queue,
 )
@@ -31,13 +35,12 @@ router = APIRouter()
 def trigger_workflow_start(
     application_id: str,
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_optional_current_user),
+    current_user: User = Depends(require_roles("REVIEWER", "ADMIN")),
 ):
     """Trigger or resume complete scrutiny pipeline: document checking, validation engine,
     and AI-assisted cross-document anomaly detection.
     """
-    actor_id = current_user.id if current_user else None
-    result = start_or_resume_workflow(db=db, application_id=application_id, actor_id=actor_id)
+    result = start_or_resume_workflow(db=db, application_id=application_id, actor_id=current_user.id)
     return DataResponse(data=result)
 
 
@@ -49,8 +52,19 @@ def trigger_workflow_start(
 def retrieve_workflow_status(
     application_id: str,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Returns structured stage status across documents, extraction, validation, anomalies, and review."""
+    app_obj = db.get(Application, application_id)
+    if not app_obj:
+        raise NotFoundException("APPLICATION_NOT_FOUND", f"Application '{application_id}' not found.")
+
+    if current_user.role == "INSTITUTION_USER":
+        if app_obj.institution_id != current_user.institution_id:
+            raise ForbiddenException("FORBIDDEN", "Access to application workflow from another institution is denied.")
+    elif current_user.role not in ("ADMIN", "REVIEWER"):
+        raise ForbiddenException("FORBIDDEN", f"Role '{current_user.role}' is not authorized to access application workflow.")
+
     result = get_workflow_status(db=db, application_id=application_id)
     return DataResponse(data=result)
 
@@ -63,11 +77,48 @@ def retrieve_workflow_status(
 def retrieve_application_readiness(
     application_id: str,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Calculates readiness across documents, extraction, deterministic validation, and anomalies.
     Provides actionable blockers and recommended next actions without collapsing into artificial percentages.
     """
+    app_obj = db.get(Application, application_id)
+    if not app_obj:
+        raise NotFoundException("APPLICATION_NOT_FOUND", f"Application '{application_id}' not found.")
+
+    if current_user.role == "INSTITUTION_USER":
+        if app_obj.institution_id != current_user.institution_id:
+            raise ForbiddenException("FORBIDDEN", "Access to application readiness from another institution is denied.")
+    elif current_user.role not in ("ADMIN", "REVIEWER"):
+        raise ForbiddenException("FORBIDDEN", f"Role '{current_user.role}' is not authorized to access application readiness.")
+
     result = get_application_readiness(db=db, application_id=application_id)
+    return DataResponse(data=result)
+
+
+
+@router.get(
+    "/applications/{application_id}/checklist",
+    response_model=DataResponse[ApplicationChecklistResponse],
+    summary="Retrieve application conditional document requirements and checklist status",
+)
+def retrieve_application_checklist(
+    application_id: str,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_current_user),
+):
+    """Evaluates dynamic conditional document checklist based on application category,
+    declared property/land ownership, building age, intake increase, and APH 2024-27 norms.
+    """
+    app_obj = db.get(Application, application_id)
+    if not app_obj:
+        raise NotFoundException("APPLICATION_NOT_FOUND", f"Application '{application_id}' not found.")
+
+    if current_user and current_user.role == "INSTITUTION_USER":
+        if app_obj.institution_id != current_user.institution_id:
+            raise ForbiddenException("FORBIDDEN", "Access to application checklist from another institution is denied.")
+
+    result = evaluate_conditional_checklist(db=db, application_id=application_id)
     return DataResponse(data=result)
 
 
@@ -80,17 +131,16 @@ def execute_lifecycle_transition(
     application_id: str,
     payload: WorkflowTransitionRequest,
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_optional_current_user),
+    current_user: User = Depends(require_roles("REVIEWER", "ADMIN")),
 ):
     """Enforces state machine rules and transitions application to target state:
     DRAFT -> SUBMITTED -> UNDER_SCRUTINY -> (ACTION_REQUIRED | SCRUTINY_COMPLETED).
     """
-    actor_id = current_user.id if current_user else None
     transition_application_state(
         db=db,
         application_id=application_id,
         target_status=payload.target_status,
-        actor_id=actor_id,
+        actor_id=current_user.id,
         reason=payload.reason,
         reviewer_notes=payload.reviewer_notes,
     )
@@ -109,6 +159,7 @@ def get_scrutiny_queue(
     readiness_state: Optional[str] = Query(None, description="Filter by readiness state"),
     lifecycle_status: Optional[str] = Query(None, description="Filter by lifecycle status"),
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("REVIEWER", "ADMIN")),
 ):
     """Returns prioritized queue of applications awaiting or undergoing official scrutiny."""
     offset = (page - 1) * page_size

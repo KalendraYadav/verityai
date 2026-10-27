@@ -24,6 +24,9 @@ class VerityAPIException(HTTPException):
             headers=headers,
         )
 
+    def to_dict(self) -> dict:
+        return self.detail if isinstance(self.detail, dict) else {"code": self.code, "message": self.message, "details": []}
+
 
 class NotFoundException(VerityAPIException):
     def __init__(self, code: str, message: str):
@@ -33,6 +36,11 @@ class NotFoundException(VerityAPIException):
 class BadRequestException(VerityAPIException):
     def __init__(self, code: str, message: str):
         super().__init__(status_code=status.HTTP_400_BAD_REQUEST, code=code, message=message)
+
+
+class ForbiddenException(VerityAPIException):
+    def __init__(self, code: str = "FORBIDDEN", message: str = "Access forbidden."):
+        super().__init__(status_code=status.HTTP_403_FORBIDDEN, code=code, message=message)
 
 
 class ValidationException(VerityAPIException):

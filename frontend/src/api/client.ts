@@ -201,6 +201,53 @@ export async function fetchApplicationDetail(applicationId: string): Promise<App
   return res.data;
 }
 
+export interface UpdateApplicationPayload {
+  category_code?: string;
+  academic_year?: string;
+  declared_data?: Record<string, any>;
+}
+
+export async function updateApplication(
+  applicationId: string,
+  payload: UpdateApplicationPayload
+): Promise<ApplicationDetailResponse> {
+  const response = await fetch(`/api/v1/applications/${applicationId}`, {
+    method: 'PATCH',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to update application (${response.status})`);
+  }
+
+  const res = await response.json();
+  return res.data;
+}
+
+export async function submitApplication(
+  applicationId: string
+): Promise<ApplicationDetailResponse> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/submit`, {
+    method: 'POST',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    const error: any = new Error(errData?.error?.message || `Failed to submit application (${response.status})`);
+    error.code = errData?.error?.code;
+    error.details = errData?.error?.details;
+    throw error;
+  }
+
+  const res = await response.json();
+  return res.data;
+}
+
 export async function fetchApplicationAudit(applicationId: string): Promise<AuditEventItem[]> {
   const response = await fetch(`/api/v1/applications/${applicationId}/audit`, {
     method: 'GET',
@@ -1053,6 +1100,33 @@ export interface ApplicationReadinessData {
   };
   blockers: string[];
   recommended_action: string;
+  checklist?: ApplicationChecklistData;
+}
+
+export interface ChecklistItemData {
+  document_code: string;
+  title: string;
+  status: string; // REQUIRED_MISSING, REQUIRED_UPLOADED, CONDITIONAL_NEEDS_REVIEW, NOT_APPLICABLE, PENDING_VERIFICATION, NEEDS_HUMAN_REVIEW
+  mandatory_or_conditional: string;
+  condition_rationale: string;
+  activating_condition?: string | null;
+  source_clause: string;
+  pdf_page: number;
+  is_present: boolean;
+  uploaded_document_id?: string | null;
+  uploaded_document_name?: string | null;
+  human_review_required: boolean;
+}
+
+export interface ApplicationChecklistData {
+  application_id: string;
+  category_code: string;
+  category_name: string;
+  total_required: number;
+  total_present: number;
+  total_conditional: number;
+  total_not_applicable: number;
+  items: ChecklistItemData[];
 }
 
 export interface ScrutinyQueueItemData {
@@ -1060,6 +1134,7 @@ export interface ScrutinyQueueItemData {
   application_reference: string;
   institution_id: string;
   institution_name: string;
+  institution_identifier?: string | null;
   category_code: string;
   academic_year?: string | null;
   lifecycle_status: string;
@@ -1108,6 +1183,22 @@ export async function fetchApplicationReadiness(applicationId: string): Promise<
   if (!response.ok) {
     const errData = await response.json().catch(() => null);
     throw new Error(errData?.error?.message || `Failed to fetch application readiness (${response.status})`);
+  }
+
+  const resJson = await response.json();
+  return resJson.data;
+}
+
+export async function fetchApplicationChecklist(applicationId: string): Promise<ApplicationChecklistData> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/checklist`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error(errData?.error?.message || `Failed to fetch application checklist (${response.status})`);
   }
 
   const resJson = await response.json();
@@ -1940,3 +2031,259 @@ export async function fetchPortalSyncHistory(limit = 50): Promise<ExternalPortal
   }
   return response.json();
 }
+
+// Phase 4: Persistent Scrutiny Job Types and Client APIs
+export interface ScrutinyJobResponse {
+  id: string;
+  application_id: string;
+  job_type: string;
+  status: 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | string;
+  triggered_by: string;
+  started_at?: string | null;
+  completed_at?: string | null;
+  duration_ms?: number | null;
+  retry_count: number;
+  max_retries: number;
+  error_code?: string | null;
+  safe_error_summary?: string | null;
+  stage_details?: Record<string, any>;
+  results_summary?: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ScrutinyJobListItem {
+  id: string;
+  application_id: string;
+  job_type: string;
+  status: 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | string;
+  triggered_by: string;
+  started_at?: string | null;
+  completed_at?: string | null;
+  duration_ms?: number | null;
+  retry_count: number;
+  created_at: string;
+}
+
+export async function triggerApplicationScrutinyJob(
+  applicationId: string,
+  payload?: { job_type?: string },
+  runAsync = true
+): Promise<ScrutinyJobResponse> {
+  const query = runAsync ? '?run_async=true' : '';
+  const response = await fetch(`/api/v1/applications/${applicationId}/scrutiny-jobs${query}`, {
+    method: 'POST',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+    body: JSON.stringify(payload || { job_type: 'FULL_SCRUTINY' }),
+  });
+
+  const resJson = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = resJson?.error?.message || 'Failed to trigger scrutiny job';
+    const code = resJson?.error?.code;
+    const error = new Error(code ? `[${code}] ${message}` : message);
+    (error as any).code = code;
+    throw error;
+  }
+
+  return resJson.data;
+}
+
+export async function fetchScrutinyJob(jobId: string): Promise<ScrutinyJobResponse> {
+  const response = await fetch(`/api/v1/scrutiny-jobs/${jobId}`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+
+  const resJson = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = resJson?.error?.message || 'Failed to fetch scrutiny job status';
+    const code = resJson?.error?.code;
+    const error = new Error(code ? `[${code}] ${message}` : message);
+    (error as any).code = code;
+    throw error;
+  }
+
+  return resJson.data;
+}
+
+export async function fetchApplicationScrutinyJobs(applicationId: string): Promise<ScrutinyJobListItem[]> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/scrutiny-jobs`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+
+  const resJson = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = resJson?.error?.message || 'Failed to fetch scrutiny jobs';
+    const code = resJson?.error?.code;
+    const error = new Error(code ? `[${code}] ${message}` : message);
+    (error as any).code = code;
+    throw error;
+  }
+
+  return resJson.data || [];
+}
+
+export async function retryScrutinyJob(jobId: string, runAsync = true): Promise<ScrutinyJobResponse> {
+  const query = runAsync ? '?run_async=true' : '';
+  const response = await fetch(`/api/v1/scrutiny-jobs/${jobId}/retry${query}`, {
+    method: 'POST',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+
+  const resJson = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = resJson?.error?.message || 'Failed to retry scrutiny job';
+    const code = resJson?.error?.code;
+    const error = new Error(code ? `[${code}] ${message}` : message);
+    (error as any).code = code;
+    throw error;
+  }
+
+  return resJson.data;
+}
+
+// ─── Independent VerityAI Gateway Client APIs ─────────────────────────────────
+
+export interface IntegrationClientItem {
+  client_id: string;
+  client_name: string;
+  description?: string | null;
+  secret_prefix: string;
+  scopes: string[];
+  is_active: boolean;
+  created_at: string;
+  last_used_at?: string | null;
+  revoked_at?: string | null;
+}
+
+export interface IntegrationClientCreated {
+  client_id: string;
+  client_name: string;
+  description?: string | null;
+  client_secret: string;
+  secret_prefix: string;
+  scopes: string[];
+  created_at: string;
+  warning: string;
+}
+
+export interface IntegrationGatewayHealth {
+  status: string;
+  platform: string;
+  version: string;
+  capabilities: string[];
+  ocr_engine: string;
+  ai_provider_mode: string;
+  timestamp: string;
+}
+
+export async function fetchIntegrationGatewayHealth(): Promise<IntegrationGatewayHealth> {
+  const response = await fetch('/api/v1/integrations/health', {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+  });
+  if (!response.ok) {
+    throw new Error(`Integration gateway health check failed (${response.status})`);
+  }
+  const res = await response.json();
+  return res.data;
+}
+
+export async function fetchIntegrationClients(): Promise<IntegrationClientItem[]> {
+  const response = await fetch('/api/v1/integrations/clients', {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to fetch clients (${response.status})`);
+  }
+  const res = await response.json();
+  return res.data || [];
+}
+
+export async function createIntegrationClient(
+  clientName: string,
+  description?: string,
+  scopes?: string[]
+): Promise<IntegrationClientCreated> {
+  const response = await fetch('/api/v1/integrations/clients', {
+    method: 'POST',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+    body: JSON.stringify({
+      client_name: clientName,
+      description,
+      scopes: scopes || ['scrutiny:create', 'scrutiny:read', 'documents:upload'],
+    }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to create client (${response.status})`);
+  }
+  const res = await response.json();
+  return res.data;
+}
+
+export async function rotateIntegrationClientSecret(clientId: string): Promise<IntegrationClientCreated> {
+  const response = await fetch(`/api/v1/integrations/clients/${clientId}/rotate`, {
+    method: 'POST',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to rotate secret (${response.status})`);
+  }
+  const res = await response.json();
+  return res.data;
+}
+
+export async function revokeIntegrationClient(clientId: string): Promise<void> {
+  const response = await fetch(`/api/v1/integrations/clients/${clientId}`, {
+    method: 'DELETE',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to revoke client (${response.status})`);
+  }
+}
+
+export async function runVerityScrutinyForApplication(applicationId: string): Promise<Record<string, any>> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/run-verity-scrutiny`, {
+    method: 'POST',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.error?.message || `Failed to run VerityAI scrutiny (${response.status})`);
+  }
+  const res = await response.json();
+  return res.data;
+}
+
+export async function fetchApplicationVerityScrutinyStatus(
+  applicationId: string
+): Promise<Record<string, any> | null> {
+  const response = await fetch(`/api/v1/applications/${applicationId}/verity-scrutiny-status`, {
+    method: 'GET',
+    headers: COMMON_HEADERS,
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    return null;
+  }
+  const res = await response.json();
+  return res.data || null;
+}
+

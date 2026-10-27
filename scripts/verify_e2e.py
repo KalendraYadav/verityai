@@ -30,6 +30,7 @@ from app.services.integration import validate_outbound_url
 from app.core.exceptions import ValidationException
 
 client = TestClient(app)
+client.headers["X-Requested-With"] = "VerityAI"
 
 
 def run_e2e_verification() -> bool:

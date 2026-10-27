@@ -11,8 +11,11 @@ from app.services.registry import normalize_institution_name, import_registry_da
 from app.core.security import hash_password
 
 
+from app.core.security import hash_password, create_access_token
+
+
 @pytest.fixture
-def registry_user(db_session: Session):
+def registry_user(client: TestClient, db_session: Session):
     user = db_session.get(User, "usr-reg-test")
     if not user:
         user = User(
@@ -25,6 +28,10 @@ def registry_user(db_session: Session):
         )
         db_session.add(user)
         db_session.commit()
+
+    token = create_access_token(user.id, user.role, user.email)
+    client.cookies.set("access_token", token)
+    client.headers["X-Requested-With"] = "VerityAI"
     return user
 
 
@@ -62,7 +69,7 @@ def test_registry_provider_listing(client: TestClient):
     assert official["status"] == "NOT_CONFIGURED"
 
 
-def test_registry_import_and_deduplication(client: TestClient, db_session: Session):
+def test_registry_import_and_deduplication(client: TestClient, db_session: Session, registry_user: User):
     payload = {
         "provider_code": "SYNTHETIC_AISHE",
         "source_dataset": "AISHE_MOCK_2026",
@@ -101,7 +108,7 @@ def test_registry_import_and_deduplication(client: TestClient, db_session: Sessi
     assert data2["updated_count"] == 2
 
 
-def test_registry_import_duplicate_in_batch_rejected(client: TestClient):
+def test_registry_import_duplicate_in_batch_rejected(client: TestClient, registry_user: User):
     payload = {
         "provider_code": "SYNTHETIC_AISHE",
         "records": [

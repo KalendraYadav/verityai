@@ -1,0 +1,275 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AICTE_Document_Field_Schemas",
+  "description": "Standardized machine-readable field extraction schemas for AICTE approval documents per Approval Process Handbook 2024-27",
+  "version": "1.0.0",
+  "definitions": {
+    "DOC_LAND_DEED": {
+      "type": "object",
+      "required": [
+        "deed_type",
+        "registration_number",
+        "registration_date",
+        "sub_registrar_office",
+        "lessor_name",
+        "lessee_name",
+        "total_area_acres",
+        "lease_period_years",
+        "is_contiguous"
+      ],
+      "properties": {
+        "deed_type": {
+          "type": "string",
+          "enum": ["SALE_DEED", "SETTLEMENT_DEED", "GIFT_DEED", "GOVERNMENT_LEASE", "PRIVATE_LEASE"]
+        },
+        "registration_number": {
+          "type": "string",
+          "pattern": "^[A-Z0-9\\/\\-]{3,30}$"
+        },
+        "registration_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "sub_registrar_office": {
+          "type": "string"
+        },
+        "lessor_name": {
+          "type": "string"
+        },
+        "lessee_name": {
+          "type": "string"
+        },
+        "total_area_acres": {
+          "type": "number",
+          "minimum": 0.5
+        },
+        "survey_numbers": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "plot_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "is_contiguous": {
+          "type": "boolean"
+        },
+        "lease_period_years": {
+          "type": "integer",
+          "minimum": 30
+        },
+        "lease_expiry_date": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "DOC_BUILDING_PLAN": {
+      "type": "object",
+      "required": [
+        "architect_name",
+        "architect_coa_registration_no",
+        "municipal_authority_name",
+        "plan_approval_number",
+        "plan_approval_date",
+        "total_built_up_area_sqm",
+        "instructional_area_sqm",
+        "administrative_area_sqm",
+        "amenities_area_sqm",
+        "circulation_area_sqm"
+      ],
+      "properties": {
+        "architect_name": {
+          "type": "string"
+        },
+        "architect_coa_registration_no": {
+          "type": "string",
+          "pattern": "^CA\\/[0-9]{4}\\/[0-9]{5}$"
+        },
+        "municipal_authority_name": {
+          "type": "string"
+        },
+        "plan_approval_number": {
+          "type": "string"
+        },
+        "plan_approval_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "total_built_up_area_sqm": {
+          "type": "number",
+          "minimum": 1000.0
+        },
+        "instructional_area_sqm": {
+          "type": "number",
+          "minimum": 500.0
+        },
+        "administrative_area_sqm": {
+          "type": "number",
+          "minimum": 750.0
+        },
+        "amenities_area_sqm": {
+          "type": "number",
+          "minimum": 500.0
+        },
+        "circulation_area_sqm": {
+          "type": "number"
+        },
+        "classroom_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "laboratory_count": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "DOC_FIRE_SAFETY": {
+      "type": "object",
+      "required": [
+        "fire_officer_designation",
+        "station_jurisdiction",
+        "noc_number",
+        "issue_date",
+        "validity_expiry_date",
+        "safety_status"
+      ],
+      "properties": {
+        "fire_officer_designation": {
+          "type": "string"
+        },
+        "station_jurisdiction": {
+          "type": "string"
+        },
+        "noc_number": {
+          "type": "string"
+        },
+        "issue_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "validity_expiry_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "building_height_meters": {
+          "type": "number"
+        },
+        "safety_status": {
+          "type": "string",
+          "enum": ["SATISFACTORY", "COMPLIANT", "CONDITIONAL_APPROVAL"]
+        }
+      }
+    },
+    "DOC_AFFIDAVIT_2": {
+      "type": "object",
+      "required": [
+        "deponent_name",
+        "deponent_designation",
+        "trust_name",
+        "stamp_paper_serial_number",
+        "stamp_value_rs",
+        "magistrate_or_notary_name",
+        "attestation_date",
+        "declared_land_acreage",
+        "anti_ragging_committee_constituted",
+        "internal_committee_constituted",
+        "sgrc_committee_constituted"
+      ],
+      "properties": {
+        "deponent_name": {
+          "type": "string"
+        },
+        "deponent_designation": {
+          "type": "string",
+          "enum": ["CHAIRMAN", "SECRETARY", "TRUSTEE", "DIRECTOR", "PRINCIPAL"]
+        },
+        "trust_name": {
+          "type": "string"
+        },
+        "stamp_paper_serial_number": {
+          "type": "string"
+        },
+        "stamp_value_rs": {
+          "type": "number",
+          "minimum": 100.0
+        },
+        "magistrate_or_notary_name": {
+          "type": "string"
+        },
+        "notary_registration_number": {
+          "type": "string"
+        },
+        "attestation_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "declared_land_acreage": {
+          "type": "number",
+          "minimum": 1.0
+        },
+        "anti_ragging_committee_constituted": {
+          "type": "boolean"
+        },
+        "internal_committee_constituted": {
+          "type": "boolean"
+        },
+        "sgrc_committee_constituted": {
+          "type": "boolean"
+        },
+        "sc_st_committee_constituted": {
+          "type": "boolean"
+        }
+      }
+    },
+    "DOC_CERTIFICATE_3": {
+      "type": "object",
+      "required": [
+        "bank_name",
+        "branch_name",
+        "branch_ifsc_code",
+        "manager_name",
+        "account_number",
+        "account_balance_rs",
+        "total_fdr_amount_rs",
+        "lien_status"
+      ],
+      "properties": {
+        "bank_name": {
+          "type": "string"
+        },
+        "branch_name": {
+          "type": "string"
+        },
+        "branch_ifsc_code": {
+          "type": "string",
+          "pattern": "^[A-Z]{4}0[A-Z0-9]{6}$"
+        },
+        "manager_name": {
+          "type": "string"
+        },
+        "account_number": {
+          "type": "string"
+        },
+        "account_balance_rs": {
+          "type": "number",
+          "minimum": 0.0
+        },
+        "fdr_numbers": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "total_fdr_amount_rs": {
+          "type": "number",
+          "minimum": 5000000.0
+        },
+        "lien_status": {
+          "type": "string",
+          "enum": ["FREE_OF_LIEN", "NO_MORTGAGE", "LIEN_CONFIRMED"]
+        }
+      }
+    }
+  }
+}

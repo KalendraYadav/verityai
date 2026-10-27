@@ -34,8 +34,27 @@ def _setup_fixtures(db_session):
     return institution, category
 
 
+from app.models.user import User
+from app.core.security import create_access_token
+
+
 def test_create_and_list_institution(client, db_session):
     """Test creating an institution and listing institutions."""
+    admin = User(
+        id="usr-inst-adm",
+        email="inst.admin@verityai.gov.in",
+        display_name="Admin User",
+        password_hash="mocked",
+        role="ADMIN",
+        is_active=True,
+    )
+    db_session.add(admin)
+    db_session.commit()
+
+    token = create_access_token(admin.id, admin.role, admin.email)
+    client.cookies.set("access_token", token)
+    client.headers["X-Requested-With"] = "VerityAI"
+
     resp = client.post(
         "/api/v1/institutions",
         json={
@@ -229,6 +248,21 @@ def test_get_application_audit_events(client, db_session):
 
 def test_list_global_audit_events(client, db_session):
     """Test retrieving global audit event timeline."""
+    admin = User(
+        id="usr-audit-adm",
+        email="audit.admin@verityai.gov.in",
+        display_name="Audit Administrator",
+        password_hash="mocked",
+        role="ADMIN",
+        is_active=True,
+    )
+    db_session.add(admin)
+    db_session.commit()
+
+    token = create_access_token(admin.id, admin.role, admin.email)
+    client.cookies.set("access_token", token)
+    client.headers["X-Requested-With"] = "VerityAI"
+
     inst, cat = _setup_fixtures(db_session)
     client.post(
         "/api/v1/applications",

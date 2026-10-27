@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ArrowLeft,
   Building2,
@@ -30,6 +30,7 @@ import {
   Lock,
   ShieldAlert,
   Info,
+  Cpu,
 } from 'lucide-react';
 import {
   fetchApplicationDetail,
@@ -44,7 +45,6 @@ import {
   reviewFinding,
   fetchWorkflowStatus,
   fetchApplicationReadiness,
-  startApplicationWorkflow,
   transitionWorkflowState,
   fetchReviewSummary,
   generateReport,
@@ -82,8 +82,19 @@ import {
   type ExternalPortalConfigItem,
   type ExternalPortalSyncLogItem,
   type ExternalVerificationData,
+  triggerApplicationScrutinyJob,
+  fetchScrutinyJob,
+  fetchApplicationScrutinyJobs,
+  retryScrutinyJob,
+  type ScrutinyJobResponse,
+  type ScrutinyJobListItem,
 } from '../../api/client';
 import { DocumentUploadModal } from '../documents/DocumentUploadModal';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { StatusBadge } from '@/components/common/StatusBadge';
 
 
 interface Props {
@@ -128,6 +139,15 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
   const [transitioning, setTransitioning] = useState(false);
   const [workflowMessage, setWorkflowMessage] = useState<string | null>(null);
 
+  // Phase 4: Persistent Scrutiny Job Integration & Polling
+  const [activeScrutinyJob, setActiveScrutinyJob] = useState<ScrutinyJobResponse | null>(null);
+  const [_scrutinyHistory, setScrutinyHistory] = useState<ScrutinyJobListItem[]>([]);
+  const [jobPolling, setJobPolling] = useState(false);
+  const [jobError, setJobError] = useState<string | null>(null);
+  const [retryingJob, setRetryingJob] = useState(false);
+  const pollingTimerRef = useRef<any>(null);
+  const pollingFailuresRef = useRef<number>(0);
+
   // Phase 9: Explainable AI, Reviewer Decision Support & Reports
   const [reviewSummary, setReviewSummary] = useState<ReviewSummaryResponse | null>(null);
   const [reportsList, setReportsList] = useState<ScrutinyReportResponse[]>([]);
@@ -167,11 +187,12 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
   const [probingPortalId, setProbingPortalId] = useState<string | null>(null);
   const [portalFeedback, setPortalFeedback] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
 
-  async function loadWorkspaceData() {
-    setLoading(true);
+  async function loadWorkspaceData(showLoading = true) {
+    if (typeof showLoading !== 'boolean') showLoading = true;
+    if (showLoading) setLoading(true);
     setError(null);
     try {
-      const [appData, docsData, auditData, catsData, valData, analysisRes, wfData, readyData, revSum, repList, regRuns, regProviders, versData, freshData, portalsData, logsData] = await Promise.all([
+      const [appData, docsData, auditData, catsData, valData, analysisRes, wfData, readyData, revSum, repList, regRuns, regProviders, versData, freshData, portalsData, logsData, jobsData] = await Promise.all([
         fetchApplicationDetail(applicationId),
         fetchApplicationDocuments(applicationId, 1, 100),
         fetchApplicationAudit(applicationId),
@@ -188,6 +209,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
         fetchApplicationFreshness(applicationId).catch(() => null),
         fetchRegulatoryPortals().catch(() => []),
         fetchPortalSyncHistory(10).catch(() => []),
+        fetchApplicationScrutinyJobs(applicationId).catch(() => []),
       ]);
       setApplication(appData);
       setDocuments(docsData.data);
@@ -236,12 +258,24 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
       if (logsData) {
         setPortalSyncLogs(logsData);
       }
+      if (jobsData && jobsData.length > 0) {
+        setScrutinyHistory(jobsData);
+        const latestJob = jobsData[0];
+        fetchScrutinyJob(latestJob.id)
+          .then((job) => {
+            setActiveScrutinyJob(job);
+            if (job.status === 'QUEUED' || job.status === 'PROCESSING') {
+              startPollingJob(job.id);
+            }
+          })
+          .catch((e) => console.warn('Failed to load latest scrutiny job details', e));
+      }
 
     } catch (err: any) {
       console.error('Failed to load application detail workspace', err);
       setError(err.message || 'Failed to load application workspace');
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }
 
@@ -369,29 +403,91 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
     }
   }
 
-  async function handleRunFullWorkflow() {
+  function stopPolling() {
+    if (pollingTimerRef.current) {
+      clearInterval(pollingTimerRef.current);
+      pollingTimerRef.current = null;
+    }
+    setJobPolling(false);
+    pollingFailuresRef.current = 0;
+  }
+
+  function startPollingJob(jobId: string) {
+    stopPolling();
+    setJobPolling(true);
+    pollingFailuresRef.current = 0;
+
+    pollingTimerRef.current = setInterval(async () => {
+      try {
+        const latestJob = await fetchScrutinyJob(jobId);
+        setActiveScrutinyJob(latestJob);
+        pollingFailuresRef.current = 0;
+
+        if (latestJob.status === 'COMPLETED') {
+          stopPolling();
+          setWorkflowMessage(`Scrutiny job ${latestJob.id} completed successfully in ${latestJob.duration_ms || 0}ms.`);
+          await loadWorkspaceData(false);
+        } else if (latestJob.status === 'FAILED') {
+          stopPolling();
+          setJobError(latestJob.safe_error_summary || 'Scrutiny pipeline execution failed.');
+          await loadWorkspaceData(false);
+        }
+      } catch (err: any) {
+        pollingFailuresRef.current += 1;
+        console.warn(`Polling error for scrutiny job ${jobId} (attempt ${pollingFailuresRef.current}):`, err);
+        if (pollingFailuresRef.current >= 5) {
+          stopPolling();
+          setJobError('Network connection issue while polling scrutiny job status. Please refresh.');
+        }
+      }
+    }, 2000);
+  }
+
+  async function handleTriggerScrutinyJob() {
     setRunningWorkflow(true);
+    setJobError(null);
     setWorkflowMessage(null);
     try {
-      const updatedWf = await startApplicationWorkflow(applicationId);
-      setWorkflowStatus(updatedWf);
-      // Reload validation and analysis to reflect new results
-      const [valData, analysisRes, readyData, appData] = await Promise.all([
-        fetchApplicationValidationSummary(applicationId).catch(() => null),
-        fetchApplicationAnalysis(applicationId).catch(() => null),
-        fetchApplicationReadiness(applicationId).catch(() => null),
-        fetchApplicationDetail(applicationId),
-      ]);
-      if (valData) setValidationSummary(valData);
-      if (analysisRes) setAnalysisData(analysisRes);
-      if (readyData) setReadiness(readyData);
-      setApplication(appData);
-      setWorkflowMessage('Full scrutiny pipeline executed successfully.');
+      const job = await triggerApplicationScrutinyJob(applicationId, { job_type: 'FULL_SCRUTINY' }, true);
+      setActiveScrutinyJob(job);
+      if (job.status === 'COMPLETED') {
+        setWorkflowMessage(`Scrutiny completed successfully (${job.duration_ms || 0}ms).`);
+        await loadWorkspaceData(false);
+      } else if (job.status === 'FAILED') {
+        setJobError(job.safe_error_summary || 'Scrutiny job execution failed.');
+        await loadWorkspaceData(false);
+      } else {
+        startPollingJob(job.id);
+      }
     } catch (err: any) {
-      console.error('Workflow execution failed', err);
-      setWorkflowMessage(err.message || 'Failed to run full workflow');
+      console.error('Failed to trigger scrutiny job', err);
+      setJobError(err.message || 'Failed to trigger scrutiny job');
     } finally {
       setRunningWorkflow(false);
+    }
+  }
+
+  async function handleRetryScrutinyJob(jobId: string) {
+    setRetryingJob(true);
+    setJobError(null);
+    setWorkflowMessage(null);
+    try {
+      const retried = await retryScrutinyJob(jobId, true);
+      setActiveScrutinyJob(retried);
+      if (retried.status === 'COMPLETED') {
+        setWorkflowMessage(`Scrutiny retry completed successfully (${retried.duration_ms || 0}ms).`);
+        await loadWorkspaceData(false);
+      } else if (retried.status === 'FAILED') {
+        setJobError(retried.safe_error_summary || 'Scrutiny retry failed.');
+        await loadWorkspaceData(false);
+      } else {
+        startPollingJob(retried.id);
+      }
+    } catch (err: any) {
+      console.error('Failed to retry scrutiny job', err);
+      setJobError(err.message || 'Failed to retry scrutiny job');
+    } finally {
+      setRetryingJob(false);
     }
   }
 
@@ -494,6 +590,9 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
 
   useEffect(() => {
     loadWorkspaceData();
+    return () => {
+      stopPolling();
+    };
   }, [applicationId]);
 
   const currentCategory = categories.find((c) => c.code === application?.category_code);
@@ -520,44 +619,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
     }
   }
 
-  const renderStatusBadge = (status: string) => {
-    switch (status) {
-      case 'DRAFT':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#FAF8FF] text-[#7450D8] border border-[#DCD0F7]">
-            <Clock className="w-3.5 h-3.5" />
-            DRAFT
-          </span>
-        );
-      case 'SUBMITTED':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-100 text-sky-800 border border-sky-300">
-            <CheckCircle2 className="w-3.5 h-3.5 text-sky-600" />
-            SUBMITTED FOR SCRUTINY
-          </span>
-        );
-      case 'UNDER_REVIEW':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#F3EEFC] text-[#5633B8] border border-[#CBB3E8]">
-            <Layers className="w-3.5 h-3.5" />
-            UNDER SCRUTINY
-          </span>
-        );
-      case 'FLAGGED':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#FFF0EF] text-[#B42318] border border-[#FECDCA]">
-            <AlertTriangle className="w-3.5 h-3.5 text-[#F04438]" />
-            NEEDS ATTENTION
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#FAF9FC] text-[#5F6485] border border-[#E9E6F2]">
-            {status}
-          </span>
-        );
-    }
-  };
+
 
   const renderDocumentStatusBadge = (docStatus: string) => {
     switch (docStatus) {
@@ -650,10 +712,11 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
     <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6">
       
       {/* 1. Top Navigation Bar */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <button
+          type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-[#E9E6F2] text-xs font-bold text-[#5F6485] hover:text-[#171B45] hover:border-[#DCD0F7] transition-all shadow-2xs cursor-pointer"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-[#66574F] hover:text-[#1B1411] bg-[#EEE5DC]/70 hover:bg-[#EEE5DC] px-4 py-2 rounded-full transition-colors cursor-pointer self-start"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Applications</span>
@@ -661,48 +724,65 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
 
         <div className="flex items-center gap-2 flex-wrap">
           <button
-            onClick={loadWorkspaceData}
-            className="p-2.5 rounded-xl bg-white border border-[#E9E6F2] text-[#5F6485] hover:text-[#7450D8] shadow-2xs transition-all cursor-pointer"
+            type="button"
+            onClick={() => loadWorkspaceData(true)}
+            className="h-9 w-9 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#66574F] hover:text-[#1B1411] flex items-center justify-center transition-colors cursor-pointer"
             title="Refresh application workspace"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className="w-3.5 h-3.5" />
           </button>
+
           <button
-            onClick={handleRunFullWorkflow}
-            disabled={runningWorkflow}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#7450D8] hover:bg-[#5D3FBD] disabled:opacity-60 text-white text-xs sm:text-sm font-semibold transition-all shadow-xs cursor-pointer"
-            title="Execute integrated end-to-end scrutiny pipeline (documents -> validation -> anomaly analysis)"
+            type="button"
+            onClick={handleTriggerScrutinyJob}
+            disabled={runningWorkflow || jobPolling || (activeScrutinyJob?.status === 'QUEUED' || activeScrutinyJob?.status === 'PROCESSING')}
+            className="h-9 px-5 rounded-full bg-[#33CC7A] hover:bg-[#2EB86E] text-[#1B1411] font-bold text-xs inline-flex items-center gap-2 transition-all shadow-[0_2px_12px_rgba(51,204,122,0.3)] hover:shadow-[0_4px_16px_rgba(51,204,122,0.4)] cursor-pointer disabled:opacity-50"
+            title="Execute persistent scrutiny job through authoritative VerityAI scrutiny pipeline"
           >
-            <Sparkles className={`w-4 h-4 ${runningWorkflow ? 'animate-spin' : ''}`} />
-            <span>{runningWorkflow ? 'Executing Pipeline...' : 'Run Scrutiny Pipeline'}</span>
+            <Sparkles className={`w-3.5 h-3.5 ${(runningWorkflow || jobPolling) ? 'animate-spin' : ''}`} />
+            <span>
+              {jobPolling || activeScrutinyJob?.status === 'PROCESSING'
+                ? 'Scrutiny in Progress...'
+                : activeScrutinyJob?.status === 'QUEUED'
+                ? 'Job Queued...'
+                : runningWorkflow
+                ? 'Initiating...'
+                : 'Run VerityAI Scrutiny'}
+            </span>
           </button>
+
           <button
+            type="button"
             onClick={() => handleGenerateScrutinyReport('PDF')}
             disabled={generatingReport}
-            className="inline-flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white border border-[#DCD0F7] hover:bg-[#FAF8FF] disabled:opacity-60 text-[#7450D8] text-xs font-semibold transition-all shadow-xs cursor-pointer"
+            className="h-9 px-4 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#1B1411] font-semibold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
             title="Generate multi-page regulatory scrutiny dossier report"
           >
             {generatingReport ? (
-              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#1F3954]" />
             ) : (
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-3.5 h-3.5 text-[#1F3954]" />
             )}
             <span>{generatingReport ? 'Generating...' : 'Scrutiny Dossier (PDF)'}</span>
           </button>
+
           <button
+            type="button"
             onClick={handleTriggerValidation}
             disabled={validating}
-            className="inline-flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white border border-[#DCD0F7] hover:bg-[#FAF8FF] disabled:opacity-60 text-[#7450D8] text-xs font-semibold transition-all shadow-xs cursor-pointer"
+            className="h-9 px-4 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#1B1411] font-semibold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
             title="Execute deterministic compliance rules against application & documents"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${validating ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${validating ? 'animate-spin text-[#1F3954]' : ''}`} />
             <span>{validating ? 'Evaluating...' : 'Validation Rules'}</span>
           </button>
+
           <button
+            type="button"
             onClick={() => setUploadModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#F04438] hover:bg-[#E34234] text-white text-xs sm:text-sm font-semibold transition-all shadow-xs cursor-pointer"
+            className="h-9 px-4 rounded-full border border-[#E5DACF] bg-[#FAF5F0] hover:bg-[#EEE5DC] text-[#1B1411] font-semibold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer"
           >
-            <Upload className="w-4 h-4" />
+            <Upload className="w-3.5 h-3.5 text-[#1F3954]" />
             <span>Upload Document</span>
           </button>
         </div>
@@ -710,294 +790,414 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
 
       {/* Report Notification if any */}
       {reportMessage && (
-        <div className="p-3.5 rounded-2xl bg-[#ECFDF3] border border-[#A6F4C5] text-[#027A48] text-xs font-semibold flex items-center justify-between">
+        <Alert className="bg-emerald-50 text-emerald-800 border-emerald-200 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-[#027A48]" />
-            <span>{reportMessage}</span>
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <AlertDescription className="text-xs font-semibold text-emerald-800">{reportMessage}</AlertDescription>
           </div>
-          <button onClick={() => setReportMessage(null)} className="text-[#8589A6] hover:text-[#171B45] cursor-pointer">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+          <Button variant="ghost" size="icon-sm" onClick={() => setReportMessage(null)} className="h-6 w-6 text-emerald-700 hover:text-emerald-950">
+            <X className="w-3.5 h-3.5" />
+          </Button>
+        </Alert>
       )}
       {reportError && (
-        <div className="p-3.5 rounded-2xl bg-[#FEF3F2] border border-[#FECDCA] text-[#B42318] text-xs font-semibold flex items-center justify-between">
+        <Alert variant="destructive" className="py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-[#B42318]" />
-            <span>{reportError}</span>
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <AlertDescription className="text-xs font-semibold">{reportError}</AlertDescription>
           </div>
-          <button onClick={() => setReportError(null)} className="text-[#8589A6] hover:text-[#171B45] cursor-pointer">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+          <Button variant="ghost" size="icon-sm" onClick={() => setReportError(null)} className="h-6 w-6 text-destructive hover:text-destructive">
+            <X className="w-3.5 h-3.5" />
+          </Button>
+        </Alert>
       )}
 
       {/* Workflow Notification if any */}
       {workflowMessage && (
-        <div className="p-3.5 rounded-2xl bg-[#F3EEFC] border border-[#DCD0F7] text-[#7450D8] text-xs font-semibold flex items-center justify-between">
+        <Alert className="bg-primary/10 text-primary border-primary/20 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-[#7450D8]" />
-            <span>{workflowMessage}</span>
+            <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+            <AlertDescription className="text-xs font-semibold text-primary">{workflowMessage}</AlertDescription>
           </div>
-          <button onClick={() => setWorkflowMessage(null)} className="text-[#8589A6] hover:text-[#171B45] cursor-pointer">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+          <Button variant="ghost" size="icon-sm" onClick={() => setWorkflowMessage(null)} className="h-6 w-6 text-primary hover:text-primary">
+            <X className="w-3.5 h-3.5" />
+          </Button>
+        </Alert>
+      )}
+
+      {/* Persistent Scrutiny Job Status Card */}
+      {activeScrutinyJob && (
+        <Card className={`transition-all shadow-2xs border ${
+          activeScrutinyJob.status === 'COMPLETED'
+            ? 'bg-emerald-50/60 border-emerald-200'
+            : activeScrutinyJob.status === 'FAILED'
+            ? 'bg-destructive/10 border-destructive/20'
+            : activeScrutinyJob.status === 'PROCESSING'
+            ? 'bg-blue-50/60 border-blue-200'
+            : 'bg-primary/5 border-primary/20'
+        }`}>
+          <CardContent className="p-4 sm:p-5 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3 border-border">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                  <Cpu className="w-4 h-4" />
+                </span>
+                <span className="text-xs font-bold text-foreground">VerityAI Document Scrutiny</span>
+                <Badge variant="outline" className="text-[10px] font-mono">
+                  vai_client_portal_internal
+                </Badge>
+                <Badge variant="secondary" className="font-mono text-xs">
+                  {activeScrutinyJob.id}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className={`gap-1.5 font-bold text-xs ${
+                    activeScrutinyJob.status === 'COMPLETED'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : activeScrutinyJob.status === 'FAILED'
+                      ? 'bg-red-50 text-red-700 border-red-200'
+                      : activeScrutinyJob.status === 'PROCESSING'
+                      ? 'bg-blue-50 text-blue-700 border-blue-200'
+                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                  }`}
+                >
+                  {(activeScrutinyJob.status === 'PROCESSING' || activeScrutinyJob.status === 'QUEUED') && (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  )}
+                  {activeScrutinyJob.status === 'COMPLETED' && <CheckCircle2 className="w-3.5 h-3.5" />}
+                  {activeScrutinyJob.status === 'FAILED' && <AlertCircle className="w-3.5 h-3.5" />}
+                  <span>{activeScrutinyJob.status}</span>
+                </Badge>
+                {activeScrutinyJob.duration_ms !== null && activeScrutinyJob.duration_ms !== undefined && (
+                  <span className="text-[11px] font-mono text-muted-foreground bg-card px-2 py-0.5 rounded border border-border">
+                    {activeScrutinyJob.duration_ms} ms
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                {activeScrutinyJob.status === 'FAILED' && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleRetryScrutinyJob(activeScrutinyJob.id)}
+                    disabled={retryingJob || activeScrutinyJob.retry_count >= activeScrutinyJob.max_retries}
+                    className="gap-1.5 h-7 text-xs"
+                    title={activeScrutinyJob.retry_count >= activeScrutinyJob.max_retries ? "Maximum retries exceeded" : "Retry scrutiny execution"}
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${retryingJob ? 'animate-spin' : ''}`} />
+                    <span>
+                      {retryingJob ? 'Retrying...' : `Retry Scrutiny (${activeScrutinyJob.retry_count}/${activeScrutinyJob.max_retries})`}
+                    </span>
+                  </Button>
+                )}
+                {jobPolling && (
+                  <Badge variant="outline" className="text-primary bg-card gap-1 font-medium animate-pulse">
+                    <Clock className="w-3 h-3" /> Live Tracking Active...
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            {activeScrutinyJob.status === 'FAILED' && activeScrutinyJob.safe_error_summary && (
+              <div className="text-xs text-destructive bg-destructive/10 p-2.5 rounded-lg border border-destructive/20">
+                <span className="font-bold">Execution Error [{activeScrutinyJob.error_code || 'PIPELINE_ERROR'}]: </span>
+                {activeScrutinyJob.safe_error_summary}
+              </div>
+            )}
+
+            {jobError && (
+              <div className="text-xs text-destructive bg-destructive/10 p-2.5 rounded-lg border border-destructive/20">
+                {jobError}
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] text-muted-foreground">
+              <div className="bg-card p-2 rounded-lg border border-border">
+                <span className="text-muted-foreground block text-[10px] uppercase font-bold">Triggered By</span>
+                <span className="font-medium text-foreground truncate block">{activeScrutinyJob.triggered_by}</span>
+              </div>
+              <div className="bg-card p-2 rounded-lg border border-border">
+                <span className="text-muted-foreground block text-[10px] uppercase font-bold">Created At</span>
+                <span className="font-medium text-foreground">{formatDate(activeScrutinyJob.created_at)}</span>
+              </div>
+              <div className="bg-card p-2 rounded-lg border border-border">
+                <span className="text-muted-foreground block text-[10px] uppercase font-bold">Started At</span>
+                <span className="font-medium text-foreground">{activeScrutinyJob.started_at ? formatDate(activeScrutinyJob.started_at) : '—'}</span>
+              </div>
+              <div className="bg-card p-2 rounded-lg border border-border">
+                <span className="text-muted-foreground block text-[10px] uppercase font-bold">Completed At</span>
+                <span className="font-medium text-foreground">{activeScrutinyJob.completed_at ? formatDate(activeScrutinyJob.completed_at) : '—'}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* End-to-End Workflow Pipeline Stages & Reviewer Determination Controls */}
-      <div className="bg-white rounded-3xl border border-[#E9E6F2] shadow-xs p-5 space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#EEEAF5] pb-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-[#8589A6] uppercase tracking-wider">Workflow Orchestration</span>
-              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                readiness?.is_ready_for_scrutiny
-                  ? 'bg-[#ECFDF3] text-[#027A48] border border-[#A6F4C5]'
-                  : 'bg-[#FFFAEB] text-[#B54708] border border-[#FEDF89]'
-              }`}>
-                {readiness?.readiness_state || 'EVALUATING'}
-              </span>
-            </div>
-            <p className="text-xs text-[#5F6485] mt-0.5">
-              {readiness?.recommended_action || 'Execute pipeline to evaluate document completeness and scrutiny readiness.'}
-            </p>
-          </div>
-
-          {/* Reviewer Action Buttons */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {application.lifecycle_status === 'SUBMITTED' && (
-              <button
-                onClick={() => handleExecuteTransition('UNDER_SCRUTINY', 'Regulatory reviewer initiated scrutiny')}
-                disabled={transitioning}
-                className="px-3.5 py-2 rounded-xl bg-[#7450D8] hover:bg-[#5D3FBD] text-white text-xs font-semibold transition-all cursor-pointer shadow-2xs"
-              >
-                Claim & Begin Scrutiny
-              </button>
-            )}
-
-            {application.lifecycle_status === 'UNDER_SCRUTINY' && (
-              <>
-                <button
-                  onClick={() => handleExecuteTransition('ACTION_REQUIRED', 'Official clarification or document update required')}
-                  disabled={transitioning}
-                  className="px-3 py-2 rounded-xl bg-[#FFF4ED] border border-[#FDCEB9] hover:bg-[#FFE6D5] text-[#C4320A] text-xs font-semibold transition-all cursor-pointer"
+      <Card className="shadow-xs border-border">
+        <CardContent className="p-5 space-y-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-border pb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Workflow Orchestration</span>
+                <Badge
+                  variant="outline"
+                  className={`text-[10px] font-bold ${
+                    readiness?.is_ready_for_scrutiny
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                  }`}
                 >
-                  Request Information
-                </button>
-                <button
-                  onClick={() => handleExecuteTransition('SCRUTINY_COMPLETED', 'Regulatory scrutiny completed')}
-                  disabled={transitioning}
-                  className="px-3.5 py-2 rounded-xl bg-[#027A48] hover:bg-[#05603A] text-white text-xs font-semibold transition-all cursor-pointer shadow-2xs"
-                >
-                  Finalize Scrutiny Determination
-                </button>
-              </>
-            )}
-
-            {application.lifecycle_status === 'ACTION_REQUIRED' && (
-              <button
-                onClick={() => handleExecuteTransition('SUBMITTED', 'Institutional applicant resubmitted dossier')}
-                disabled={transitioning}
-                className="px-3.5 py-2 rounded-xl bg-[#7450D8] hover:bg-[#5D3FBD] text-white text-xs font-semibold transition-all cursor-pointer"
-              >
-                Mark Resubmitted
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* 5-Stage Stepper Progression */}
-        <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 pt-1 text-xs">
-          {[
-            {
-              step: '1. Documents',
-              desc: `${documents.length} Uploaded`,
-              status: workflowStatus?.stages?.documents?.status || (documents.length > 0 ? 'COMPLETE' : 'PENDING'),
-            },
-            {
-              step: '2. Text Extraction',
-              desc: `${documents.filter((d) => d.processing_status === 'COMPLETED' || d.processing_status === 'COMPLETED_WITH_WARNINGS' || d.processing_status === 'EXTRACTED').length} Extracted`,
-              status: workflowStatus?.stages?.extraction?.status || 'PARTIAL',
-            },
-            {
-              step: '3. Rules Validation',
-              desc: validationSummary ? `${validationSummary.passed}/${validationSummary.total_rules} Passed` : 'Pending',
-              status: workflowStatus?.stages?.validation?.status || (validationSummary ? 'COMPLETE' : 'NOT_STARTED'),
-            },
-            {
-              step: '4. Anomaly Findings',
-              desc: analysisData ? `${analysisData.open_findings} Open` : 'Pending',
-              status: workflowStatus?.stages?.anomalies?.status || (analysisData ? 'COMPLETE' : 'NOT_STARTED'),
-            },
-            {
-              step: '5. Human Decision',
-              desc: application.lifecycle_status,
-              status: application.lifecycle_status === 'SCRUTINY_COMPLETED' ? 'COMPLETE' : (application.lifecycle_status === 'UNDER_SCRUTINY' ? 'IN_PROGRESS' : 'PENDING'),
-            },
-          ].map((st, idx) => (
-            <div
-              key={idx}
-              className={`p-2.5 rounded-xl border transition-all ${
-                st.status === 'COMPLETE'
-                  ? 'bg-[#ECFDF3] border-[#A6F4C5] text-[#027A48]'
-                  : st.status === 'IN_PROGRESS'
-                  ? 'bg-[#EFF8FF] border-[#B2DDFF] text-[#175CD3]'
-                  : 'bg-[#FAF8FF] border-[#E9E6F2] text-[#5F6485]'
-              }`}
-            >
-              <div className="font-bold flex items-center justify-between">
-                <span>{st.step}</span>
-                {st.status === 'COMPLETE' ? (
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                ) : st.status === 'IN_PROGRESS' ? (
-                  <Clock className="w-3.5 h-3.5 animate-spin" />
-                ) : null}
+                  {readiness?.readiness_state || 'EVALUATING'}
+                </Badge>
               </div>
-              <div className="text-[11px] mt-0.5 opacity-90 truncate">{st.desc}</div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {readiness?.recommended_action || 'Execute pipeline to evaluate document completeness and scrutiny readiness.'}
+              </p>
             </div>
-          ))}
-        </div>
 
-        {/* Multi-Dimensional Blockers List */}
-        {readiness?.blockers && readiness.blockers.length > 0 && (
-          <div className="p-3 rounded-2xl bg-[#FFF0EF] border border-[#FECDCA] text-[11px] text-[#B42318] space-y-1">
-            <span className="font-bold uppercase tracking-wider text-[10px]">Outstanding Review Blockers ({readiness.blockers.length})</span>
-            <ul className="list-disc pl-4 space-y-0.5">
-              {readiness.blockers.map((b, idx) => (
-                <li key={idx}>{b}</li>
-              ))}
-            </ul>
+            {/* Reviewer Action Buttons */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {application.lifecycle_status === 'SUBMITTED' && (
+                <Button
+                  size="sm"
+                  onClick={() => handleExecuteTransition('UNDER_SCRUTINY', 'Regulatory reviewer initiated scrutiny')}
+                  disabled={transitioning}
+                  className="font-semibold shadow-2xs"
+                >
+                  Claim & Begin Scrutiny
+                </Button>
+              )}
+
+              {application.lifecycle_status === 'UNDER_SCRUTINY' && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleExecuteTransition('ACTION_REQUIRED', 'Official clarification or document update required')}
+                    disabled={transitioning}
+                    className="text-amber-800 border-amber-300 hover:bg-amber-50 font-semibold"
+                  >
+                    Request Information
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleExecuteTransition('SCRUTINY_COMPLETED', 'Regulatory scrutiny completed')}
+                    disabled={transitioning}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-2xs"
+                  >
+                    Finalize Scrutiny Determination
+                  </Button>
+                </>
+              )}
+
+              {application.lifecycle_status === 'ACTION_REQUIRED' && (
+                <Button
+                  size="sm"
+                  onClick={() => handleExecuteTransition('SUBMITTED', 'Institutional applicant resubmitted dossier')}
+                  disabled={transitioning}
+                  className="font-semibold"
+                >
+                  Mark Resubmitted
+                </Button>
+              )}
+            </div>
           </div>
-        )}
-      </div>
 
+          {/* 5-Stage Stepper Progression */}
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 pt-1 text-xs">
+            {[
+              {
+                step: '1. Documents',
+                desc: `${documents.length} Uploaded`,
+                status: workflowStatus?.stages?.documents?.status || (documents.length > 0 ? 'COMPLETE' : 'PENDING'),
+              },
+              {
+                step: '2. Text Extraction',
+                desc: `${documents.filter((d) => d.processing_status === 'COMPLETED' || d.processing_status === 'COMPLETED_WITH_WARNINGS' || d.processing_status === 'EXTRACTED').length} Extracted`,
+                status: workflowStatus?.stages?.extraction?.status || 'PARTIAL',
+              },
+              {
+                step: '3. Rules Validation',
+                desc: validationSummary ? `${validationSummary.passed}/${validationSummary.total_rules} Passed` : 'Pending',
+                status: workflowStatus?.stages?.validation?.status || (validationSummary ? 'COMPLETE' : 'NOT_STARTED'),
+              },
+              {
+                step: '4. Anomaly Findings',
+                desc: analysisData ? `${analysisData.open_findings} Open` : 'Pending',
+                status: workflowStatus?.stages?.anomalies?.status || (analysisData ? 'COMPLETE' : 'NOT_STARTED'),
+              },
+              {
+                step: '5. Human Decision',
+                desc: application.lifecycle_status,
+                status: application.lifecycle_status === 'SCRUTINY_COMPLETED' ? 'COMPLETE' : (application.lifecycle_status === 'UNDER_SCRUTINY' ? 'IN_PROGRESS' : 'PENDING'),
+              },
+            ].map((st, idx) => (
+              <div
+                key={idx}
+                className={`p-2.5 rounded-xl border transition-all ${
+                  st.status === 'COMPLETE'
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                    : st.status === 'IN_PROGRESS'
+                    ? 'bg-blue-50 text-blue-800 border-blue-200'
+                    : 'bg-muted/30 border-border text-muted-foreground'
+                }`}
+              >
+                <div className="font-bold flex items-center justify-between">
+                  <span>{st.step}</span>
+                  {st.status === 'COMPLETE' ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  ) : st.status === 'IN_PROGRESS' ? (
+                    <Clock className="w-3.5 h-3.5 animate-spin text-blue-600" />
+                  ) : null}
+                </div>
+                <div className="text-[11px] mt-0.5 opacity-90 truncate">{st.desc}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Multi-Dimensional Blockers List */}
+          {readiness?.blockers && readiness.blockers.length > 0 && (
+            <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-[11px] text-destructive space-y-1">
+              <span className="font-bold uppercase tracking-wider text-[10px]">Outstanding Review Blockers ({readiness.blockers.length})</span>
+              <ul className="list-disc pl-4 space-y-0.5">
+                {readiness.blockers.map((b, idx) => (
+                  <li key={idx}>{b}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* 2. Application Scrutiny Header Dossier Card */}
-      <div className="bg-white rounded-3xl border border-[#E9E6F2] shadow-xs p-5 sm:p-6 space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#EEEAF5] pb-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="font-mono text-base sm:text-lg font-extrabold text-[#171B45]">
-                {application.application_reference}
-              </span>
-              {renderStatusBadge(application.lifecycle_status)}
-              <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-[#F3EEFC] text-[#7450D8] border border-[#DCD0F7]">
-                {application.category_code}
-              </span>
-            </div>
-            <p className="text-xs text-[#5F6485] flex items-center gap-2 flex-wrap">
-              <span className="flex items-center gap-1 font-semibold text-[#171B45]">
-                <Building2 className="w-3.5 h-3.5 text-[#7450D8]" />
-                {application.institution.institution_name}
-              </span>
-              <span>•</span>
-              <span className="font-mono text-[11px]">
-                ID: {application.institution.institution_identifier || application.institution.id}
-              </span>
-              <span>•</span>
-              <span>Academic Year: {application.academic_year || '2026-27'}</span>
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 text-xs text-[#5F6485]">
-            <div className="text-right">
-              <span className="text-[10px] uppercase font-bold text-[#8589A6]">Created</span>
-              <p className="font-medium text-[#171B45] text-xs">{formatDate(application.created_at)}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Scrutiny Stat Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
-          <div className="p-3 rounded-xl bg-[#FAF8FF] border border-[#E9E6F2]">
-            <span className="text-[10px] uppercase font-bold text-[#5F6485]">Submitted Documents</span>
-            <p className="text-base font-extrabold text-[#171B45] mt-0.5">{documents.length}</p>
-          </div>
-          <div className="p-3 rounded-xl bg-[#FAF8FF] border border-[#E9E6F2]">
-            <span className="text-[10px] uppercase font-bold text-[#5F6485]">Text Extracted</span>
-            <p className="text-base font-extrabold text-[#027A48] mt-0.5">
-              {documents.filter((d) => d.processing_status === 'COMPLETED' || d.processing_status === 'COMPLETED_WITH_WARNINGS').length}
-            </p>
-          </div>
-          <div className="p-3 rounded-xl bg-[#FAF8FF] border border-[#E9E6F2]">
-            <span className="text-[10px] uppercase font-bold text-[#5F6485]">Validation Engine</span>
-            {validationSummary ? (
-              <p className={`text-xs font-extrabold mt-1 truncate ${
-                validationSummary.failed > 0
-                  ? 'text-[#B42318]'
-                  : validationSummary.needs_review > 0
-                  ? 'text-[#C4320A]'
-                  : 'text-[#027A48]'
-              }`}>
-                {validationSummary.failed > 0
-                  ? `${validationSummary.failed} Failed / ${validationSummary.total_rules} Rules`
-                  : validationSummary.needs_review > 0
-                  ? `${validationSummary.needs_review} Needs Review`
-                  : `${validationSummary.passed}/${validationSummary.total_rules} Passed`}
+      <Card className="shadow-xs border-border">
+        <CardContent className="p-5 sm:p-6 space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="font-mono text-base sm:text-lg font-bold text-foreground">
+                  {application.application_reference}
+                </span>
+                <StatusBadge status={application.lifecycle_status} category="lifecycle" />
+                <Badge variant="outline" className="font-mono text-[11px]">
+                  {application.category_code}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
+                <span className="flex items-center gap-1 font-semibold text-foreground">
+                  <Building2 className="w-3.5 h-3.5 text-primary" />
+                  {application.institution.institution_name}
+                </span>
+                <span>•</span>
+                <span className="font-mono text-[11px]">
+                  ID: {application.institution.institution_identifier || application.institution.id}
+                </span>
+                <span>•</span>
+                <span>Academic Year: {application.academic_year || '2026-27'}</span>
               </p>
-            ) : (
-              <p className="text-xs font-bold text-[#8589A6] mt-1">Pending Validation</p>
-            )}
+            </div>
+
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <div className="text-right">
+                <span className="text-[10px] uppercase font-bold text-muted-foreground">Created</span>
+                <p className="font-medium text-foreground text-xs">{formatDate(application.created_at)}</p>
+              </div>
+            </div>
           </div>
-          <div className="p-3 rounded-xl bg-[#FAF8FF] border border-[#E9E6F2]">
-            <span className="text-[10px] uppercase font-bold text-[#5F6485]">Regulatory Category</span>
-            <p className="text-xs font-bold text-[#7450D8] mt-1 truncate" title={currentCategory?.name || application.category_code}>
-              {currentCategory?.name || application.category_code}
-            </p>
+
+          {/* Quick Scrutiny Stat Bar */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+            <div className="p-3 rounded-xl bg-muted/30 border border-border">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground">Submitted Documents</span>
+              <p className="text-base font-extrabold text-foreground mt-0.5">{documents.length}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-muted/30 border border-border">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground">Text Extracted</span>
+              <p className="text-base font-extrabold text-emerald-600 mt-0.5">
+                {documents.filter((d) => d.processing_status === 'COMPLETED' || d.processing_status === 'COMPLETED_WITH_WARNINGS').length}
+              </p>
+            </div>
+            <div className="p-3 rounded-xl bg-muted/30 border border-border">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground">Validation Engine</span>
+              {validationSummary ? (
+                <p className={`text-xs font-extrabold mt-1 truncate ${
+                  validationSummary.failed > 0
+                    ? 'text-destructive'
+                    : validationSummary.needs_review > 0
+                    ? 'text-amber-700'
+                    : 'text-emerald-600'
+                }`}>
+                  {validationSummary.failed > 0
+                    ? `${validationSummary.failed} Failed / ${validationSummary.total_rules} Rules`
+                    : validationSummary.needs_review > 0
+                    ? `${validationSummary.needs_review} Needs Review`
+                    : `${validationSummary.passed}/${validationSummary.total_rules} Passed`}
+                </p>
+              ) : (
+                <p className="text-xs font-bold text-muted-foreground mt-1">Pending Validation</p>
+              )}
+            </div>
+            <div className="p-3 rounded-xl bg-muted/30 border border-border">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground">Regulatory Category</span>
+              <p className="text-xs font-bold text-primary mt-1 truncate" title={currentCategory?.name || application.category_code}>
+                {currentCategory?.name || application.category_code}
+              </p>
+            </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* 3. Sub-Tab Navigation */}
-      <div className="bg-white rounded-2xl border border-[#E9E6F2] shadow-2xs overflow-hidden">
-        <div className="px-5 border-b border-[#E9E6F2] flex items-center gap-6 overflow-x-auto">
+      <div className="bg-white rounded-2xl border border-[#E5DACF] shadow-[0_4px_24px_-4px_rgba(27,20,17,0.04)] overflow-hidden">
+        <div className="p-2 border-b border-[#E5DACF] flex items-center gap-1.5 overflow-x-auto bg-[#FAF5F0]/60">
           <button
             onClick={() => setActiveSubTab('documents')}
-            className={`py-3.5 text-xs sm:text-sm font-bold border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`py-2 px-3.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === 'documents'
-                ? 'border-[#7450D8] text-[#7450D8]'
-                : 'border-transparent text-[#5F6485] hover:text-[#171B45]'
+                ? 'bg-[#1B1411] text-[#FAF5F0] font-bold shadow-xs'
+                : 'text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC]/50'
             }`}
           >
-            <FileText className="w-4 h-4" />
-            <span>Submitted Documents & OCR ({documents.length})</span>
+            <FileText className="w-3.5 h-3.5" />
+            <span>Documents &amp; OCR ({documents.length})</span>
           </button>
 
           <button
             onClick={() => setActiveSubTab('validation')}
-            className={`py-3.5 text-xs sm:text-sm font-bold border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`py-2 px-3.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === 'validation'
-                ? 'border-[#7450D8] text-[#7450D8]'
-                : 'border-transparent text-[#5F6485] hover:text-[#171B45]'
+                ? 'bg-[#1B1411] text-[#FAF5F0] font-bold shadow-xs'
+                : 'text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC]/50'
             }`}
           >
-            <ShieldCheck className="w-4 h-4" />
+            <ShieldCheck className="w-3.5 h-3.5" />
             <span>
-              Validation Rules & Results {validationSummary ? `(${validationSummary.results.length})` : ''}
+              Validation Rules {validationSummary ? `(${validationSummary.results.length})` : ''}
             </span>
             {validationSummary && validationSummary.failed > 0 && (
-              <span className="w-2 h-2 rounded-full bg-[#F04438]" title="Has failed rules" />
+              <span className="w-2 h-2 rounded-full bg-rose-500" title="Has failed rules" />
             )}
             {validationSummary && validationSummary.failed === 0 && validationSummary.needs_review > 0 && (
-              <span className="w-2 h-2 rounded-full bg-[#F79009]" title="Needs human review" />
+              <span className="w-2 h-2 rounded-full bg-amber-500" title="Needs human review" />
             )}
           </button>
 
           <button
             onClick={() => setActiveSubTab('anomalies')}
-            className={`py-3.5 text-xs sm:text-sm font-bold border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`py-2 px-3.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === 'anomalies'
-                ? 'border-[#7450D8] text-[#7450D8]'
-                : 'border-transparent text-[#5F6485] hover:text-[#171B45]'
+                ? 'bg-[#1B1411] text-[#FAF5F0] font-bold shadow-xs'
+                : 'text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC]/50'
             }`}
           >
-            <Sparkles className="w-4 h-4 text-[#7450D8]" />
+            <Sparkles className="w-3.5 h-3.5 text-[#33CC7A]" />
             <span>
-              Anomalies & Candidate Fields {analysisData ? `(${analysisData.findings.length})` : ''}
+              Anomalies &amp; Fields {analysisData ? `(${analysisData.findings.length})` : ''}
             </span>
             {analysisData && analysisData.open_findings > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-[#FEE4E2] text-[#B42318] border border-[#FECDCA]">
+              <span className="bg-rose-50 text-rose-700 border border-rose-200 px-1.5 py-0 rounded-full text-[10px] font-bold">
                 {analysisData.open_findings}
               </span>
             )}
@@ -1005,61 +1205,61 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
 
           <button
             onClick={() => setActiveSubTab('requirements')}
-            className={`py-3.5 text-xs sm:text-sm font-bold border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`py-2 px-3.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === 'requirements'
-                ? 'border-[#7450D8] text-[#7450D8]'
-                : 'border-transparent text-[#5F6485] hover:text-[#171B45]'
+                ? 'bg-[#1B1411] text-[#FAF5F0] font-bold shadow-xs'
+                : 'text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC]/50'
             }`}
           >
-            <Layers className="w-4 h-4" />
-            <span>Declared Data & Checklist</span>
+            <Layers className="w-3.5 h-3.5" />
+            <span>Declared Data</span>
           </button>
 
           <button
             onClick={() => setActiveSubTab('audit')}
-            className={`py-3.5 text-xs sm:text-sm font-bold border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`py-2 px-3.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === 'audit'
-                ? 'border-[#7450D8] text-[#7450D8]'
-                : 'border-transparent text-[#5F6485] hover:text-[#171B45]'
+                ? 'bg-[#1B1411] text-[#FAF5F0] font-bold shadow-xs'
+                : 'text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC]/50'
             }`}
           >
-            <History className="w-4 h-4" />
-            <span>Scrutiny Audit Trail ({auditEvents.length})</span>
+            <History className="w-3.5 h-3.5" />
+            <span>Audit Trail ({auditEvents.length})</span>
           </button>
 
           <button
             onClick={() => setActiveSubTab('institution')}
-            className={`py-3.5 text-xs sm:text-sm font-bold border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`py-2 px-3.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === 'institution'
-                ? 'border-[#7450D8] text-[#7450D8]'
-                : 'border-transparent text-[#5F6485] hover:text-[#171B45]'
+                ? 'bg-[#1B1411] text-[#FAF5F0] font-bold shadow-xs'
+                : 'text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC]/50'
             }`}
           >
-            <Building2 className="w-4 h-4" />
+            <Building2 className="w-3.5 h-3.5" />
             <span>Institution Dossier</span>
           </button>
 
           <button
             onClick={() => setActiveSubTab('reports')}
-            className={`py-3.5 text-xs sm:text-sm font-bold border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`py-2 px-3.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === 'reports'
-                ? 'border-[#7450D8] text-[#7450D8]'
-                : 'border-transparent text-[#5F6485] hover:text-[#171B45]'
+                ? 'bg-[#1B1411] text-[#FAF5F0] font-bold shadow-xs'
+                : 'text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC]/50'
             }`}
           >
-            <Download className="w-4 h-4 text-[#7450D8]" />
-            <span>Scrutiny Dossier & Reports {reportsList.length > 0 ? `(${reportsList.length})` : ''}</span>
+            <Download className="w-3.5 h-3.5" />
+            <span>Dossier &amp; Reports {reportsList.length > 0 ? `(${reportsList.length})` : ''}</span>
           </button>
 
           <button
             onClick={() => setActiveSubTab('registry')}
-            className={`py-3.5 text-xs sm:text-sm font-bold border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`py-2 px-3.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === 'registry'
-                ? 'border-[#7450D8] text-[#7450D8]'
-                : 'border-transparent text-[#5F6485] hover:text-[#171B45]'
+                ? 'bg-[#1B1411] text-[#FAF5F0] font-bold shadow-xs'
+                : 'text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC]/50'
             }`}
           >
-            <Database className="w-4 h-4 text-[#7450D8]" />
+            <Database className="w-3.5 h-3.5" />
             <span>
               Registry Verification {registryRuns.length > 0 ? `(${registryRuns[0].overall_status})` : ''}
             </span>
@@ -1067,29 +1267,29 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
 
           <button
             onClick={() => setActiveSubTab('history')}
-            className={`py-3.5 text-xs sm:text-sm font-bold border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`py-2 px-3.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === 'history'
-                ? 'border-[#7450D8] text-[#7450D8]'
-                : 'border-transparent text-[#5F6485] hover:text-[#171B45]'
+                ? 'bg-[#1B1411] text-[#FAF5F0] font-bold shadow-xs'
+                : 'text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC]/50'
             }`}
           >
-            <GitCompare className="w-4 h-4 text-[#7450D8]" />
+            <GitCompare className="w-3.5 h-3.5" />
             <span>
-              Dossier History & Versioning {versionsList.length > 0 ? `(v${versionsList[0].version_number})` : ''}
+              History &amp; Versions {versionsList.length > 0 ? `(v${versionsList[0].version_number})` : ''}
             </span>
           </button>
 
           <button
             onClick={() => setActiveSubTab('portals')}
-            className={`py-3.5 text-xs sm:text-sm font-bold border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`py-2 px-3.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === 'portals'
-                ? 'border-[#7450D8] text-[#7450D8]'
-                : 'border-transparent text-[#5F6485] hover:text-[#171B45]'
+                ? 'bg-[#1B1411] text-[#FAF5F0] font-bold shadow-xs'
+                : 'text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC]/50'
             }`}
           >
-            <Network className="w-4 h-4 text-[#7450D8]" />
+            <Network className="w-3.5 h-3.5" />
             <span>
-              Regulatory Gateways ({portalsList.length > 0 ? portalsList.length : '3'})
+              Gateways ({portalsList.length > 0 ? portalsList.length : '3'})
             </span>
           </button>
         </div>
@@ -1967,23 +2167,137 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
         {/* Tab: Requirements & Declared Data */}
         {activeSubTab === 'requirements' && (
           <div className="p-4 sm:p-6 space-y-6">
-            {/* Required Documents Checklist */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
+            {/* Required & Conditional Documents Checklist */}
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
-                  <h4 className="text-xs sm:text-sm font-extrabold text-[#171B45]">
-                    Mandatory Regulatory Documents Checklist
+                  <h4 className="text-xs sm:text-sm font-extrabold text-[#171B45] flex items-center gap-2">
+                    <span>Statutory Document Scrutiny Checklist</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FAF8FF] text-[#7450D8] border border-[#E9E6F2]">
+                      APH 2024–27
+                    </span>
                   </h4>
                   <p className="text-[11px] text-[#5F6485]">
-                    Evaluation criteria defined for category &quot;{currentCategory?.name || application.category_code}&quot;.
+                    Dynamic conditional checklist grounded in AICTE Approval Process Handbook 2024-27 for &quot;{readiness?.checklist?.category_name || currentCategory?.name || application.category_code}&quot;.
                   </p>
                 </div>
-                <span className="text-xs font-bold text-[#7450D8]">
-                  {requiredDocTypes.filter((t) => uploadedTypes.has(t)).length} of {requiredDocTypes.length} Present
-                </span>
+                <div className="flex items-center gap-2 text-xs font-bold text-[#7450D8]">
+                  {readiness?.checklist ? (
+                    <span className="bg-[#FAF8FF] px-2.5 py-1 rounded-lg border border-[#E9E6F2]">
+                      {readiness.checklist.total_present} Present • {readiness.checklist.total_required} Mandatory • {readiness.checklist.total_conditional} Conditional
+                    </span>
+                  ) : (
+                    <span>
+                      {requiredDocTypes.filter((t) => uploadedTypes.has(t)).length} of {requiredDocTypes.length} Present
+                    </span>
+                  )}
+                </div>
               </div>
 
-              {requiredDocTypes.length === 0 ? (
+              {readiness?.checklist && readiness.checklist.items.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  {readiness.checklist.items.map((item) => {
+                    const isUploaded = item.status === 'REQUIRED_UPLOADED';
+                    const isPending = item.status === 'PENDING_VERIFICATION';
+                    const isMissing = item.status === 'REQUIRED_MISSING';
+                    const isConditionalReview = item.status === 'CONDITIONAL_NEEDS_REVIEW' || item.status === 'NEEDS_HUMAN_REVIEW';
+
+                    return (
+                      <div
+                        key={item.document_code}
+                        className={`p-4 rounded-xl border transition-all ${
+                          isUploaded
+                            ? 'bg-[#ECFDF3]/40 border-[#D1FADF]'
+                            : isPending
+                            ? 'bg-[#EFF8FF]/40 border-[#B2DDFF]'
+                            : isMissing
+                            ? 'bg-[#FFF4F3]/40 border-[#FECDCA]'
+                            : isConditionalReview
+                            ? 'bg-[#FFFAEB]/50 border-[#FEDF89]'
+                            : 'bg-[#F9FAFB] border-[#EAECF0] opacity-75'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-2.5 min-w-0">
+                            <div
+                              className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                                isUploaded
+                                  ? 'bg-[#027A48] text-white'
+                                  : isPending
+                                  ? 'bg-[#175CD3] text-white'
+                                  : isMissing
+                                  ? 'bg-[#F04438] text-white'
+                                  : isConditionalReview
+                                  ? 'bg-[#DC6803] text-white'
+                                  : 'bg-[#98A2B3] text-white'
+                              }`}
+                            >
+                              {isUploaded ? (
+                                <Check className="w-3.5 h-3.5" />
+                              ) : isPending ? (
+                                <Clock className="w-3.5 h-3.5 animate-spin" />
+                              ) : isMissing ? (
+                                <X className="w-3.5 h-3.5" />
+                              ) : isConditionalReview ? (
+                                <AlertTriangle className="w-3.5 h-3.5" />
+                              ) : (
+                                <Info className="w-3.5 h-3.5" />
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <p className="font-bold text-xs text-[#171B45] truncate">{item.title}</p>
+                                <span className="font-mono text-[9px] text-[#8589A6] px-1.5 py-0.2 rounded bg-white border border-[#E9E6F2]">
+                                  {item.document_code}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-[#5F6485] mt-1 leading-relaxed">
+                                {item.condition_rationale}
+                              </p>
+                              {item.activating_condition && (
+                                <p className="text-[10px] text-[#7450D8] font-medium mt-0.5">
+                                  Triggered by: {item.activating_condition}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-2 mt-2 text-[10px] text-[#8589A6] flex-wrap">
+                                <span className="font-medium text-[#475467]">
+                                  Ref: {item.source_clause} (p.{item.pdf_page})
+                                </span>
+                                {item.uploaded_document_name && (
+                                  <span className="text-[#027A48] font-medium truncate max-w-xs">
+                                    • Uploaded: {item.uploaded_document_name}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="shrink-0 flex flex-col items-end gap-1">
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                isUploaded
+                                  ? 'bg-[#ECFDF3] text-[#027A48]'
+                                  : isPending
+                                  ? 'bg-[#EFF8FF] text-[#175CD3]'
+                                  : isMissing
+                                  ? 'bg-[#FFF0EF] text-[#B42318]'
+                                  : isConditionalReview
+                                  ? 'bg-[#FEF0C7] text-[#B54708]'
+                                  : 'bg-[#F2F4F7] text-[#475467]'
+                              }`}
+                            >
+                              {item.status.replace(/_/g, ' ')}
+                            </span>
+                            <span className="text-[9px] font-medium text-[#8589A6]">
+                              {item.mandatory_or_conditional}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : requiredDocTypes.length === 0 ? (
                 <div className="p-4 rounded-xl bg-[#FAF8FF] border border-[#E9E6F2] text-xs text-[#5F6485]">
                   No strict mandatory document types configured for this illustrative category.
                 </div>
@@ -2351,10 +2665,10 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             <div className="p-4 rounded-2xl bg-[#FFF6ED] border border-[#FECDCA] text-xs space-y-2">
               <div className="flex items-center gap-2 text-[#C4320A] font-bold">
                 <AlertTriangle className="w-4 h-4 text-[#F04438]" />
-                <span>Simulated Reference Data & Autonomous Verification Notice</span>
+                <span>Simulated Reference Data &amp; Autonomous Verification Notice</span>
               </div>
               <p className="text-[#5F6485] leading-relaxed">
-                Verification operates against authorized reference datasets and synthetic demonstration fixtures (e.g. AISHE accreditation, sanctioned intake ceilings). In accordance with SIH 2026 prototype specifications, official AICTE production portal APIs are not connected. No result constitutes legal certification.
+                Verification operates against authorized reference datasets and simulated adapters (e.g. AISHE accreditation, sanctioned intake ceilings). Production external government portal APIs are not directly connected; verification results are decision-support indicators and do not constitute final statutory determinations.
               </p>
             </div>
 

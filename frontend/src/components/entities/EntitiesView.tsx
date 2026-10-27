@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { fetchInstitutions, type Institution } from '../../api/client';
-import { Building2, Search, MapPin, ShieldCheck, RefreshCw } from 'lucide-react';
+import { Building2, Search, MapPin, ShieldCheck, RefreshCw, ArrowRight } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/common/EmptyState';
 
 export const EntitiesView: React.FC = () => {
   const [institutions, setInstitutions] = useState<Institution[]>([]);
@@ -32,96 +38,126 @@ export const EntitiesView: React.FC = () => {
   );
 
   return (
-    <div className="p-4 lg:p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
+      {/* 1. Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-[#171B45] flex items-center gap-2">
-            Registered Technical Institutions
-          </h1>
-          <p className="text-xs sm:text-sm text-[#5F6485] mt-0.5">
-            Accredited educational institutions, universities, and polytechnics under regulatory scrutiny purview.
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+              <Building2 className="size-6 text-primary shrink-0" />
+              Registered Institutional Entities
+            </h1>
+            <Badge variant="outline" className="text-xs font-semibold bg-secondary text-primary border-primary/20">
+              {institutions.length} Entities
+            </Badge>
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Accredited higher-education institutions, polytechnics, and universities evaluated under AICTE regulatory scrutiny norms.
           </p>
         </div>
 
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           onClick={load}
-          className="p-2 rounded-xl border border-[#E9E6F2] text-[#5F6485] hover:bg-[#FAF8FF] hover:text-[#7450D8] transition-colors cursor-pointer self-start sm:self-auto"
+          disabled={loading}
+          className="h-8 gap-1.5 text-xs text-muted-foreground self-start sm:self-auto"
           title="Refresh entities"
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-        </button>
+          <RefreshCw className={`size-3.5 ${loading ? 'animate-spin text-primary' : ''}`} />
+          <span>Refresh</span>
+        </Button>
       </div>
 
+      {/* 2. Search */}
       <div className="relative max-w-md">
-        <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8589A6]" />
-        <input
+        <Search className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+        <Input
           type="text"
-          placeholder="Filter by institution name, code, or city..."
+          placeholder="Filter by institution name, AISHE code, or city..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full text-xs rounded-xl border border-[#E9E6F2] bg-white pl-10 pr-4 py-2.5 text-[#171B45] focus:outline-hidden focus:ring-2 focus:ring-[#7450D8]/20 focus:border-[#7450D8]"
+          className="h-9 text-xs pl-8 pr-4 bg-card"
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {/* 3. Entity Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {loading ? (
-          <div className="col-span-full p-12 text-center text-xs text-[#5F6485]">
-            <RefreshCw className="w-6 h-6 animate-spin text-[#7450D8] mx-auto mb-2" />
-            Loading registered entities...
-          </div>
+          Array.from({ length: 6 }).map((_, i) => (
+            <Card key={i} className="border-border p-5 space-y-3">
+              <div className="flex items-center gap-3">
+                <Skeleton className="size-10 rounded-lg" />
+                <div className="space-y-1.5 flex-1">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              </div>
+              <Skeleton className="h-10 w-full" />
+            </Card>
+          ))
         ) : filtered.length === 0 ? (
-          <div className="col-span-full p-12 text-center text-xs text-[#8589A6]">
-            No institutions match your search query.
+          <div className="col-span-full">
+            <EmptyState
+              icon={Building2}
+              title="No institutions match your search query"
+              description="Try adjusting your keywords or clearing the filter to see all registered educational entities."
+            />
           </div>
         ) : (
           filtered.map((inst, idx) => (
-            <div
+            <Card
               key={inst.id}
-              className="bg-white rounded-2xl border border-[#E9E6F2] p-5 shadow-xs hover:border-[#DCD0F7] transition-all space-y-4"
+              className="border-border shadow-[0_1px_3px_0_rgba(23,27,69,0.04)] hover:border-primary/40 transition-colors flex flex-col justify-between"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm ${
-                      idx % 2 === 0
-                        ? 'bg-[#F3EEFC] text-[#7450D8]'
-                        : 'bg-[#FFF0EF] text-[#F04438]'
-                    }`}
-                  >
-                    <Building2 className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-[#171B45] line-clamp-1">
-                      {inst.institution_name}
-                    </h3>
-                    <div className="text-[11px] font-mono text-[#7450D8] font-semibold">
-                      {inst.institution_identifier || inst.id}
+              <CardHeader className="p-4 sm:p-5 pb-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    <div
+                      className={`size-9 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
+                        idx % 2 === 0
+                          ? 'bg-secondary text-primary'
+                          : 'bg-muted text-foreground'
+                      }`}
+                    >
+                      <Building2 className="size-4" />
+                    </div>
+                    <div className="overflow-hidden">
+                      <CardTitle className="text-sm font-semibold text-foreground truncate" title={inst.institution_name}>
+                        {inst.institution_name}
+                      </CardTitle>
+                      <CardDescription className="text-xs font-mono text-primary font-medium mt-0.5">
+                        {inst.institution_identifier || inst.id.slice(0, 10)}
+                      </CardDescription>
                     </div>
                   </div>
+                  <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] shrink-0 font-medium">
+                    {inst.status}
+                  </Badge>
                 </div>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#E6F4F2] text-[#12B886]">
-                  {inst.status}
-                </span>
-              </div>
+              </CardHeader>
 
-              <div className="space-y-1.5 text-xs text-[#5F6485] pt-2 border-t border-[#EEEAF5]">
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-3.5 h-3.5 text-[#8589A6]" />
-                  <span>
+              <CardContent className="px-4 sm:px-5 py-2 space-y-2 text-xs text-muted-foreground border-t border-border/60">
+                <div className="flex items-center gap-2 pt-1">
+                  <MapPin className="size-3.5 text-muted-foreground shrink-0" />
+                  <span className="truncate">
                     {inst.city ? `${inst.city}, ` : ''}{inst.state || 'India'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#8589A6]" />
-                  <span>Category: {inst.institution_type?.replace(/_/g, ' ') || 'ENGINEERING COLLEGE'}</span>
+                  <ShieldCheck className="size-3.5 text-muted-foreground shrink-0" />
+                  <span className="truncate">Category: {inst.institution_type?.replace(/_/g, ' ') || 'TECHNICAL COLLEGE'}</span>
                 </div>
-              </div>
+              </CardContent>
 
-              <div className="pt-2 flex items-center justify-between text-[11px] text-[#8589A6]">
-                <span>Tenant Isolation: Enforced</span>
-                <span className="font-semibold text-[#7450D8]">View Dossier →</span>
-              </div>
-            </div>
+              <CardFooter className="px-4 sm:px-5 py-3 border-t border-border flex items-center justify-between text-[11px] text-muted-foreground bg-muted/20">
+                <span className="font-mono text-[10px]">Tenant Isolation: Enforced</span>
+                <span className="font-semibold text-primary inline-flex items-center gap-1 hover:underline cursor-pointer">
+                  <span>Dossiers</span>
+                  <ArrowRight className="size-3" />
+                </span>
+              </CardFooter>
+            </Card>
           ))
         )}
       </div>

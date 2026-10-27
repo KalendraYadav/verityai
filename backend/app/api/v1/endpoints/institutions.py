@@ -34,9 +34,18 @@ def get_institution(institution_id: str, db: Session = Depends(get_db)):
     return DataResponse(data=InstitutionResponse.model_validate(institution))
 
 
-@router.post("", response_model=DataResponse[InstitutionResponse], status_code=status.HTTP_201_CREATED)
-def create_institution(payload: InstitutionCreate, db: Session = Depends(get_db)):
-    """Create a new institution record."""
+from app.api.deps import require_roles
+from app.models.user import User
+from app.services.audit import record_audit_event
+
+
+@router.post("", response_model=DataResponse[InstitutionResponse], status_code=status.HTTP_201_CREATED, summary="Create a new institution (Admin only)")
+def create_institution(
+    payload: InstitutionCreate,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(require_roles("ADMIN")),
+):
+    """Create a new institution record. Strictly restricted to Regulatory Administrators."""
     institution = Institution(
         institution_name=payload.institution_name,
         institution_identifier=payload.institution_identifier,
@@ -45,6 +54,19 @@ def create_institution(payload: InstitutionCreate, db: Session = Depends(get_db)
         city=payload.city,
     )
     db.add(institution)
+    db.flush()
+
+    record_audit_event(
+        db=db,
+        event_type="INSTITUTION_CREATED",
+        actor_id=admin_user.id,
+        actor_type="USER",
+        metadata={
+            "institution_id": institution.id,
+            "institution_name": institution.institution_name,
+            "identifier": institution.institution_identifier,
+        },
+    )
     db.commit()
     db.refresh(institution)
     return DataResponse(data=InstitutionResponse.model_validate(institution))

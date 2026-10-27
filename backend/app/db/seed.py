@@ -74,29 +74,30 @@ def seed_database():
         print("🌱 Starting VerityAI synthetic demo data seeding...")
 
         # 1. Seed Application Categories
-        category_code = "EOA_ILLUSTRATIVE"
-        category = db.scalar(select(ApplicationCategory).where(ApplicationCategory.code == category_code))
-        if not category:
-            category = ApplicationCategory(
-                code=category_code,
-                name="Extension of Approval (Illustrative)",
-                description="Illustrative AICTE annual Extension of Approval application workflow for demonstration.",
-                required_document_types=["ACCREDITATION_CERTIFICATE", "LAND_USE_CERTIFICATE"],
-                required_declared_fields=["institution_name", "institution_identifier", "certificate_number", "certificate_expiry_date"],
-                provenance="ILLUSTRATIVE",
-                enabled=True,
-            )
-            db.add(category)
-            print(f"  + Created Category: {category.code}")
-        else:
-            print(f"  * Category exists: {category.code}")
+        from app.services.document_catalog import APPLICATION_CATEGORIES
+        for cat_code, cat_info in APPLICATION_CATEGORIES.items():
+            category = db.scalar(select(ApplicationCategory).where(ApplicationCategory.code == cat_code))
+            if not category:
+                category = ApplicationCategory(
+                    code=cat_code,
+                    name=cat_info["name"],
+                    description=cat_info["description"],
+                    required_document_types=cat_info["required_document_types"],
+                    required_declared_fields=cat_info["required_declared_fields"],
+                    provenance=cat_info["provenance"],
+                    enabled=cat_info["enabled"],
+                )
+                db.add(category)
+                print(f"  + Created Category: {category.code}")
+            else:
+                print(f"  * Category exists: {category.code}")
 
-        # 2. Seed Institutions (Synthetic)
+        # 2. Seed Institutions (6 Clean Fictional Institutions for SIH 2026)
         institutions_data = [
             {
                 "id": "INS-0001",
-                "institution_name": "Apex Institute of Technology (Synthetic)",
-                "institution_identifier": "SYN-INST-0001",
+                "institution_name": "Meridian Institute of Technology",
+                "institution_identifier": "VAI-I-001",
                 "institution_type": "ENGINEERING_COLLEGE",
                 "state": "Maharashtra",
                 "city": "Pune",
@@ -105,9 +106,9 @@ def seed_database():
             },
             {
                 "id": "INS-0002",
-                "institution_name": "Zenith College of Engineering (Synthetic)",
-                "institution_identifier": "SYN-INST-0002",
-                "institution_type": "TECHNICAL_INSTITUTE",
+                "institution_name": "Northbridge College of Engineering",
+                "institution_identifier": "VAI-I-002",
+                "institution_type": "ENGINEERING_COLLEGE",
                 "state": "Karnataka",
                 "city": "Bengaluru",
                 "status": "ACTIVE",
@@ -115,11 +116,41 @@ def seed_database():
             },
             {
                 "id": "INS-0003",
-                "institution_name": "Aryavart Polytechnic Institute (Synthetic)",
-                "institution_identifier": "SYN-INST-0003",
+                "institution_name": "Aravalli School of Technical Studies",
+                "institution_identifier": "VAI-I-003",
                 "institution_type": "POLYTECHNIC",
                 "state": "Delhi",
                 "city": "New Delhi",
+                "status": "ACTIVE",
+                "data_origin": "SYNTHETIC_DEMO",
+            },
+            {
+                "id": "INS-0004",
+                "institution_name": "Eastfield Institute of Applied Sciences",
+                "institution_identifier": "VAI-I-004",
+                "institution_type": "TECHNICAL_INSTITUTE",
+                "state": "Telangana",
+                "city": "Hyderabad",
+                "status": "ACTIVE",
+                "data_origin": "SYNTHETIC_DEMO",
+            },
+            {
+                "id": "INS-0005",
+                "institution_name": "Riverstone College of Engineering",
+                "institution_identifier": "VAI-I-005",
+                "institution_type": "ENGINEERING_COLLEGE",
+                "state": "Tamil Nadu",
+                "city": "Chennai",
+                "status": "ACTIVE",
+                "data_origin": "SYNTHETIC_DEMO",
+            },
+            {
+                "id": "INS-0006",
+                "institution_name": "Summit Institute of Management and Technology",
+                "institution_identifier": "VAI-I-006",
+                "institution_type": "MANAGEMENT_INSTITUTE",
+                "state": "Uttar Pradesh",
+                "city": "Noida",
                 "status": "ACTIVE",
                 "data_origin": "SYNTHETIC_DEMO",
             },
@@ -132,7 +163,12 @@ def seed_database():
                 db.add(inst)
                 print(f"  + Created Institution: {inst.institution_name} [{inst.id}]")
             else:
-                print(f"  * Institution exists: {existing.institution_name} [{existing.id}]")
+                existing.institution_name = inst_data["institution_name"]
+                existing.institution_identifier = inst_data["institution_identifier"]
+                existing.institution_type = inst_data["institution_type"]
+                existing.state = inst_data["state"]
+                existing.city = inst_data["city"]
+                print(f"  * Updated Institution: {existing.institution_name} [{existing.id}]")
 
         db.flush()
 
@@ -160,10 +196,55 @@ def seed_database():
             {
                 "id": "USR-OPERATOR-VERITY",
                 "email": "operator@verityai.gov.in",
-                "display_name": "Apex Registrar",
+                "display_name": "Meridian Registrar",
                 "password_hash": OPERATOR_PASSWORD_HASH,
                 "role": "INSTITUTION_USER",
                 "institution_id": "INS-0001",
+                "data_origin": "SYNTHETIC_DEMO",
+            },
+            {
+                "id": "USR-OPERATOR-NORTHBRIDGE",
+                "email": "operator.northbridge@verityai.gov.in",
+                "display_name": "Northbridge Registrar",
+                "password_hash": OPERATOR_PASSWORD_HASH,
+                "role": "INSTITUTION_USER",
+                "institution_id": "INS-0002",
+                "data_origin": "SYNTHETIC_DEMO",
+            },
+            {
+                "id": "USR-OPERATOR-ARAVALLI",
+                "email": "operator.aravalli@verityai.gov.in",
+                "display_name": "Aravalli Registrar",
+                "password_hash": OPERATOR_PASSWORD_HASH,
+                "role": "INSTITUTION_USER",
+                "institution_id": "INS-0003",
+                "data_origin": "SYNTHETIC_DEMO",
+            },
+            {
+                "id": "USR-OPERATOR-EASTFIELD",
+                "email": "operator.eastfield@verityai.gov.in",
+                "display_name": "Eastfield Registrar",
+                "password_hash": OPERATOR_PASSWORD_HASH,
+                "role": "INSTITUTION_USER",
+                "institution_id": "INS-0004",
+                "data_origin": "SYNTHETIC_DEMO",
+            },
+            {
+                "id": "USR-OPERATOR-RIVERSTONE",
+                "email": "operator.riverstone@verityai.gov.in",
+                "display_name": "Riverstone Registrar",
+                "password_hash": OPERATOR_PASSWORD_HASH,
+                "role": "INSTITUTION_USER",
+                "institution_id": "INS-0005",
+                "data_origin": "SYNTHETIC_DEMO",
+            },
+            {
+                "id": "USR-OPERATOR-SUMMIT",
+                "email": "operator.summit@verityai.gov.in",
+                "display_name": "Summit Registrar",
+                "password_hash": OPERATOR_PASSWORD_HASH,
+                "role": "INSTITUTION_USER",
+                "institution_id": "INS-0006",
                 "data_origin": "SYNTHETIC_DEMO",
             },
             # Backward-compatibility demo accounts
@@ -194,11 +275,12 @@ def seed_database():
                 db.add(u)
                 print(f"  + Created User: {u.display_name} ({u.role})")
             else:
-                print(f"  * User exists: {existing_user.display_name} ({existing_user.role})")
+                existing_user.display_name = u_data["display_name"]
+                print(f"  * Updated User: {existing_user.display_name} ({existing_user.role})")
 
         db.flush()
 
-        # 4. Seed Applications
+        # 4. Seed Applications across the 6 Distinct Demonstration Institutions
         apps_data = [
             {
                 "id": "APP-2026-0001",
@@ -209,8 +291,8 @@ def seed_database():
                 "lifecycle_status": "SUBMITTED",
                 "pipeline_status": "NOT_STARTED",
                 "declared_data": {
-                    "institution_name": "Apex Institute of Technology (Synthetic)",
-                    "institution_identifier": "SYN-INST-0001",
+                    "institution_name": "Meridian Institute of Technology",
+                    "institution_identifier": "VAI-I-001",
                     "certificate_number": "CERT-SYN-000123",
                     "certificate_expiry_date": "2027-03-31",
                     "programme_name": "Computer Science and Engineering",
@@ -228,8 +310,8 @@ def seed_database():
                 "lifecycle_status": "UNDER_REVIEW",
                 "pipeline_status": "NOT_STARTED",
                 "declared_data": {
-                    "institution_name": "Zenith College of Engineering (Synthetic)",
-                    "institution_identifier": "SYN-INST-0002",
+                    "institution_name": "Northbridge College of Engineering",
+                    "institution_identifier": "VAI-I-002",
                     "certificate_number": "CERT-SYN-000456",
                     "certificate_expiry_date": "2028-06-30",
                     "programme_name": "Information Technology",
@@ -248,8 +330,8 @@ def seed_database():
                 "lifecycle_status": "DRAFT",
                 "pipeline_status": "NOT_STARTED",
                 "declared_data": {
-                    "institution_name": "Aryavart Polytechnic Institute (Synthetic)",
-                    "institution_identifier": "SYN-INST-0003",
+                    "institution_name": "Aravalli School of Technical Studies",
+                    "institution_identifier": "VAI-I-003",
                     "certificate_number": "CERT-SYN-000789",
                     "certificate_expiry_date": "2026-12-31",
                     "programme_name": "Civil Engineering",
@@ -258,10 +340,129 @@ def seed_database():
                 "created_by": "USR-ADMIN-VERITY",
                 "data_origin": "SYNTHETIC_DEMO",
             },
+            {
+                "id": "APP-2026-0010",
+                "application_reference": "VAI-2026-0010",
+                "institution_id": "INS-0001",
+                "category_code": "EOA_ILLUSTRATIVE",
+                "academic_year": "2026-27",
+                "lifecycle_status": "SUBMITTED",
+                "pipeline_status": "NOT_STARTED",
+                "declared_data": {
+                    "institution_name": "Meridian Institute of Technology",
+                    "institution_identifier": "VAI-I-001",
+                    "certificate_number": "CERT-MER-2026-01",
+                    "certificate_expiry_date": "2027-03-31",
+                    "programme_name": "Computer Science and Engineering",
+                    "approved_intake": 120,
+                },
+                "created_by": "USR-ADMIN-VERITY",
+                "data_origin": "SYNTHETIC_DEMO",
+            },
+            {
+                "id": "APP-2026-0011",
+                "application_reference": "VAI-2026-0011",
+                "institution_id": "INS-0002",
+                "category_code": "EOA_ILLUSTRATIVE",
+                "academic_year": "2026-27",
+                "lifecycle_status": "SUBMITTED",
+                "pipeline_status": "NOT_STARTED",
+                "declared_data": {
+                    "institution_name": "Northbridge College of Engineering",
+                    "institution_identifier": "VAI-I-002",
+                    "certificate_number": "CERT-NBC-2026-02",
+                    "certificate_expiry_date": "2028-06-30",
+                    "programme_name": "Electronics & Communication Engineering",
+                    "approved_intake": 180,
+                },
+                "created_by": "USR-ADMIN-VERITY",
+                "data_origin": "SYNTHETIC_DEMO",
+            },
+            {
+                "id": "APP-2026-0012",
+                "application_reference": "VAI-2026-0012",
+                "institution_id": "INS-0003",
+                "category_code": "EOA_ILLUSTRATIVE",
+                "academic_year": "2026-27",
+                "lifecycle_status": "SUBMITTED",
+                "pipeline_status": "NOT_STARTED",
+                "declared_data": {
+                    "institution_name": "Aravalli School of Technical Studies",
+                    "institution_identifier": "VAI-I-003",
+                    "certificate_number": "CERT-AST-2026-03",
+                    "certificate_expiry_date": "2027-12-31",
+                    "programme_name": "Civil and Environmental Engineering",
+                    "approved_intake": 60,
+                },
+                "created_by": "USR-ADMIN-VERITY",
+                "data_origin": "SYNTHETIC_DEMO",
+            },
+            {
+                "id": "APP-2026-0013",
+                "application_reference": "VAI-2026-0013",
+                "institution_id": "INS-0004",
+                "category_code": "EOA_ILLUSTRATIVE",
+                "academic_year": "2026-27",
+                "lifecycle_status": "SUBMITTED",
+                "pipeline_status": "NOT_STARTED",
+                "declared_data": {
+                    "institution_name": "Eastfield Institute of Applied Sciences",
+                    "institution_identifier": "VAI-I-004",
+                    "certificate_number": "CERT-EAS-2026-04",
+                    "certificate_expiry_date": "2028-03-31",
+                    "programme_name": "Mechanical Engineering & Robotics",
+                    "approved_intake": 120,
+                },
+                "created_by": "USR-ADMIN-VERITY",
+                "data_origin": "SYNTHETIC_DEMO",
+            },
+            {
+                "id": "APP-2026-0014",
+                "application_reference": "VAI-2026-0014",
+                "institution_id": "INS-0005",
+                "category_code": "EOA_ILLUSTRATIVE",
+                "academic_year": "2026-27",
+                "lifecycle_status": "SUBMITTED",
+                "pipeline_status": "NOT_STARTED",
+                "declared_data": {
+                    "institution_name": "Riverstone College of Engineering",
+                    "institution_identifier": "VAI-I-005",
+                    "certificate_number": "CERT-RCE-2026-05",
+                    "certificate_expiry_date": "2027-06-30",
+                    "programme_name": "Electrical & Electronics Engineering",
+                    "approved_intake": 90,
+                },
+                "created_by": "USR-ADMIN-VERITY",
+                "data_origin": "SYNTHETIC_DEMO",
+            },
+            {
+                "id": "APP-2026-0015",
+                "application_reference": "VAI-2026-0015",
+                "institution_id": "INS-0006",
+                "category_code": "EOA_ILLUSTRATIVE",
+                "academic_year": "2026-27",
+                "lifecycle_status": "SUBMITTED",
+                "pipeline_status": "NOT_STARTED",
+                "declared_data": {
+                    "institution_name": "Summit Institute of Management and Technology",
+                    "institution_identifier": "VAI-I-006",
+                    "certificate_number": "CERT-SIM-2026-06",
+                    "certificate_expiry_date": "2029-03-31",
+                    "programme_name": "Management Information Systems",
+                    "approved_intake": 120,
+                },
+                "created_by": "USR-ADMIN-VERITY",
+                "data_origin": "SYNTHETIC_DEMO",
+            },
         ]
 
         for app_data in apps_data:
-            existing_app = db.scalar(select(Application).where(Application.id == app_data["id"]))
+            existing_app = db.scalar(
+                select(Application).where(
+                    (Application.id == app_data["id"])
+                    | (Application.application_reference == app_data["application_reference"])
+                )
+            )
             if not existing_app:
                 app = Application(**app_data)
                 db.add(app)
@@ -494,7 +695,14 @@ def seed_database():
 
         # 8. Seed Baseline Application Versions (v1)
         for app_spec in apps_data:
-            get_application_versions(db, app_spec["id"])
+            app_record = db.scalar(
+                select(Application).where(
+                    (Application.id == app_spec["id"])
+                    | (Application.application_reference == app_spec["application_reference"])
+                )
+            )
+            if app_record:
+                get_application_versions(db, app_record.id)
 
         db.commit()
         print("✅ Seeding completed successfully. Ready for demonstration!")

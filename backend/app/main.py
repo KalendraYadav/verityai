@@ -1,3 +1,5 @@
+import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -5,6 +7,31 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.core.config import settings
 from app.api.v1.router import api_router
+from app.db.session import SessionLocal, engine
+from app.db.base import Base
+from app.services.scrutiny_job import reconcile_abandoned_scrutiny_jobs
+
+logger = logging.getLogger("verityai")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Ensure all declared tables (including new integration tables) exist
+    Base.metadata.create_all(bind=engine)
+
+    # Startup: Reconcile any scrutiny jobs interrupted by server restart/shutdown
+    db = SessionLocal()
+    try:
+        reconciled = reconcile_abandoned_scrutiny_jobs(db)
+        if reconciled > 0:
+            logger.info("Startup reconciliation: marked %d abandoned scrutiny jobs as FAILED.", reconciled)
+    except Exception as exc:
+        logger.warning("Startup scrutiny job reconciliation encountered an error: %s", exc)
+    finally:
+        db.close()
+    yield
+    # Shutdown logic if needed
+
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -12,6 +39,7 @@ app = FastAPI(
     description="VerityAI AI-Powered Application Validation & Compliance Verification Platform",
     docs_url="/docs",
     openapi_url=f"{settings.API_V1_PREFIX}/openapi.json",
+    lifespan=lifespan,
 )
 
 # Standardized error handlers conforming to docs/DATA_MODEL_AND_API.md
@@ -88,6 +116,7 @@ if settings.ALLOWED_ORIGINS:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.ALLOWED_ORIGINS,
+        allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$",
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["*"],

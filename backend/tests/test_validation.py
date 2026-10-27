@@ -558,6 +558,12 @@ def test_api_list_validation_rules(client: TestClient, base_fixtures):
 def test_api_trigger_and_get_summary(client: TestClient, base_fixtures):
     """POST /applications/{id}/validate and GET /applications/{id}/validation-summary."""
     app = base_fixtures["app"]
+    user = base_fixtures["user"]
+
+    from app.core.security import create_access_token
+    token = create_access_token(user.id, user.role, user.email)
+    client.cookies.set("access_token", token)
+    client.headers["X-Requested-With"] = "VerityAI"
 
     # Trigger validation
     post_res = client.post(
@@ -593,6 +599,12 @@ def test_api_trigger_and_get_summary(client: TestClient, base_fixtures):
 
 def test_api_nonexistent_application_404(client: TestClient, base_fixtures):
     """Triggering validation on nonexistent application returns 404."""
+    user = base_fixtures["user"]
+    from app.core.security import create_access_token
+    token = create_access_token(user.id, user.role, user.email)
+    client.cookies.set("access_token", token)
+    client.headers["X-Requested-With"] = "VerityAI"
+
     fake_id = str(uuid.uuid4())
     res = client.post(f"/api/v1/applications/{fake_id}/validate")
     assert res.status_code == 404

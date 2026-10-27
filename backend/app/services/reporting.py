@@ -259,8 +259,9 @@ def get_application_review_summary(db: Session, application_id: str) -> Optional
         "evidence_items": evidence_items,
         "recommended_actions": recommendations,
         "disclaimer": (
-            "VerityAI Decision Support Layer: Automated validation results and AI-assisted findings "
-            "are advisory only. Final regulatory determinations must be made by authorized human reviewers."
+            "VerityAI Decision Support Layer: Illustrative Prototype Rules — Results are generated using a limited demonstration rule set "
+            "and must not be treated as official AICTE compliance determinations. "
+            "Final decisions require verification against applicable regulations and authorized records."
         ),
     }
 
@@ -339,16 +340,23 @@ def generate_scrutiny_pdf(db: Session, application_id: str, actor_id: Optional[s
     y += 75
 
     # 2. Disclaimer Banner
-    current_page.draw_rect(fitz.Rect(30, y, 565, y + 36), fill=(0.98, 0.98, 0.98), color=(0.88, 0.26, 0.22), width=1) # Red border
+    current_page.draw_rect(fitz.Rect(30, y, 565, y + 46), fill=(0.98, 0.98, 0.98), color=(0.88, 0.26, 0.22), width=1) # Red border
     current_page.insert_text(fitz.Point(40, y + 14), "ADVISORY NOTICE — HUMAN REVIEW REQUIRED", fontsize=9, color=(0.88, 0.26, 0.22), fontname="helv")
     current_page.insert_text(
-        fitz.Point(40, y + 27),
-        "This document is an AI-assisted decision-support report. It does not constitute official approval or confirmed fraud.",
-        fontsize=8,
+        fitz.Point(40, y + 26),
+        "Illustrative Prototype Rules — Results are generated using a limited demonstration rule set and must not be treated as",
+        fontsize=7.5,
         color=(0.3, 0.3, 0.3),
         fontname="helv",
     )
-    y += 48
+    current_page.insert_text(
+        fitz.Point(40, y + 36),
+        "official AICTE compliance determinations. Final decisions require verification against applicable regulations and authorized records.",
+        fontsize=7.5,
+        color=(0.3, 0.3, 0.3),
+        fontname="helv",
+    )
+    y += 58
 
     # 3. Scrutiny Metrics Summary Box
     check_space(55)
@@ -434,6 +442,16 @@ def generate_scrutiny_pdf(db: Session, application_id: str, actor_id: Optional[s
     doc.save(file_path)
     file_size = os.path.getsize(file_path)
 
+    raw_snapshot = {
+        "application_id": summary["application_id"],
+        "application_status": summary["application_status"],
+        "documents_summary": summary["documents_summary"],
+        "validation_summary": summary["validation_summary"],
+        "anomaly_summary": summary["anomaly_summary"],
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+    serialized_snapshot = json.loads(json.dumps(raw_snapshot, default=str))
+
     # Persist ScrutinyReport model
     report_record = ScrutinyReport(
         id=report_id,
@@ -443,14 +461,7 @@ def generate_scrutiny_pdf(db: Session, application_id: str, actor_id: Optional[s
         format="PDF",
         storage_path=file_path,
         file_size_bytes=file_size,
-        summary_snapshot={
-            "application_id": summary["application_id"],
-            "application_status": summary["application_status"],
-            "documents_summary": summary["documents_summary"],
-            "validation_summary": summary["validation_summary"],
-            "anomaly_summary": summary["anomaly_summary"],
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        },
+        summary_snapshot=serialized_snapshot,
     )
     db.add(report_record)
 

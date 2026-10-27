@@ -1,0 +1,232 @@
+PDF_Page,Printed_Page,Section,Title_or_Topic,Content_Type,Requirements_Count,Extraction_Method,Extraction_Confidence,Review_Status,Notes_and_Issues
+1,,Cover,Approval Process Handbook 2024-25 to 2026-27,Visual Image,0,Native OCR,High,EXAMINED,Front Cover featuring Baudhayana
+2,,Inside Cover,Decorative Mandala Motif,Visual Graphic,0,Visual Inspection,High,EXAMINED,Blank / decorative page
+3,,Title Page,Approval Process Handbook 2024-25 to 2026-27,Title / Meta,0,Native Text,High,EXAMINED,Official AICTE emblem and address
+4,,Legal Status,Statutory Authority under AICTE Act 1987 & Regulations,Statutory Text,8,Native Text,High,EXAMINED,Lists 8 governing statutory regulations
+5,i,Foreword,Chairman Foreword - National Education Policy 2020 Context,Statutory Text,3,Native Text,High,EXAMINED,Snippet of 15 major reforms
+6,ii,Foreword,Chairman Foreword - Continuation of Reforms & Digital ID,Statutory Text,12,Native Text,High,EXAMINED,BCA/BBA/BMS under AICTE; Off-Campus; APAAR/ABC ID
+7,iii,Message,Vice Chairman Message - Single Window Approvals,Executive Text,0,Native Text,High,EXAMINED,Contextual policy support
+8,iv,Message,Member Secretary Message - NEP Alignment & Skilling,Executive Text,0,Native Text,High,EXAMINED,Contextual policy support
+9,v,Index,Corpus Table of Contents,Index / Metadata,0,Native Text,High,EXAMINED,Full structural chapter index (Chapters I to VIII Annex 1-18)
+10,vi,Abbreviations,List of Official Abbreviations (A-M),Glossary,0,Native Text,High,EXAMINED,Statutory acronym dictionary (ACA to M.Tech)
+11,vii,Abbreviations,List of Official Abbreviations (M-X),Glossary,0,Native Text,High,EXAMINED,Statutory acronym dictionary (NAAC to XAT)
+12,viii,Definitions,Statutory Definitions (Clauses 1 to 25),Legal Definitions,25,Native Text,High,EXAMINED,Defines Academic Year Approved Intake Division etc.
+13,ix,Definitions,Statutory Definitions (Clauses 26 to 36),Legal Definitions,11,Native Text,High,EXAMINED,Defines Division seat ceilings EoA EVC etc.
+14,x,Definitions,Statutory Definitions (Clauses 37 to 54),Legal Definitions,18,Native Text,High,EXAMINED,Defines Lateral Entry ODL OL Standalone SAC SCSC
+15,xi,Definitions,Statutory Definitions (Clauses 55 to 63),Legal Definitions,9,Native Text,High,EXAMINED,Defines SHC Supernumerary seats Technical Institution Trust
+16,xii,Preamble,AICTE Act 1987 Statutory Powers & Mandates,Legal Text,8,Native Text,High,EXAMINED,Cites Section 10(g) 10(i) 10(k) 10(n) 10(p) 11(1-4)
+17,1,Chapter I,1.1-1.3 Grant of Approval for New Institution,Statutory Rules,8,Native Text,High,EXAMINED,Mandatory NSWS online filing; Prior approval requirement
+18,2,Chapter I,1.3.3-1.4.1 Eligibility of Promoters & NSW Portal,Statutory Rules,6,Native Text,High,EXAMINED,Trust/Society/Sec 8 Company eligibility; Rs 6000 portal fee
+19,3,Chapter I,1.4.2 Technical Education Regulatory (TER) Charges,Table 1.1,5,Native Text,High,EXAMINED,TER Charges Table 1.1; 10% annual escalation
+20,4,Chapter I,1.4.3-1.5.2 Mandatory DSC & New Institution Criteria,Statutory Rules,7,Native Text,High,EXAMINED,Mandatory Digital Signature; Affidavit 2 on Rs 100 stamp
+21,5,Chapter I,1.5.3-1.6 Required Fund Position (Table 1.2) & Names,Table 1.2,6,Native Text,High,EXAMINED,Minimum operational FDRs (Rs 100L / 50L); Name restrictions
+22,6,Chapter I,1.7 Intake & Division Ceilings (Table 1.3),Table 1.3,7,Native Text,High,EXAMINED,Intake & division caps across Diploma UG PG
+23,7,Chapter I,1.7-1.8 Scrutiny & Re-Scrutiny Evaluation Committee,Statutory Workflow,9,Native Text,High,EXAMINED,Annexure-7 web selection; 2 promoter representatives
+24,8,Chapter I,1.9-1.10 Expert Visit Committee (EVC) & LoA/LoR,Statutory Workflow,8,Native Text,High,EXAMINED,Online/Physical EVC (30-min video); LoA 2-year validity
+25,9,Chapter I,1.11 Standing Appellate Committee (SAC) Appeal,Statutory Workflow,7,Native Text,High,EXAMINED,Appeal within 7 days of LoD; Affidavit 3 for Security Deposit
+26,10,Chapter I,1.12 Security Deposit Requirements (Table 1.4),Table 1.4,5,Native Text,High,EXAMINED,Security Deposit Table 1.4; 10-year lock-in period
+27,11,Chapter II,2.1 Grant of Extension of Approval (EoA) Overview,Statutory Scope,17,Native Text,High,EXAMINED,17 EoA categories; 3-year EoA eligibility criteria
+28,12,Chapter II,2.2-2.3 Submission of EoA Application & TER Charges,Statutory Rules,5,Native Text,High,EXAMINED,Annual web portal submission; 30-year land lease rule
+29,13,Chapter II,2.3.2 TER Charges for Existing Institutions (Table 2.1),Table 2.1,8,Native Text,High,EXAMINED,TER Charges breakdown per division & application type
+30,14,Chapter II,2.3.3 Data Entry & Deficiency Report Generation,Statutory Rules,5,Native Text,High,EXAMINED,Online deficiency report; One-time reopening rule
+31,15,Chapter II,2.3.4-2.5 Documents for EoA & Self-Disclosure,Statutory Rules,8,Native Text,High,EXAMINED,Annexure-2 documents; Random EVC; Fraud criminal cases
+32,16,Chapter II,2.6 Increase in Intake & Regional Language Courses,Statutory Rules,8,Native Text,High,EXAMINED,Core branch ratio; Architect plan; FSR compliance
+33,17,Chapter II,2.6-2.7 Working Professionals Seats & New Programmes,Statutory Rules,7,Native Text,High,EXAMINED,15/30/60 supernumerary seats; Aspirational districts
+34,18,Chapter II,2.8-2.9 NRI & Supernumerary Seats (FN/OCI/Gulf),Statutory Rules,9,Native Text,High,EXAMINED,5% NRI quota; 15% supernumerary FN/OCI quota
+35,19,Chapter II,2.9-2.10 Study in India Fee Waiver & Integrated Courses,Statutory Rules,8,Native Text,High,EXAMINED,FRRO registration; 1/3 Gulf reservation; Integrated MTech/MBA
+36,20,Chapter II,2.11 Off-Campus Establishment Regulations,Statutory Rules,6,Native Text,High,EXAMINED,10-year existence; NIRF/NBA/NAAC criteria; Same city only
+37,21,Chapter II,2.12-2.13 Fellow Programme in Management & Mergers,Statutory Rules,10,Native Text,High,EXAMINED,FPM 3-5 years; 20 seat cap; Multidisciplinary merger rules
+38,22,Chapter II,2.13.1 Merger Rules under Same Trust/Society,Statutory Rules,12,Native Text,High,EXAMINED,Parent/Child campus rules; No intra-day student movement
+39,23,Chapter II,2.13.2-2.14 Conversion of Diploma into Degree & vice-versa,Statutory Rules,11,Native Text,High,EXAMINED,Minimum 5 years existence; Annexure-11 nomenclature
+40,24,Chapter II,2.15-2.16 Women's to Co-Ed & Hibernation of Intake,Statutory Rules,10,Native Text,High,EXAMINED,Conversion rules; Hibernation period = course duration - 1
+41,25,Chapter II,2.16.2-2.18 Restoration of Intake & Change of Site,Statutory Rules,10,Native Text,High,EXAMINED,6-year cap on break in EoA; Relocation during vacation
+42,26,Chapter II,2.18-2.20 Name/Trust Changes & Closure with Zero Intake,Statutory Rules,10,Native Text,High,EXAMINED,Zero intake for deficient closures; Dispute withholding
+43,27,Chapter II,2.21 Closure of Institution Procedures,Statutory Rules,9,Native Text,High,EXAMINED,Progressive vs Complete closure; Affidavit 4; SD penalty
+44,28,Chapter II,2.22 Processing Periods for Application Types (Table 2.2),Table 2.2,2,Native Text,High,EXAMINED,Public notice period vs Year-round application categories
+45,29,Chapter II,2.23-2.24 Processing Stages & Standing Hearing Committee,Statutory Workflow,6,Native Text,High,EXAMINED,Scrutiny -> EVC -> SHC -> EC -> SAC appeal flow
+46,30,Chapter II,Table 2.3 Evaluation Steps per Application Type,Table 2.3,1,Native Text,High,EXAMINED,Matrix of Scrutiny EVC SHC SAC steps for 21 application types
+47,31,Chapter II,2.25 Grant of Approval & Deficiency Compliances,Statutory Rules,8,Native Text,High,EXAMINED,Executive Committee approval; Student enrolment by Nov 30
+48,32,Chapter II,2.26-2.28 Unapproved Institutions & Do's/Don'ts Reference,Statutory Rules,6,Native Text,High,EXAMINED,Punitive action under Chapter VII; Online verification validity
+49,33,Chapter III,3.1-3.2 Collaboration & Twinning Programme Regulations,Statutory Rules,7,Native Text,High,EXAMINED,Student Exchange; Twinning 40% credit cap; Joint Degrees
+50,34,Chapter III,3.2 Partner University Eligibility Criteria,Statutory Rules,5,Native Text,High,EXAMINED,QS Top 1000 or NIRF Top 200 or NBA 650 or NAAC 3.01
+51,35,Chapter III,3.3-3.4 TER Charges (Table 3.1) & Scrutiny Procedure,Table 3.1,4,Native Text,High,EXAMINED,TER Rs 12L intro / 6L cont; Bipartite MoUs mandatory
+52,36,Chapter III,3.5-3.6 Annual Reporting & Fee Regulations,Statutory Rules,8,Native Text,High,EXAMINED,No lateral entry in Twinning; State Govt fee notification
+53,37,Chapter IV,4.1-4.2 Grant of Approval for Universities,Statutory Rules,7,Native Text,High,EXAMINED,Central State Deemed-to-be Private; 3-year EoA norms
+54,38,Chapter IV,4.3-4.4 University Eligibility & Campuses,Statutory Rules,6,Native Text,High,EXAMINED,Multiple campuses rule; All technical courses mandatory
+55,39,Chapter IV,4.5 TER Charges for Universities (Table 4.1),Table 4.1,4,Native Text,High,EXAMINED,TER Rs 10L private / 2L govt; Supreme Court CA 17869/2017
+56,40,Chapter IV,4.6-4.7 Built-Up Area & Graded Autonomy Category I/II,Statutory Rules,7,Native Text,High,EXAMINED,UGC Graded Autonomy 2018; Name restrictions
+57,41,Chapter IV,4.7 Evaluation of University Applications,Statutory Rules,6,Native Text,High,EXAMINED,NAAC score letter; Affidavits 2 & 5; Off-Campus UGC NOC
+58,42,Chapter IV,4.8-4.11 University Security Deposit Exemption & Norms,Statutory Rules,7,Native Text,High,EXAMINED,Exemptions for govt & >10yr private; 10-year lock-in
+59,43,Chapter IV,4.12-4.19 University Governance & Annual Updates,Statutory Rules,8,Native Text,High,EXAMINED,Annual portal update; BoG/BoM minutes on website
+60,44,Chapter IV,4.20-4.23 Mandatory Disclosures & Institute of Eminence,Statutory Rules,5,Native Text,High,EXAMINED,IoE exemptions; Penal actions for unapproved technical courses
+61,45,Chapter V,5.1-5.2 Open & Distance Learning (ODL) / Online Learning (OL),Statutory Rules,7,Native Text,High,EXAMINED,Permitted PG courses: Management MCA AI Cyber Security
+62,46,Chapter V,5.3 ODL/OL Academic & Administrative Staffing (Table 5.1),Table 5.1,5,Native Text,High,EXAMINED,Professor Head per discipline; Staffing up to 5000 students
+63,47,Chapter V,5.3.4 Learner Support Centre Infrastructure (Table 5.2/5.3),Table 5.2/5.3,6,Native Text,High,EXAMINED,Min 150 sq m per LSC; 300 Mbps internet; Barrier-free norms
+64,48,Chapter V,5.3.5-5.3.7 ODL Academic Norms & FSR 1:30,Statutory Rules,7,Native Text,High,EXAMINED,FSR 1:30; LMS mandatory; Admissions in July and January
+65,49,Chapter V,Table 5.4 Approved ODL/OL Degree Nomenclatures,Table 5.4,6,Native Text,High,EXAMINED,BBA/BMS MBA BCA MCA PGD; Academic Bank of Credit
+66,50,Chapter V,5.3.8-5.3.9 ODL/OL Approval Criteria & TER Charges (Table 5.5),Table 5.5,5,Native Text,High,EXAMINED,NIRF Top 200 or NAAC 3.01+; TER Rs 10L new / 2L EoA
+67,51,Chapter V,5.3.10-5.3.11 Approval Procedure & Headquarters Visit,Statutory Workflow,6,Native Text,High,EXAMINED,Scrutiny & EVC for HQ; Affidavit for DEC/UGC compliance
+68,,Blank Separator,Decorative Graphic,Visual Graphic,0,Visual Inspection,High,EXAMINED,Blank / decorative page
+69,53,Chapter VI,6.1-6.7 Standard Norms - Academic Calendar & Nomenclature,Statutory Norms,8,Native Text,High,EXAMINED,Academic calendar; Working professionals flexible mode
+70,54,Chapter VI,6.8-6.13 Minor Degrees, SWAYAM & Low Enrollment Reductions,Statutory Norms,7,Native Text,High,EXAMINED,18-20 minor credits; 40% SWAYAM MOOCs; 50% cut if <30% intake
+71,55,Chapter VI,6.14 Faculty Requirements & Cadre Ratio Overview,Statutory Norms,6,Native Text,High,EXAMINED,ECS bank salary payment; No retention of original certificates
+72,56,Chapter VI,6.14-6.17 Faculty Pay Scales, Biometric & Land Title (30yr),Statutory Norms,8,Native Text,High,EXAMINED,AICTE Pay Scales 2019; Aadhaar/PAN; 30-year clear title lease
+73,57,Chapter VI,6.17-6.26 Contiguous Land, Building Completion & Fire Safety,Statutory Norms,12,Native Text,High,EXAMINED,Max 3 plots within 2km; Occupancy cert; Fire Safety cert
+74,58,Chapter VI,6.27-6.38 BoG, Fees, Capitation Prohibition & 10% EWS,Statutory Norms,11,Native Text,High,EXAMINED,No capitation fee; 10% EWS reservation (1.25x intake multiplier)
+75,59,Chapter VI,6.39-6.42 Tuition Fee Waiver (TFW 5%) Scheme,Statutory Norms,8,Native Text,High,EXAMINED,Mandatory 5% supernumerary TFW; Income limit Rs 8.00 Lakh
+76,60,Chapter VI,6.43-6.44 PM-USPY (J&K 2 seats) & Gifted Children Seats,Statutory Norms,6,Native Text,High,EXAMINED,Supernumerary J&K seats; Gifted Children (2 per college)
+77,61,Chapter VI,6.45-6.46 Fee Refund Policy & Security Deposit Release,Statutory Norms,6,Native Text,High,EXAMINED,Max Rs 1000 processing fee deduction; 7-day refund window
+78,62,Chapter VI,6.47 Essential Requirements - Anti-Ragging Committee,Statutory Mandates,6,Native Text,High,EXAMINED,Mandatory Anti-Ragging Committee Squad & CCTV vital points
+79,63,Chapter VI,6.48 Internal Committee (IC) Gender Sensitization,Statutory Mandates,6,Native Text,High,EXAMINED,Section 4 AICTE 2016 Regulations; Annual report by June 30
+80,64,Chapter VI,6.49-6.50 SC/ST Committee & Grievance Redressal (SGRC),Statutory Mandates,6,Native Text,High,EXAMINED,SC/ST Committee (5 members); Ombudsman appointment
+81,65,Chapter VI,6.50 Student Grievance Redressal Committee Composition,Statutory Mandates,5,Native Text,High,EXAMINED,SGRC 15-day resolution window; Ombudsman eligibility
+82,66,Chapter VI,6.50 Ombudsman Powers & Non-Compliance Penalties,Statutory Mandates,5,Native Text,High,EXAMINED,30-day appeal resolution; Public notice for non-compliance
+83,67,Chapter VI,6.51-6.53 Institution Innovation Council (IIC) & ABC,Statutory Mandates,6,Native Text,High,EXAMINED,Mandatory IIC certificate; Academic Bank of Credit; FSSAI
+84,68,Chapter VI,6.53-6.54 Women Helpline, Insurance & Desirable Requirements,Statutory Mandates,8,Native Text,High,EXAMINED,24x7 women helpline; Internships; Solar rooftop; IDEA lab
+85,69,Chapter VI,6.54 Desirable Facilities & Binding AICTE/UGC Circulars,Statutory Mandates,5,Native Text,High,EXAMINED,Rainwater harvesting; Sanitary napkin vending & incinerator
+86,70,Chapter VII,7.1-7.3 Penal Actions on Violation of AICTE Norms,Penal Codes,8,Native Text,High,EXAMINED,Fine, intake cut, no admission, withdrawal of approval
+87,71,Chapter VII,7.4 Specific Penal Actions (Faculty, Land, Principal, Excess),Penal Codes,8,Native Text,High,EXAMINED,No qualified Principal for >12 months; Excess admission fine 5x
+88,72,Chapter VII,7.4-7.5 Excess Fee, Retaining Certificates & Twinning Penalties,Penal Codes,7,Native Text,High,EXAMINED,Full fee refund; Withholding approval; Visa revocation notice
+89,73,Chapter VII,7.6-7.10 Fee Refund Violations & Standing Complaint Scrutiny,Penal Codes,6,Native Text,High,EXAMINED,10% FDR penalty; Fake caste certificate action; SCSC procedure
+90,74,Chapter VII,7.11-7.13 Restoration Procedure & Grievance Reporting,Penal Codes,5,Native Text,High,EXAMINED,Online application for restoration; Monthly grievance update
+91,75,Chapter VIII,Do's and Don'ts for Applicants and Institutions,Guidelines,15,Native Text,High,EXAMINED,No hard copy; Digital payment only; Shared campus boundary rules
+92,,Blank Separator,Decorative Graphic,Visual Graphic,0,Visual Inspection,High,EXAMINED,Blank / decorative page
+93,77,Annexure 1,Documents for Setting up New Technical Institution,Checklist,12,Native Text,High,EXAMINED,Certificate 1 & 2; Affidavit 2; 30-year land lease deed
+94,78,Annexure 1,Private Lease of Land & Building Requirements,Checklist,8,Native Text,High,EXAMINED,Encumbrance cert; Land conversion; Fire safety; Working capital
+95,79,Annexure 1,Documents to be Submitted to Expert Visit Committee (EVC),Checklist,9,Native Text,High,EXAMINED,Newspaper ad; 30-minute video on YouTube; Stock registers
+96,80,Annexure 1,Documents for Closure & Section 8 Companies,Checklist,12,Native Text,High,EXAMINED,Format 2 NOC; Staff salary sheet; Sec 8 non-profit clause
+97,81,Annexure 2,Documents for Existing Institutions (EoA / Break in EoA),Checklist,7,Native Text,High,EXAMINED,Affidavit 2; Occupancy cert; Structural stability; Fire cert; Satellite map
+98,82,Annexure 2,Documents for NRI Seats, Mergers, Increase in Intake,Checklist,8,Native Text,High,EXAMINED,Format 3 resolution; Affidavit 8; PhD faculty proof
+99,83,Annexure 2,Documents for Progressive / Complete Closure & University,Checklist,8,Native Text,High,EXAMINED,Affidavit 4; University NOC; Student re-arrangement ledger
+100,84,Annexure 2,Documents for Bank Details & Trust Changes,Checklist,8,Native Text,High,EXAMINED,Affidavit 9 & 10; Charity Commissioner approval; Conveyance deed
+101,85,Annexure 2,Documents for Collaboration / Twinning & Off-Campus,Checklist,7,Native Text,High,EXAMINED,Foreign university degree equivalency; Bipartite MoU; Affidavit 11
+102,86,Annexure 3,Norms for Land Requirements (FSI/FAR Based),Infrastructure Norms,9,Native Text,High,EXAMINED,Calculated on FSI/FAR; Max 3 plots within 2km; Safe foundation
+103,87,Annexure 3,Minimum Built-Up Area & Instructional Area (Engg/Tech),Schedule Tables,8,Native Text,High,EXAMINED,Formula INA+ADA+AMA+25% ACA; Classrooms 66/33 sq m; Labs 66 sq m
+104,88,Annexure 3,Instructional Area: Planning & Applied Arts,Schedule Tables,8,Native Text,High,EXAMINED,Studios 120 sq m; Workshop 120 sq m; Library 150 sq m
+105,89,Annexure 3,Instructional Area: Design, HMCT, MCA, Management,Schedule Tables,8,Native Text,High,EXAMINED,Computer centre 150 sq m; Classrooms 66 sq m; Seminar 132 sq m
+106,90,Annexure 3,Administrative (750 sq m) & Amenities (500 sq m) Norms,Infrastructure Norms,6,Native Text,High,EXAMINED,Carpet area 1.1 sq m/student; Admin min 750 sq m; Amenities 500 sq m
+107,91,Annexure 3,Circulation Area (25%) & Municipal FSI Adherence,Infrastructure Norms,4,Native Text,High,EXAMINED,25% ACA for corridors stairs; Adequate toilets ladies/gents
+108,92,Annexure 4,Norms for Computers, Software & Internet Bandwidth,Equipment Norms,10,Native Text,High,EXAMINED,PC ratios 1:10 UG, 1:4 PG; Bandwidth 100Mbps to 1Gbps; 5% printers
+109,93,Annexure 4,Norms for Library Books, Titles, Volumes & Reading Room,Library Norms,8,Native Text,High,EXAMINED,First year titles (50-100); 5x volumes; 15% reading seating
+110,94,Annexure 4,Digital Library, e-Books (66%) & Scopus Journals,Library Norms,8,Native Text,High,EXAMINED,66% e-books; NDL membership; 6xN Scopus journals for UG/PG
+111,95,Annexure 5,Faculty Requirements & Cadre Ratio (Diploma & UG),Staffing Formula,7,Native Text,High,EXAMINED,Cadre ratio 1:2:6; FSR Engg 1:20 UG; Formula S/(20*R)
+112,96,Annexure 5,Faculty Requirements & Cadre Ratio (Post Graduate),Staffing Formula,6,Native Text,High,EXAMINED,PG FSR 1:15 Engg, 1:20 MBA/MCA; 25% cut if enrollment <=50%
+113,97,Annexure 6,Norms for PGDM/PGCM - Entrance Tests & Scoring,Programme Norms,10,Native Text,High,EXAMINED,CAT/XAT/CMAT 35-60%; GD/PI 20-45%; Academic record 5-25%
+114,98,Annexure 6,PGDM Curriculum, Academic Calendar & Refund Policy,Programme Norms,8,Native Text,High,EXAMINED,Calendar March 1 to June 30; Max Rs 1000 deduction; BoG Annex 17
+115,99,Annexure 6,PGDM Graded Autonomy Categories & Consolidation,Programme Norms,5,Native Text,High,EXAMINED,Category I/II/III; Centralized admission and exam for same Trust
+116,100,Annexure 7,Process Flow Chart for Establishment of New Institution,Workflow Diagram,0,Visual Flowchart,High,EXAMINED,LoA / LoR decision tree through Scrutiny, EVC, SHC, EC, Council
+117,101,Annexure 8,National Credit Framework (NCrF) Levels (3.0 to 8.0),Credit Framework,10,Native Text,High,EXAMINED,Exit qualifications at 10th, 1st yr, 2nd yr, 3rd yr, 4th yr, PG, PhD
+118,102,Annexure 8,Duration & Entry Qualifications for Diploma & Lateral Entry,Eligibility Rules,5,Native Text,High,EXAMINED,Diploma 3 yrs (10th pass); Lateral Entry 2 yrs (10+2 / ITI)
+119,103,Annexure 8,Under Graduate Degree Eligibility (45% General / 40% Res),Eligibility Rules,6,Native Text,High,EXAMINED,4-year BE/BTech (10+2 with Physics/Maths + subject from Table 8.4)
+120,104,Annexure 8,Under Graduate Lateral Entry to 2nd / 3rd / Final Year,Eligibility Rules,5,Native Text,High,EXAMINED,Diploma holder 45% -> 2nd yr; B.Voc holder -> 3rd/final yr
+121,105,Annexure 8,Post Graduate Degree Duration & Eligibility (50% / 45%),Eligibility Rules,7,Native Text,High,EXAMINED,2-year ME/MTech; 2-year MCA (Maths at 10+2 or Graduation)
+122,106,Annexure 8,MCA & MBA Lateral Entry and PGDM Eligibility,Eligibility Rules,6,Native Text,High,EXAMINED,2-year MBA; 18-month Exec PGDM (5 yrs exp); BCA -> MCA 2nd yr
+123,107,Annexure 8,Table 8.4 Mandatory 10+2 Subjects per Engineering Discipline,Schedule Tables,29,Native Text,High,EXAMINED,Discipline-wise 10+2 subjects (Aeronautical, Civil, CSE, Mech, etc.)
+124,108,Annexure 8,Table 8.4 (Contd) & Integrated / Dual Degree Eligibility,Schedule Tables,8,Native Text,High,EXAMINED,5-year Integrated MTech/MBA eligibility (45% general / 40% reserved)
+125,109,Annexure 8,Fellow Programme in Management & SAMVAY Framework,Eligibility Rules,4,Native Text,High,EXAMINED,FPM 3-5 years; Credit framework for vocational mobility
+126,110,Annexure 8,Comprehensive Summary of Entry Qualifications,Summary Table,10,Native Text,High,EXAMINED,Consolidated matrix from Diploma to Executive PGDM
+127,111,Annexure 9,MBA/PGDM in IEV (Innovation & Venture Development),Programme Norms,5,Native Text,High,EXAMINED,Incubation SPV with 3 years operation; 30 student cohort
+128,112,Annexure 10,Undertaking for Student Induction, Exam Reforms & Internship,Statutory Format,6,Letterhead Format,High,EXAMINED,Mandatory 6-point declaration on institutional letterhead
+129,113,Annexure 11,11.1 Approved Diploma Course Nomenclature (A - C),Master Taxonomy,60,Native Text,High,EXAMINED,Official AICTE course names (3D Animation to Computer Science)
+130,114,Annexure 11,11.1 Approved Diploma Course Nomenclature (C - D),Master Taxonomy,60,Native Text,High,EXAMINED,Official AICTE course names (Construction to Cyber Security)
+131,115,Annexure 11,11.1 Approved Diploma Course Nomenclature (D - I),Master Taxonomy,60,Native Text,High,EXAMINED,Official AICTE course names (Dairy to Information Technology)
+132,116,Annexure 11,11.1 Approved Diploma Course Nomenclature (I - M),Master Taxonomy,60,Native Text,High,EXAMINED,Official AICTE course names (Instrumentation to Marine)
+133,117,Annexure 11,11.1 Approved Diploma Course Nomenclature (M - T),Master Taxonomy,60,Native Text,High,EXAMINED,Official AICTE course names (Mechanical to Textile)
+134,118,Annexure 11,11.2 Post Diploma Courses & Diploma (T - W),Master Taxonomy,45,Native Text,High,EXAMINED,Tool & Die to Wood Tech; Post Diploma specializations
+135,119,Annexure 11,11.3 Under Graduate Engineering Nomenclature (A - C),Master Taxonomy,70,Native Text,High,EXAMINED,Additive Manufacturing to Cyber Physical Systems
+136,120,Annexure 11,11.3 Under Graduate Engineering Nomenclature (D - I),Master Taxonomy,70,Native Text,High,EXAMINED,Dairy to Industrial Internet of Things
+137,121,Annexure 11,11.3 Under Graduate Engineering Nomenclature (M - T),Master Taxonomy,70,Native Text,High,EXAMINED,Manufacturing to Transportation Engineering
+138,122,Annexure 11,11.4 Minor / Honours Degree in Emerging Areas,Specialization Rules,25,Native Text,High,EXAMINED,AI/ML, Blockchain, Cyber Security, Robotics, 3D Printing, IoT
+139,123,Annexure 11,11.4 Minor/Hons (Contd) & 11.5 PG Diploma / Certificate,Master Taxonomy,25,Native Text,High,EXAMINED,VLSI, 5G, Smart Cities; PG Diploma specializations
+140,124,Annexure 11,11.6 Post Graduate Degree Nomenclature (A - C),Master Taxonomy,80,Native Text,High,EXAMINED,Master of Engineering specializations (AI to Civil)
+141,125,Annexure 11,11.6 Post Graduate Degree Nomenclature (C - E),Master Taxonomy,80,Native Text,High,EXAMINED,Computer Science specializations to Electrical
+142,126,Annexure 11,11.6 Post Graduate Degree Nomenclature (E - G),Master Taxonomy,80,Native Text,High,EXAMINED,Electronics & Communication to Geotechnical
+143,127,Annexure 11,11.6 Post Graduate Degree Nomenclature (G - M),Master Taxonomy,80,Native Text,High,EXAMINED,Green Energy to Manufacturing Systems
+144,128,Annexure 11,11.6 Post Graduate Degree Nomenclature (M - P),Master Taxonomy,80,Native Text,High,EXAMINED,Mechanical Engineering to Power Systems
+145,129,Annexure 11,11.6 Post Graduate Degree Nomenclature (P - T),Master Taxonomy,80,Native Text,High,EXAMINED,Production to Thermal Science Engineering
+146,130,Annexure 11,11.6 PG (V - W) & 11.7-11.8 Planning UG / PG,Master Taxonomy,40,Native Text,High,EXAMINED,VLSI, Wireless, Urban & Regional Planning, Housing
+147,131,Annexure 11,11.9-11.11 Applied Arts & Crafts and Design (UG/Diploma),Master Taxonomy,45,Native Text,High,EXAMINED,Animation, Fashion, Fine Arts, Visual Effects
+148,132,Annexure 11,11.12-11.14 PG Applied Arts & Crafts and Design,Master Taxonomy,40,Native Text,High,EXAMINED,Industrial Design, Interaction Design, User Experience
+149,133,Annexure 11,11.15-11.19 HMCT, BCA, MCA, BBA & Management (A - D),Master Taxonomy,45,Native Text,High,EXAMINED,Hotel Management, BCA, MCA, BBA, Agribusiness, Analytics
+150,134,Annexure 11,11.19 (Contd) Management Specializations (D - W),Master Taxonomy,65,Native Text,High,EXAMINED,Finance, Marketing, HR, Operations, Supply Chain, Retail
+151,135,Annexure 11,Core Branches for Under Graduate Engineering,Master Taxonomy,35,Native Text,High,EXAMINED,Core engineering clusters (Civil, Mechanical, Electrical, CSE)
+152,136,Annexure 11,Core Branches for Under Graduate Engineering (Contd),Master Taxonomy,35,Native Text,High,EXAMINED,ECE, Chemical, Food Tech, Industrial Engineering clusters
+153,137,Annexure 11,Core Branches for Under Graduate Engineering (Contd),Master Taxonomy,30,Native Text,High,EXAMINED,Instrumentation, Metallurgy, Mining, Textile clusters
+154,138,Annexure 11,Core Branches for Diploma in Engineering & Technology,Master Taxonomy,40,Native Text,High,EXAMINED,Diploma branch mappings (Civil, Electrical, Mechanical, CSE)
+155,139,Annexure 11,Core Branches for Diploma (Contd),Master Taxonomy,40,Native Text,High,EXAMINED,Diploma ECE, Instrumentation, Chemical, Food Technology
+156,140,Annexure 11,Core Branches for Diploma (Contd),Master Taxonomy,35,Native Text,High,EXAMINED,Diploma Mechanical, Mining, Metallurgy, Textile
+157,141,Annexure 12,Conversion of Levels: Diploma to UG Degrees (A - C),Conversion Mapping,50,Schedule Tables,High,EXAMINED,Conversion cross-walk from Diploma to Degree (Aero, Civil, Chem)
+158,142,Annexure 12,Conversion of Levels: Diploma to UG Degrees (C - E),Conversion Mapping,50,Schedule Tables,High,EXAMINED,Conversion cross-walk (Civil, CSE, Electrical)
+159,143,Annexure 12,Conversion of Levels: Diploma to UG Degrees (E - F),Conversion Mapping,50,Schedule Tables,High,EXAMINED,Conversion cross-walk (ECE, Environmental, Energy, Fashion)
+160,144,Annexure 12,Conversion of Levels: Diploma to UG Degrees (F - M),Conversion Mapping,50,Schedule Tables,High,EXAMINED,Conversion cross-walk (Food, Instrumentation, Leather, Mech)
+161,145,Annexure 12,Conversion of Levels: Diploma to UG Degrees (M - P),Conversion Mapping,50,Schedule Tables,High,EXAMINED,Conversion cross-walk (Mechanical, Metallurgy, Mining, Petrochem)
+162,146,Annexure 12,Conversion of Levels: Diploma to UG Degrees (P - T),Conversion Mapping,50,Schedule Tables,High,EXAMINED,Conversion cross-walk (Plastics, Production, Textile)
+163,147,Annexure 12,Conversion of Levels: UG Degree to Diploma,Conversion Mapping,35,Schedule Tables,High,EXAMINED,Reverse conversion mappings for institutional restructuring
+164,148,Annexure 12,Conversion of Levels: UG Degree to Diploma (Contd),Conversion Mapping,40,Schedule Tables,High,EXAMINED,Reverse mappings for Civil, CSE, IT, Electrical
+165,149,Annexure 12,Conversion of Levels: UG Degree to Diploma (Contd),Conversion Mapping,40,Schedule Tables,High,EXAMINED,Reverse mappings for ECE, Mechanical, Production
+166,150,Annexure 12,Conversion of Levels: UG Degree to Diploma (Contd),Conversion Mapping,35,Schedule Tables,High,EXAMINED,Reverse mappings for Marine, Mining, Metallurgy
+167,151,Annexure 12,Conversion of Levels: UG Degree to Diploma (Contd),Conversion Mapping,30,Schedule Tables,High,EXAMINED,Reverse mappings for Plastics, Textile, Chemical
+168,152,Annexure 13,Major Disciplines & Relevant Branches (Diploma),Recruitment Mapping,45,Schedule Tables,High,EXAMINED,Faculty recruitment cross-discipline eligibility (Aero to Civil)
+169,153,Annexure 13,Major Disciplines & Relevant Branches (Diploma Contd),Recruitment Mapping,45,Schedule Tables,High,EXAMINED,Faculty recruitment mapping for Civil, CSE, IT, Electrical
+170,154,Annexure 13,Major Disciplines & Relevant Branches (Diploma Contd),Recruitment Mapping,45,Schedule Tables,High,EXAMINED,Faculty recruitment mapping for ECE, Instrumentation
+171,155,Annexure 13,Major Disciplines & Relevant Branches (Diploma Contd),Recruitment Mapping,45,Schedule Tables,High,EXAMINED,Faculty recruitment mapping for Mechanical, Production
+172,156,Annexure 13,Major Disciplines & Relevant Branches (Diploma Contd),Recruitment Mapping,45,Schedule Tables,High,EXAMINED,Faculty recruitment mapping for Metallurgy, Mining, Textile
+173,157,Annexure 13,Major Disciplines & Relevant Branches (Diploma Contd),Recruitment Mapping,25,Schedule Tables,High,EXAMINED,Specialized disciplines: Food, Film, Hotel Management
+174,158,Annexure 13,Major Disciplines & Relevant Branches (Under Graduate),Recruitment Mapping,40,Schedule Tables,High,EXAMINED,UG Degree faculty recruitment mappings (Aero, Civil, Biotech)
+175,159,Annexure 13,Major Disciplines & Relevant Branches (UG Contd),Recruitment Mapping,40,Schedule Tables,High,EXAMINED,UG faculty recruitment mappings for CSE, IT, Chemical
+176,160,Annexure 13,Major Disciplines & Relevant Branches (UG Contd),Recruitment Mapping,40,Schedule Tables,High,EXAMINED,UG faculty recruitment mappings for Electrical, ECE, Instrumentation
+177,161,Annexure 13,Major Disciplines & Relevant Branches (UG Contd),Recruitment Mapping,40,Schedule Tables,High,EXAMINED,UG faculty recruitment mappings for Mechanical, Production, Auto
+178,162,Annexure 13,Major Disciplines & Relevant Branches (UG Contd),Recruitment Mapping,35,Schedule Tables,High,EXAMINED,UG faculty recruitment mappings for Metallurgy, Mining, Textile
+179,163,Annexure 14,State-Wise Competent Authorities: Central & Eastern,Statutory Authority,12,Authority Table,High,EXAMINED,Authorities for CG, MP, Gujarat, Andaman, Arunachal
+180,164,Annexure 14,State-Wise Competent Authorities: Eastern & North-East,Statutory Authority,14,Authority Table,High,EXAMINED,Authorities for Assam, Jharkhand, Manipur, Meghalaya, Orissa
+181,165,Annexure 14,State-Wise Competent Authorities: Northern Region,Statutory Authority,10,Authority Table,High,EXAMINED,Authorities for Bihar, Uttarakhand, Uttar Pradesh, West Bengal
+182,166,Annexure 14,State-Wise Competent Authorities: North-Western Region,Statutory Authority,8,Authority Table,High,EXAMINED,Authorities for Chandigarh, Haryana, Himachal Pradesh
+183,167,Annexure 14,State-Wise Competent Authorities: North-Western & Rajasthan,Statutory Authority,10,Authority Table,High,EXAMINED,Authorities for J&K, Ladakh, Delhi, Punjab, Rajasthan
+184,168,Annexure 14,State-Wise Competent Authorities: South-Central Region,Statutory Authority,8,Authority Table,High,EXAMINED,Authorities for Andhra Pradesh, Telangana (HMDA/GHMC)
+185,169,Annexure 14,State-Wise Competent Authorities: Southern & Western Region,Statutory Authority,12,Authority Table,High,EXAMINED,Authorities for Tamil Nadu, Karnataka, Kerala, Maharashtra
+186,170,Annexure 15,Fellow Programme in Management (FPM) Admission & Guide,Programme Norms,6,Native Text,High,EXAMINED,FPM eligibility; Guide max 5 scholars; 20 seat cap
+187,171,Annexure 15,FPM Research Guidance & Absence of Guide,Programme Norms,6,Native Text,High,EXAMINED,Internal guide rule; Absence > 2 years requires new guide
+188,172,Annexure 15,FPM Credit Requirements (30 Credits) & Pre-Registration,Credit Curriculum,6,Native Text,High,EXAMINED,30 credits; CGPA min 6.5 (60%); Pre-registration seminar
+189,173,Annexure 15,FPM Time Limits (2-5 Years) & Pre-Synopsis Seminar,Programme Timeline,5,Native Text,High,EXAMINED,Thesis submission 2-5 years; 5 copies of pre-synopsis
+190,174,Annexure 15,FPM Thesis Evaluation (6 Examiners) & Viva-Voce,Examination Norms,5,Native Text,High,EXAMINED,6 examiners panel (foreign $250 / Indian Rs 5000); Viva defense
+191,175,Annexure 15,FPM Degree Award & Automatic Disqualification,Statutory Norms,4,Native Text,High,EXAMINED,Governing Board award; Prohibition on dual enrollment
+192,176,Annexure 16,Structure of AICTE Council (51 Members; Quorum 1/3),Committee Statutes,1,Statutory Quorum,High,EXAMINED,Composition under Section 3 of AICTE Act 1987
+193,177,Annexure 16,Structure of EC, Scrutiny, EVC, SHC, SAC Committees,Committee Statutes,5,Statutory Quorum,High,EXAMINED,Scrutiny (Prof + Advocate + Architect); EVC (Prof + Expert + Architect)
+194,178,Annexure 16,Role & Responsibilities of Committees & SCSC,Committee Statutes,7,Role Descriptions,High,EXAMINED,Scrutiny verifies Annex 1/2; EVC verifies facilities; SHC/SAC hearing
+195,179,Annexure 17,Recommended Composition of BoG / BoM (11-21 Members),Governance Norms,1,Governance Rules,High,EXAMINED,BoG structure: Chairman, Trust nominees, University, State, AICTE
+196,180,Annexure 18,Mandatory Disclosures: Institution, Governance, Programmes,Public Transparency,6,Disclosure Schema,High,EXAMINED,18.1 Name/address; 18.5 Governance; 18.6 Programmes & NBA
+197,181,Annexure 18,Mandatory Disclosures: Twinning, Fees & Faculty,Public Transparency,5,Disclosure Schema,High,EXAMINED,18.6 Twinning details; 18.7 Faculty list & Student:Faculty ratio
+198,182,Annexure 18,Mandatory Disclosures: Faculty Profiles & Admissions,Public Transparency,4,Disclosure Schema,High,EXAMINED,18.8 Faculty profiles (DOB, ID, publ, patents); 18.10 Admissions
+199,183,Annexure 18,Mandatory Disclosures: Admission Criteria & Infrastructure,Public Transparency,4,Disclosure Schema,High,EXAMINED,18.11 Entrance tests; 18.15 Classrooms labs computer centres
+200,184,Annexure 18,Mandatory Disclosures: Online Exams, ABC & Single PDF,Public Transparency,4,Disclosure Schema,High,EXAMINED,18.15-18.18 ABC compliance; Single public PDF under attachments
+201,185,Affidavit 1,Statutory Affidavit for Forgotten Password (Rs 100/-),Legal Affidavit,1,Sworn Deposition,High,EXAMINED,Deposition on Rs 100 stamp; Online payment Rs 6000 proof
+202,186,Affidavit 2,Comprehensive Compliance Affidavit (New/EoA/Univ),Legal Affidavit,15,Sworn Deposition,High,EXAMINED,Sworn deposition on Land, Built-up area, Occupancy, Fire, Faculty
+203,187,Affidavit 2,Land Schedule, Built-Up Area Table & Faculty Declarations,Legal Affidavit,15,Deposition Tables,High,EXAMINED,Deed numbers, registration dates, plot numbers, carpet areas
+204,188,Affidavit 2,Mandatory Committees Deposition & Minimum Wages,Legal Affidavit,4,Sworn Deposition,High,EXAMINED,Anti-Ragging, SGRC, Internal Committee, SC/ST, Minimum Wages Act
+205,189,Affidavit 3,Security Deposit Deposition (10-Year Lock-In Period),Legal Affidavit,8,Sworn Deposition,High,EXAMINED,Deposition for LoA / New Programme; Forfeiture conditions
+206,190,Affidavit 4,Affidavit for Progressive / Complete Closure,Legal Affidavit,8,Sworn Deposition,High,EXAMINED,No liability to faculty/students; Joint FDR / RPGF details table
+207,191,Affidavit 5,Affidavit for Universities Applying under Chapter IV,Legal Affidavit,4,Sworn Deposition,High,EXAMINED,University adherence to AICTE norms; Inspection rights
+208,192,Affidavit 6,Affidavit for Release of Security Deposit (FDR/RTGS),Legal Affidavit,11,Sworn Deposition,High,EXAMINED,10-year maturity completion; No pending complaints or inquiries
+209,193,Affidavit 7,Joint Affidavit for Transfer of Private Property / Land,Legal Affidavit,9,Sworn Deposition,High,EXAMINED,Irrevocable 30-year lease transfer; No sub-lease permitted
+210,194,Affidavit 8,Affidavit for Additional Course / Increase in Intake,Legal Affidavit,5,Sworn Deposition,High,EXAMINED,Creation of additional infrastructure, faculty, and funds
+211,195,Affidavit 9,Affidavit for Change in Bank Details,Legal Affidavit,9,Sworn Deposition,High,EXAMINED,Bank merger or closure justification; No commercial angle
+212,196,Affidavit 10,Affidavit for Change in Name/Address of Trust/Society,Legal Affidavit,9,Sworn Deposition,High,EXAMINED,Charity Commissioner / ROC approval; Asset conveyance
+213,197,Affidavit 11,Affidavit for Collaboration & Twinning Programme,Legal Affidavit,9,Sworn Deposition,High,EXAMINED,Equivalent degree award; Foreign semester attendance; Visa failure MoU
+214,198,Affidavit 12,Affidavit for Academic Courses of Other Regulatory Bodies,Legal Affidavit,6,Sworn Deposition,High,EXAMINED,Excess facilities declaration; Separate faculty for other bodies
+215,199,Affidavit 13,Affidavit for Open & Distance Learning / Online Mode,Legal Affidavit,10,Sworn Deposition,High,EXAMINED,ODL/OL HQ & LSC facilities; Staffing and committee declarations
+216,200,Affidavit 13,Affidavit 13 Verification & Notary Execution,Legal Affidavit,1,Sworn Deposition,High,EXAMINED,Execution before First Class Magistrate or Public Notary
+217,201,Format 1,No Objection Certificate (NOC) from State Govt / UT,Prescribed Format,1,Official Resolution,High,EXAMINED,State Government NOC for New Institution, Closure, Site Change
+218,202,Format 2,No Objection Certificate from Affiliating University/Board,Prescribed Format,1,Official Resolution,High,EXAMINED,University NOC for affiliation, closure, new courses, mergers
+219,203,Format 2,University NOC Student Re-Arrangement Schedule,Prescribed Format,1,Schedule Tables,High,EXAMINED,Re-allocation table for trailing students upon course closure
+220,204,Format 2,University NOC Execution & Authorized Signature,Prescribed Format,1,Official Resolution,High,EXAMINED,Registrar / Director signature and university seal
+221,205,Format 3,Resolution of the Trust / Society / Company,Prescribed Format,1,Corporate Resolution,High,EXAMINED,Board resolution for land allocation, intake expansion, name change
+222,206,Format 3,Trust Resolution Execution & Resource Allocation,Prescribed Format,1,Corporate Resolution,High,EXAMINED,Fund allocation for land, built-up area, faculty, and equipment
+223,207,Format 4,MoU between Institution and Skill Knowledge Provider (SKP),Prescribed Agreement,1,Bipartite Contract,High,EXAMINED,NSQF agreement for vocational education skill training
+224,208,Format 4,Roles and Responsibilities of SKP and Academic Centre,Prescribed Agreement,1,Contractual Clauses,High,EXAMINED,Fee sharing, examination evaluation, credit statement issuance
+225,209,Format 4,MoU Execution, Signatures & 3-Year Validity Period,Prescribed Agreement,1,Contractual Clauses,High,EXAMINED,3-year term; No confidentiality under RTI Act
+226,210,Certificate 1,Certificate of an Advocate (Letterhead Format),Legal Verification,3,Certificate Template,High,EXAMINED,Advocate verification of Trust registration, Land title & CLU
+227,211,Certificate 1,Advocate Certificate: Land Conversion & Classification,Legal Verification,2,Certificate Template,High,EXAMINED,Advocate certification of authentic land conversion orders
+228,212,Certificate 2,Certificate of Architect (Council of Architecture),Engineering Verification,5,Certificate Template,High,EXAMINED,Architect certification of Site Plan, Building Plan, Carpet area table
+229,213,Certificate 3,Certificate of Bank Manager (Letterhead Format),Financial Verification,4,Certificate Template,High,EXAMINED,Bank Manager certification of operational funds, FDRs, and no liens
+230,214,Back Separator,Decorative Graphic,Visual Graphic,0,Visual Inspection,High,EXAMINED,Blank / decorative page
+231,,Back Cover,Brihadisvara Temple Architectural Feature & Contacts,Back Cover,0,Visual Graphic,High,EXAMINED,Official social media handles, address, and cultural epigraph

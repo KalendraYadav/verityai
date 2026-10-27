@@ -130,3 +130,16 @@ class DocumentProcessingStatusData(BaseModel):
 class ReprocessRequest(BaseModel):
     from_stage: Optional[str] = "TEXT_EXTRACT"
 
+
+class DocumentIntegrityResponseData(BaseModel):
+    document_id: str
+    filename: str
+    status: str
+    file_size: Optional[int] = None
+    sha256_recorded: Optional[str] = None
+    sha256_actual: Optional[str] = None
+    sha256_match: bool
+    signature_report: Dict[str, Any]
+
+    model_config = ConfigDict(from_attributes=True)
+

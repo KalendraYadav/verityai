@@ -130,3 +130,23 @@ def require_roles(*allowed_roles: str) -> Callable[[User], User]:
         return current_user
 
     return role_checker
+
+
+def get_authenticated_api_client(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> "IntegrationClient":
+    """Extract and authenticate external API client from X-API-Key or Authorization header."""
+    from app.services.api_key import authenticate_api_key
+    api_key = request.headers.get("X-API-Key") or request.headers.get("Authorization")
+    return authenticate_api_key(db=db, raw_key_token=api_key)
+
+
+def require_client_scope(required_scope: str) -> Callable[["IntegrationClient"], "IntegrationClient"]:
+    """Dependency factory enforcing specific API scope on integration client."""
+    def scope_checker(client: "IntegrationClient" = Depends(get_authenticated_api_client)) -> "IntegrationClient":
+        from app.services.api_key import verify_client_scope
+        verify_client_scope(client, required_scope)
+        return client
+
+    return scope_checker

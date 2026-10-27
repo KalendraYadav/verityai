@@ -1,7 +1,7 @@
 import os
 import uuid
 import re
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, Query, Form, File, UploadFile, status, Response, BackgroundTasks
 from fastapi.responses import FileResponse
 from sqlalchemy import select, func, desc, asc
@@ -24,11 +24,15 @@ from app.schemas.document import (
     DocumentProcessingStatusData,
     ProcessingRunResponseData,
     ReprocessRequest,
+    DocumentIntegrityResponseData,
 )
+from app.api.deps import get_current_user, require_roles, get_optional_current_user
 from app.core.exceptions import (
     NotFoundException,
     VerityAPIException,
     ConflictException,
+    ForbiddenException,
+    BadRequestException,
 )
 from app.services.audit import record_audit_event
 from app.services.storage import (
@@ -36,7 +40,12 @@ from app.services.storage import (
     resolve_storage_path,
     remove_document_file,
 )
+from app.services.integrity import inspect_stored_document_integrity
 from app.services.extraction import run_background_extraction
+from app.services.document_catalog import (
+    get_regulatory_document_types,
+    resolve_document_type,
+)
 
 router = APIRouter()
 
@@ -72,8 +81,9 @@ async def upload_document(
     file: UploadFile = File(...),
     declared_type: Optional[str] = Form(None),
     db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_current_user),
 ):
-    """Secure document upload for an application.
+    """Secure document upload for an application with server-side tenant isolation.
     Validates size, extension, and content magic bytes.
     Computes SHA-256 and detects potential duplicates.
     """
@@ -82,9 +92,31 @@ async def upload_document(
     if not app_obj:
         raise NotFoundException("APPLICATION_NOT_FOUND", f"Application '{application_id}' not found.")
 
-    # 2. Check application lifecycle (must allow uploads)
-    if app_obj.lifecycle_status in ("ARCHIVED", "CANCELLED"):
-        raise ConflictException("APPLICATION_LOCKED", f"Application is {app_obj.lifecycle_status} and cannot accept documents.")
+    # Role boundary: Reviewers are strictly forbidden from uploading or modifying institutional documents
+    if current_user and current_user.role == "REVIEWER":
+        raise ForbiddenException("FORBIDDEN", "Reviewers are not permitted to upload or modify institutional source documents.")
+
+    # Server-side tenant isolation for INSTITUTION_USER
+    if current_user and current_user.role == "INSTITUTION_USER":
+        if app_obj.institution_id != current_user.institution_id:
+            raise ForbiddenException("FORBIDDEN", "Cannot upload documents to an application belonging to another institution.")
+        if app_obj.lifecycle_status != "DRAFT":
+            raise ConflictException(
+                "APPLICATION_LOCKED",
+                f"Cannot upload documents to an application in '{app_obj.lifecycle_status}' status. Only DRAFT applications permit document uploads."
+            )
+
+    # 2. Validate declared_type against official document catalog if provided
+    resolved_category = None
+    if declared_type:
+        trimmed = declared_type.strip()
+        if trimmed:
+            resolved_category = resolve_document_type(trimmed)
+            if not resolved_category:
+                raise BadRequestException(
+                    "INVALID_DOCUMENT_TYPE",
+                    f"Document category '{declared_type}' is not recognized in the official AICTE statutory document catalogue."
+                )
 
     doc_id = f"DOC-{uuid.uuid4().hex[:8].upper()}"
     original_filename = file.filename or "unknown"
@@ -108,7 +140,7 @@ async def upload_document(
             entity_id=doc_id,
             document_id=doc_id,
             application_id=application_id,
-            actor_id=_resolve_user_id(db, app_obj.institution_id),
+            actor_id=current_user.id if current_user else _resolve_user_id(db, app_obj.institution_id),
             metadata={
                 "reason_code": exc.detail.get("code") if isinstance(exc.detail, dict) else "REJECTED",
                 "filename": _sanitize_header_filename(original_filename),
@@ -124,7 +156,7 @@ async def upload_document(
     )
     is_duplicate = duplicate_doc is not None
 
-    user_id = _resolve_user_id(db, app_obj.institution_id)
+    user_id = current_user.id if current_user else _resolve_user_id(db, app_obj.institution_id)
 
     # 5. Persist Document and initial ProcessingRun
     try:
@@ -139,7 +171,7 @@ async def upload_document(
             declared_media_type=declared_mime,
             file_size_bytes=file_size_bytes,
             sha256=sha256_hex,
-            declared_type=declared_type,
+            declared_type=resolved_category or declared_type,
             upload_status="ACCEPTED",
             processing_status="QUEUED",
             uploaded_by=user_id,
@@ -214,11 +246,18 @@ def list_application_documents(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """List documents belonging to an application."""
+    """List documents belonging to an application with tenant isolation."""
     app_obj = db.scalar(select(Application).where(Application.id == application_id))
     if not app_obj:
         raise NotFoundException("APPLICATION_NOT_FOUND", f"Application '{application_id}' not found.")
+
+    if current_user.role == "INSTITUTION_USER":
+        if app_obj.institution_id != current_user.institution_id:
+            raise ForbiddenException("FORBIDDEN", "Access to documents from another institution is denied.")
+    elif current_user.role not in ("ADMIN", "REVIEWER"):
+        raise ForbiddenException("FORBIDDEN", f"Role '{current_user.role}' is not authorized to access application documents.")
 
     query = select(Document).where(
         Document.application_id == application_id,
@@ -274,16 +313,36 @@ def list_all_documents(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     application_id: Optional[str] = Query(None),
+    institution_id: Optional[str] = Query(None),
     q: Optional[str] = Query(None),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """List documents with optional filtering by application or search query."""
-    query = select(Document).where(Document.deleted_at.is_(None))
+    """List documents with strict role-based access control and tenant isolation."""
+    query = (
+        select(Document)
+        .join(Application, Document.application_id == Application.id)
+        .where(Document.deleted_at.is_(None))
+    )
 
-    if application_id:
-        query = query.where(Document.application_id == application_id)
+    if current_user.role == "INSTITUTION_USER":
+        # Institutional tenant isolation: lock strictly to user's registered institution
+        query = query.where(Application.institution_id == current_user.institution_id)
+        if application_id:
+            query = query.where(Document.application_id == application_id)
+    elif current_user.role in ("REVIEWER", "ADMIN"):
+        if institution_id:
+            query = query.where(Application.institution_id == institution_id)
+        if application_id:
+            query = query.where(Document.application_id == application_id)
+    else:
+        raise ForbiddenException("FORBIDDEN", f"Role '{current_user.role}' is not authorized to list documents.")
+
     if q:
-        query = query.where(Document.original_filename.ilike(f"%{q}%"))
+        query = query.where(
+            (Document.original_filename.ilike(f"%{q}%"))
+            | (Document.sha256.ilike(f"%{q}%"))
+        )
 
     total = db.scalar(select(func.count()).select_from(query.subquery())) or 0
     items = (
@@ -324,6 +383,32 @@ def list_all_documents(
     )
 
 
+# --- Statutory Document Catalogue Endpoints ---
+
+@router.get(
+    "/documents/regulatory-catalog",
+    response_model=DataResponse[List[Dict[str, Any]]],
+)
+def get_regulatory_catalog_endpoint(
+    category_code: Optional[str] = Query(None, description="Optional application category code filter"),
+):
+    """Return regulation-grounded AICTE statutory document catalogue with official titles, references, and conditions."""
+    docs = get_regulatory_document_types(category_code)
+    return DataResponse(data=docs)
+
+
+@router.get(
+    "/document-types",
+    response_model=DataResponse[List[Dict[str, Any]]],
+)
+def get_document_types_endpoint(
+    category_code: Optional[str] = Query(None, description="Optional application category code filter"),
+):
+    """Convenience endpoint returning statutory document categories and metadata."""
+    docs = get_regulatory_document_types(category_code)
+    return DataResponse(data=docs)
+
+
 @router.get(
     "/documents/{document_id}",
     response_model=DataResponse[DocumentResponseData],
@@ -331,13 +416,23 @@ def list_all_documents(
 def get_document_metadata(
     document_id: str,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Retrieve metadata for a specific document without exposing filesystem paths."""
+    """Retrieve metadata for a specific document without exposing filesystem paths.
+    Enforces authentication and tenant isolation.
+    """
     doc = db.scalar(
         select(Document).where(Document.id == document_id, Document.deleted_at.is_(None))
     )
     if not doc:
         raise NotFoundException("DOCUMENT_NOT_FOUND", f"Document '{document_id}' not found.")
+
+    if current_user.role == "INSTITUTION_USER":
+        app_obj = db.get(Application, doc.application_id)
+        if not app_obj or not current_user.institution_id or current_user.institution_id != app_obj.institution_id:
+            raise ForbiddenException("FORBIDDEN", "Access to document from another institution is denied.")
+    elif current_user.role not in ("ADMIN", "REVIEWER"):
+        raise ForbiddenException("FORBIDDEN", f"Role '{current_user.role}' is not authorized to access document metadata.")
 
     # Check if duplicate exists
     dup_count = db.scalar(
@@ -385,9 +480,10 @@ def get_document_metadata(
 def retrieve_document_file(
     document_id: str,
     download: bool = Query(False),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Secure document retrieval/preview.
+    """Secure document retrieval/preview with institutional tenant isolation.
     Streams file bytes with nosniff and cache-control headers.
     """
     doc = db.scalar(
@@ -395,6 +491,16 @@ def retrieve_document_file(
     )
     if not doc:
         raise NotFoundException("DOCUMENT_NOT_FOUND", f"Document '{document_id}' not found.")
+
+    # Authorization Check:
+    # 1. ADMIN and REVIEWER roles have cross-institutional authority to inspect dossiers.
+    # 2. INSTITUTION_USER can ONLY access documents belonging to their own registered institution.
+    if current_user.role == "INSTITUTION_USER":
+        app_obj = db.get(Application, doc.application_id)
+        if not app_obj or not current_user.institution_id or current_user.institution_id != app_obj.institution_id:
+            raise ForbiddenException("FORBIDDEN", "Access to documents from another institution is denied.")
+    elif current_user.role not in ("ADMIN", "REVIEWER"):
+        raise ForbiddenException("FORBIDDEN", f"User role '{current_user.role}' is not authorized to access documents.")
 
     if doc.file_state == "DELETED":
         raise NotFoundException("DOCUMENT_DELETED", "This document has been deleted.")
@@ -409,7 +515,7 @@ def retrieve_document_file(
     safe_filename = _sanitize_header_filename(doc.original_filename)
     disposition_type = "attachment" if download else "inline"
 
-    # Audit file access
+    # Audit file access with authenticated user identity
     record_audit_event(
         db=db,
         event_type="DOCUMENT_DOWNLOADED" if download else "DOCUMENT_VIEWED",
@@ -417,7 +523,7 @@ def retrieve_document_file(
         entity_id=doc.id,
         document_id=doc.id,
         application_id=doc.application_id,
-        actor_id=_resolve_user_id(db),
+        actor_id=current_user.id,
         metadata={"filename": safe_filename, "disposition": disposition_type},
     )
     db.commit()
@@ -434,19 +540,56 @@ def retrieve_document_file(
 
 
 @router.get(
+    "/documents/{document_id}/integrity",
+    response_model=DataResponse[DocumentIntegrityResponseData],
+)
+def get_document_integrity(
+    document_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Inspects physical file integrity, SHA-256 consistency, and digital signatures.
+    Adheres strictly to tenant isolation rules: Institution users can only inspect their own documents.
+    """
+    doc = db.scalar(
+        select(Document).where(Document.id == document_id, Document.deleted_at.is_(None))
+    )
+    if not doc:
+        raise NotFoundException("DOCUMENT_NOT_FOUND", f"Document '{document_id}' not found.")
+
+    if current_user.role == "INSTITUTION_USER":
+        app_obj = db.get(Application, doc.application_id)
+        if not app_obj or not current_user.institution_id or current_user.institution_id != app_obj.institution_id:
+            raise ForbiddenException("FORBIDDEN", "Access to documents from another institution is denied.")
+    elif current_user.role not in ("ADMIN", "REVIEWER"):
+        raise ForbiddenException("FORBIDDEN", f"User role '{current_user.role}' is not authorized to access documents.")
+
+    report = inspect_stored_document_integrity(doc)
+    return DataResponse(data=DocumentIntegrityResponseData(**report))
+
+
+@router.get(
     "/documents/{document_id}/pages",
     response_model=DataResponse[DocumentPagesResponseData],
 )
 def get_document_pages(
     document_id: str,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Retrieve extracted page-level text, method, and OCR confidence."""
+    """Retrieve extracted page-level text, method, and OCR confidence with tenant scoping."""
     doc = db.scalar(
         select(Document).where(Document.id == document_id, Document.deleted_at.is_(None))
     )
     if not doc:
         raise NotFoundException("DOCUMENT_NOT_FOUND", f"Document '{document_id}' not found.")
+
+    if current_user.role == "INSTITUTION_USER":
+        app_obj = db.get(Application, doc.application_id)
+        if not app_obj or not current_user.institution_id or current_user.institution_id != app_obj.institution_id:
+            raise ForbiddenException("FORBIDDEN", "Access to document pages from another institution is denied.")
+    elif current_user.role not in ("ADMIN", "REVIEWER"):
+        raise ForbiddenException("FORBIDDEN", f"Role '{current_user.role}' is not authorized to access document pages.")
 
     # Find the latest processing run's pages or all pages for this document
     pages = db.scalars(
@@ -491,13 +634,21 @@ def get_document_pages(
 def get_document_processing_status(
     document_id: str,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Retrieve processing status, error information, and run history."""
+    """Retrieve processing status, error information, and run history with tenant scoping."""
     doc = db.scalar(
         select(Document).where(Document.id == document_id, Document.deleted_at.is_(None))
     )
     if not doc:
         raise NotFoundException("DOCUMENT_NOT_FOUND", f"Document '{document_id}' not found.")
+
+    if current_user.role == "INSTITUTION_USER":
+        app_obj = db.get(Application, doc.application_id)
+        if not app_obj or not current_user.institution_id or current_user.institution_id != app_obj.institution_id:
+            raise ForbiddenException("FORBIDDEN", "Access to document processing details from another institution is denied.")
+    elif current_user.role not in ("ADMIN", "REVIEWER"):
+        raise ForbiddenException("FORBIDDEN", f"Role '{current_user.role}' is not authorized to access document processing details.")
 
     runs = db.scalars(
         select(ProcessingRun)
@@ -547,6 +698,7 @@ def reprocess_document(
     background_tasks: BackgroundTasks,
     request_data: Optional[ReprocessRequest] = None,
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("REVIEWER", "ADMIN")),
 ):
     """Trigger re-extraction/reprocessing of an uploaded document.
     Enforces idempotency and prevents concurrent duplicate processing.
@@ -572,14 +724,13 @@ def reprocess_document(
         raise NotFoundException("FILE_NOT_FOUND", "Document file is missing from storage.")
 
     # Create new ProcessingRun
-    user_id = _resolve_user_id(db)
     new_run = ProcessingRun(
         id=f"RUN-{uuid.uuid4().hex[:8].upper()}",
         document_id=doc.id,
         trigger="REPROCESS",
         status="QUEUED",
         pipeline_version="0.1.0",
-        requested_by=user_id,
+        requested_by=current_user.id,
     )
     doc.processing_status = "QUEUED"
     db.add(new_run)
@@ -614,4 +765,5 @@ def reprocess_document(
             runs_history=[run_item],
         )
     )
+
 

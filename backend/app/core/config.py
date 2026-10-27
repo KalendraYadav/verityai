@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
+    HOST: str = "0.0.0.0"
+    PORT: int = 8000
 
     # CORS
     ALLOWED_ORIGINS: List[str] = [

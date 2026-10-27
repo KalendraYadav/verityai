@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { fetchAuditEvents, type AuditEventItem } from '../../api/client';
 import { History, ShieldCheck, RefreshCw, FileText, User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/common/EmptyState';
 
 export const AuditTimelineView: React.FC = () => {
   const [events, setEvents] = useState<AuditEventItem[]>([]);
@@ -23,81 +26,110 @@ export const AuditTimelineView: React.FC = () => {
   }, []);
 
   return (
-    <div className="p-4 lg:p-8 space-y-6 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
+      {/* 1. Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#EEE5DC]">
         <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-[#171B45] flex items-center gap-2">
-            <History className="w-6 h-6 text-[#7450D8]" />
-            Regulatory Audit Trail
-          </h1>
-          <p className="text-xs sm:text-sm text-[#5F6485] mt-0.5">
-            Immutable, append-only log of application ingestion, status transitions, and scrutiny actions.
-          </p>
+          <div className="flex items-center gap-2.5">
+            <div className="size-9 rounded-xl bg-[#1B1411] text-[#33CC7A] flex items-center justify-center shadow-sm">
+              <History className="size-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1B1411]">
+                  Regulatory Audit Trail &amp; Compliance Log
+                </h1>
+                <span className="rounded-full bg-[#1B1411] text-[#FAF5F0] font-mono text-[10px] font-bold px-2.5 py-0.5">
+                  {events.length} Events
+                </span>
+              </div>
+              <p className="text-xs text-[#66574F] mt-0.5">
+                Cryptographically sealed, append-only log of institutional submissions, AI validation pipelines, and officer determinations.
+              </p>
+            </div>
+          </div>
         </div>
 
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           onClick={load}
-          className="p-2 rounded-xl border border-[#E9E6F2] text-[#5F6485] hover:bg-[#FAF8FF] hover:text-[#7450D8] transition-colors cursor-pointer self-start sm:self-auto"
+          disabled={loading}
+          className="h-8 gap-1.5 text-xs text-[#1B1411] bg-white border-[#EEE5DC] hover:bg-[#FAF5F0] rounded-full px-4 shadow-sm self-start sm:self-auto shrink-0"
           title="Refresh audit log"
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-        </button>
+          <RefreshCw className={`size-3.5 ${loading ? 'animate-spin text-[#33CC7A]' : 'text-[#66574F]'}`} />
+          <span>Refresh Audit</span>
+        </Button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-[#E9E6F2] shadow-xs overflow-hidden">
-        <div className="px-6 py-4 border-b border-[#EEEAF5] flex items-center justify-between">
-          <div className="text-xs font-bold uppercase tracking-wider text-[#171B45] flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#12B886]" />
-            Chronological Events ({events.length})
+      {/* 2. Timeline Container */}
+      <div className="bg-white rounded-2xl border border-[#EEE5DC] shadow-[0_2px_8px_rgba(27,20,17,0.04)] overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-[#EEE5DC] flex flex-row items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="size-4 text-[#33CC7A] shrink-0" />
+              <h2 className="text-sm font-bold text-[#1B1411]">
+                Chronological Audit Trail
+              </h2>
+            </div>
+            <p className="text-xs text-[#66574F] mt-0.5">
+              Non-repudiable, append-only record of all regulatory actions.
+            </p>
           </div>
-          <span className="text-[11px] text-[#8589A6]">Foreign Keys: RESTRICT · Non-repudiable</span>
+          <span className="font-mono text-[10px] rounded-full bg-[#EEE5DC] text-[#1B1411] px-3 py-1 font-bold">
+            Tamper-Evident SHA-256
+          </span>
         </div>
 
-        {loading ? (
-          <div className="p-12 text-center text-xs text-[#5F6485]">
-            <RefreshCw className="w-6 h-6 animate-spin text-[#7450D8] mx-auto mb-2" />
-            Loading audit events...
-          </div>
-        ) : events.length === 0 ? (
-          <div className="p-12 text-center text-xs text-[#8589A6]">
-            No audit records found.
-          </div>
-        ) : (
-          <div className="p-6">
-            <div className="relative border-l-2 border-[#E9E6F2] ml-4 space-y-6">
+        <div className="p-4 sm:p-6">
+          {loading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-16 w-full rounded-xl" />
+              <Skeleton className="h-16 w-full rounded-xl" />
+              <Skeleton className="h-16 w-full rounded-xl" />
+            </div>
+          ) : events.length === 0 ? (
+            <EmptyState
+              icon={History}
+              title="No audit records found"
+              description="Actions taken across applications, scrutiny workflows, and document processing will appear chronologically here."
+            />
+          ) : (
+            <div className="relative border-l border-[#EEE5DC] ml-3 sm:ml-4 space-y-5">
               {events.map((event) => (
-                <div key={event.id} className="relative pl-6 group">
-                  {/* Dot icon on line */}
-                  <div className="absolute -left-2.5 top-0.5 w-5 h-5 rounded-full bg-white border-2 border-[#7450D8] flex items-center justify-center">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#7450D8]" />
+                <div key={event.id} className="relative pl-5 sm:pl-6 group">
+                  {/* Timeline Node */}
+                  <div className="absolute -left-2 top-1.5 size-4 rounded-full bg-[#1B1411] border-2 border-[#33CC7A] flex items-center justify-center">
+                    <span className="size-1 rounded-full bg-[#33CC7A]" />
                   </div>
 
-                  <div className="bg-[#FAF9FC] border border-[#E9E6F2] rounded-xl p-4 space-y-1 hover:border-[#DCD0F7] transition-all">
+                  <div className="bg-[#FAF5F0] border border-[#EEE5DC] rounded-xl p-4 space-y-2.5 hover:border-[#1B1411]/30 transition-all shadow-xs">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="font-bold text-xs text-[#171B45] uppercase tracking-wide">
-                        {event.event_type.replace(/_/g, ' ')}
+                      <span className="font-bold text-xs text-[#1B1411] font-mono">
+                        {event.event_type}
                       </span>
-                      <span className="text-[11px] font-mono text-[#8589A6]">
+                      <span className="text-[11px] font-mono text-[#66574F]">
                         {new Date(event.occurred_at).toLocaleString()}
                       </span>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-[#5F6485] pt-1">
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-[#66574F]">
                       <div className="flex items-center gap-1.5">
-                        <User className="w-3.5 h-3.5 text-[#8589A6]" />
-                        <span>Actor: {event.actor_id || 'System Worker'} ({event.actor_type})</span>
+                        <User className="size-3 text-[#66574F]" />
+                        <span>Actor: <strong className="text-[#1B1411]">{event.actor_id || 'System Worker'}</strong> ({event.actor_type})</span>
                       </div>
 
                       {event.application_id && (
                         <div className="flex items-center gap-1.5">
-                          <FileText className="w-3.5 h-3.5 text-[#8589A6]" />
-                          <span className="font-mono text-[#7450D8]">App: {event.application_id}</span>
+                          <FileText className="size-3 text-[#66574F]" />
+                          <span className="font-mono text-[#1F3954] font-semibold">App: {event.application_id}</span>
                         </div>
                       )}
                     </div>
 
                     {event.metadata && Object.keys(event.metadata).length > 0 && (
-                      <div className="text-[11px] font-mono bg-white p-2 rounded-lg border border-[#EEEAF5] text-[#5F6485] mt-2">
+                      <div className="text-[10px] font-mono bg-white p-2.5 rounded-lg border border-[#EEE5DC] text-[#1B1411] overflow-x-auto">
                         {JSON.stringify(event.metadata)}
                       </div>
                     )}
@@ -105,8 +137,8 @@ export const AuditTimelineView: React.FC = () => {
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

@@ -32,34 +32,24 @@ def get_providers():
     return list_registry_providers()
 
 
-@router.post("/registry/imports", response_model=RegistryImportResponse)
+@router.post("/registry/imports", response_model=RegistryImportResponse, summary="Import reference registry records (Admin only)")
 def import_records(
     payload: RegistryImportRequest,
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_optional_current_user),
+    admin_user: User = Depends(require_roles("ADMIN")),
 ):
     """
     Import authorized regulatory reference records.
-    Restricted to ADMIN role when authenticated.
+    Strictly restricted to Regulatory Administrators.
     """
-    if current_user and current_user.role != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "code": "FORBIDDEN",
-                "message": "Only administrators can import registry datasets."
-            }
-        )
-
     records_data = [r.model_dump() for r in payload.records]
-    actor_id = current_user.id if current_user else None
     result = import_registry_dataset(
         db=db,
         records_data=records_data,
         provider_code=payload.provider_code,
         source_dataset=payload.source_dataset,
         dataset_version=payload.dataset_version,
-        actor_id=actor_id
+        actor_id=admin_user.id,
     )
     return result
 
@@ -88,15 +78,14 @@ def trigger_verification(
     application_id: str,
     payload: RegistryVerificationTriggerRequest,
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_optional_current_user),
+    current_user: User = Depends(require_roles("REVIEWER", "ADMIN")),
 ):
     """Trigger statutory registry verification against reference records."""
-    actor_id = current_user.id if current_user else None
     run = verify_application_registry(
         db=db,
         application_id=application_id,
         provider_code=payload.provider_code,
-        actor_id=actor_id
+        actor_id=current_user.id,
     )
     return run
 
@@ -136,15 +125,14 @@ def resolve_discrepancy_endpoint(
     result_id: str,
     payload: DiscrepancyResolveRequest,
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_optional_current_user),
+    current_user: User = Depends(require_roles("REVIEWER", "ADMIN")),
 ):
     """Human reviewer resolves or waives a discrepancy found during registry verification."""
-    actor_id = current_user.id if current_user else None
     res = resolve_registry_discrepancy(
         db=db,
         result_id=result_id,
         resolution_status=payload.resolution_status,
         resolution_notes=payload.resolution_notes,
-        actor_id=actor_id
+        actor_id=current_user.id,
     )
     return res

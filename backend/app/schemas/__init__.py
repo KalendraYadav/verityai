@@ -15,6 +15,7 @@ from app.schemas.institution import (
 from app.schemas.category import ApplicationCategoryResponse
 from app.schemas.application import (
     ApplicationCreate,
+    ApplicationUpdate,
     ApplicationResponse,
     ApplicationListItem,
     ApplicationDetailResponse,
@@ -48,6 +49,8 @@ from app.schemas.workflow import (
     ApplicationReadinessResponse,
     WorkflowTransitionRequest,
     ScrutinyQueueItem,
+    ChecklistItemResponse,
+    ApplicationChecklistResponse,
 )
 
 __all__ = [

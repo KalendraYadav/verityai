@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   fetchApplications,
   fetchInstitutions,
@@ -16,16 +16,23 @@ import {
   Search,
   Building2,
   Calendar,
-  Inbox,
   AlertCircle,
   Upload,
+  ArrowRight,
 } from 'lucide-react';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { StatusBadge } from '@/components/common/StatusBadge';
+import { EmptyState } from '@/components/common/EmptyState';
 
 interface Props {
   onSelectApplication?: (applicationId: string) => void;
+  userRole?: string;
 }
 
-export function ApplicationList({ onSelectApplication }: Props = {}) {
+export function ApplicationList({ onSelectApplication, userRole }: Props = {}) {
   const [applications, setApplications] = useState<ApplicationListItem[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -82,249 +89,280 @@ export function ApplicationList({ onSelectApplication }: Props = {}) {
     loadApplications();
   }
 
-  function getStatusBadge(status: string) {
-    switch (status) {
-      case 'DRAFT':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FAF8FF] text-[#7450D8] border border-[#DCD0F7]">
-            DRAFT
-          </span>
-        );
-      case 'SUBMITTED':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-300">
-            SUBMITTED
-          </span>
-        );
-      case 'UNDER_REVIEW':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#F3EEFC] text-[#5633B8] border border-[#CBB3E8]">
-            UNDER REVIEW
-          </span>
-        );
-      case 'REVIEW_COMPLETED':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#E6F4F2] text-[#12B886] border border-[#12B886]/30">
-            COMPLETED
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-700">
-            {status}
-          </span>
-        );
-    }
-  }
-
   return (
-    <div className="space-y-5">
-      {/* Action and Filter Bar */}
-      <div className="bg-white rounded-2xl shadow-xs border border-[#E9E6F2] p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Status Tabs */}
-          <div className="inline-flex rounded-xl border border-[#E9E6F2] bg-[#FAF8FF] p-1 text-xs">
+    <div className="space-y-6 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+      {/* 1. Page Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1B1411]">
+              Institutional Application Register
+            </h1>
+            <span className="text-xs font-bold bg-[#EBF7F0] text-[#1B1411] border border-[#33CC7A]/30 px-3 py-0.5 rounded-full">
+              {total} Dossiers
+            </span>
+          </div>
+          <p className="text-xs text-[#66574F] mt-1">
+            Search, filter, and inspect regulatory applications and associated supporting documentation.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5 self-stretch sm:self-auto">
+          <button
+            type="button"
+            onClick={loadApplications}
+            disabled={loading}
+            title="Refresh application list"
+            className="h-9 px-4 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#66574F] hover:text-[#1B1411] inline-flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap shrink-0 transition-colors cursor-pointer"
+          >
+            <RefreshCw className={`size-3.5 ${loading ? 'animate-spin text-[#33CC7A]' : ''}`} />
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
+
+          {userRole !== 'REVIEWER' && (
             <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="h-9 px-4 rounded-full bg-[#33CC7A] hover:bg-[#2EB86E] text-[#1B1411] inline-flex items-center gap-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition-all shadow-[0_2px_10px_rgba(51,204,122,0.25)] cursor-pointer"
+            >
+              <Plus className="size-3.5" />
+              <span>New Application</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* 2. Filter & Search Controls */}
+      <div className="bg-white rounded-2xl border border-[#E5DACF] p-3 sm:p-4 shadow-[0_4px_24px_-4px_rgba(27,20,17,0.04)] flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1 bg-[#EEE5DC] p-1 rounded-full border border-[#E5DACF] text-xs">
+            <button
+              type="button"
               onClick={() => setStatusFilter('')}
-              className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
+              className={`h-7 px-3.5 text-xs rounded-full font-semibold transition-all cursor-pointer ${
                 statusFilter === ''
-                  ? 'bg-white text-[#7450D8] shadow-xs'
-                  : 'text-[#5F6485] hover:text-[#171B45]'
+                  ? 'bg-[#1B1411] text-[#FAF5F0] shadow-sm'
+                  : 'text-[#66574F] hover:text-[#1B1411]'
               }`}
             >
               All Applications
             </button>
             <button
+              type="button"
               onClick={() => setStatusFilter('DRAFT')}
-              className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
+              className={`h-7 px-3.5 text-xs rounded-full font-semibold transition-all cursor-pointer ${
                 statusFilter === 'DRAFT'
-                  ? 'bg-white text-[#7450D8] shadow-xs'
-                  : 'text-[#5F6485] hover:text-[#171B45]'
+                  ? 'bg-[#1B1411] text-[#FAF5F0] shadow-sm'
+                  : 'text-[#66574F] hover:text-[#1B1411]'
               }`}
             >
               Drafts
             </button>
             <button
+              type="button"
               onClick={() => setStatusFilter('SUBMITTED')}
-              className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
+              className={`h-7 px-3.5 text-xs rounded-full font-semibold transition-all cursor-pointer ${
                 statusFilter === 'SUBMITTED'
-                  ? 'bg-white text-[#7450D8] shadow-xs'
-                  : 'text-[#5F6485] hover:text-[#171B45]'
+                  ? 'bg-[#1B1411] text-[#FAF5F0] shadow-sm'
+                  : 'text-[#66574F] hover:text-[#1B1411]'
               }`}
             >
               Submitted
             </button>
-          </div>
-
-          {/* Search Input */}
-          <form onSubmit={handleSearchSubmit} className="relative flex-1 sm:w-72">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#8589A6]" />
-            <input
-              type="text"
-              placeholder="Search reference or institution..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-xs rounded-xl border border-[#E9E6F2] bg-[#FAF9FC] pl-9 pr-3 py-2 text-[#171B45] focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-[#7450D8]/20 focus:border-[#7450D8] transition-all"
-            />
-          </form>
-        </div>
-
-        <div className="flex items-center gap-2 self-end md:self-auto">
-          <button
-            onClick={loadApplications}
-            disabled={loading}
-            title="Refresh application list"
-            className="p-2 rounded-xl border border-[#E9E6F2] text-[#5F6485] hover:bg-[#FAF8FF] hover:text-[#7450D8] transition-colors cursor-pointer disabled:opacity-50"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-[#F04438] text-white hover:bg-[#E34234] transition-all shadow-xs hover:shadow-md cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            New Application
-          </button>
-        </div>
-      </div>
-
-      {/* Error Banner */}
-      {error && (
-        <div className="p-4 rounded-2xl bg-[#FFF0EF] border border-[#FECDCA] text-[#B42318] flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-[#F04438] shrink-0 mt-0.5" />
-          <div className="text-xs">
-            <div className="font-semibold">Unable to Load Applications</div>
-            <div className="mt-0.5">{error}</div>
-          </div>
-        </div>
-      )}
-
-      {/* Applications Table Card */}
-      <div className="bg-white rounded-2xl shadow-xs border border-[#E9E6F2] overflow-hidden">
-        <div className="px-6 py-4 border-b border-[#EEEAF5] bg-white flex items-center justify-between">
-          <div className="text-xs font-bold uppercase tracking-wider text-[#171B45] flex items-center gap-2">
-            <FileText className="w-4 h-4 text-[#7450D8]" />
-            Registered Applications ({total})
-          </div>
-          <div className="text-[11px] text-[#8589A6]">
-            SQLite Persistence · WAL Mode
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="p-12 text-center text-[#5F6485] text-xs">
-            <RefreshCw className="w-6 h-6 animate-spin mx-auto text-[#7450D8] mb-2" />
-            Loading application records...
-          </div>
-        ) : applications.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-[#FAF8FF] border border-[#DCD0F7] flex items-center justify-center mx-auto text-[#7450D8] mb-3">
-              <Inbox className="w-7 h-7" />
-            </div>
-            <h4 className="text-sm font-bold text-[#171B45]">No applications found</h4>
-            <p className="text-xs text-[#5F6485] max-w-sm mx-auto mt-1 mb-4 leading-relaxed">
-              {searchQuery || statusFilter
-                ? 'No application records match your current filter criteria.'
-                : 'Get started by creating your first institutional application or running the seed script.'}
-            </p>
             <button
-              onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-[#F04438] text-white hover:bg-[#E34234] transition-all cursor-pointer shadow-xs"
+              type="button"
+              onClick={() => setStatusFilter('UNDER_REVIEW')}
+              className={`h-7 px-3.5 text-xs rounded-full font-semibold transition-all cursor-pointer ${
+                statusFilter === 'UNDER_REVIEW'
+                  ? 'bg-[#1B1411] text-[#FAF5F0] shadow-sm'
+                  : 'text-[#66574F] hover:text-[#1B1411]'
+              }`}
             >
-              <Plus className="w-4 h-4" />
-              Create First Application
+              Under Review
             </button>
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-[#EEEAF5] bg-[#FAF9FC] text-[#8589A6] font-semibold">
-                  <th className="py-3 px-5">APPLICATION REFERENCE</th>
-                  <th className="py-3 px-4">INSTITUTION</th>
-                  <th className="py-3 px-4">CATEGORY</th>
-                  <th className="py-3 px-4">ACADEMIC YEAR</th>
-                  <th className="py-3 px-4">STATUS</th>
-                  <th className="py-3 px-4">PIPELINE</th>
-                  <th className="py-3 px-4">LAST UPDATED</th>
-                  <th className="py-3 px-5 text-right">ACTIONS</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#EEEAF5]">
+        </div>
+
+        <form onSubmit={handleSearchSubmit} className="relative flex-1 md:max-w-xs">
+          <Search className="size-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#66574F] pointer-events-none" />
+          <input
+            id="application-search-input"
+            name="application_search"
+            aria-label="Search applications by reference or institution"
+            type="text"
+            placeholder="Search reference or institution..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full h-9 text-xs pl-9 pr-4 rounded-full border border-[#E5DACF] bg-[#FAF5F0]/50 focus:bg-white focus:outline-hidden focus:border-[#1B1411] text-[#1B1411]"
+          />
+        </form>
+      </div>
+
+      {/* 3. Error Alert */}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertTitle className="text-xs font-semibold">Unable to Load Applications</AlertTitle>
+          <AlertDescription className="text-xs">{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* 4. Applications Table Card */}
+      <div className="bg-white rounded-2xl border border-[#E5DACF] shadow-[0_4px_24px_-4px_rgba(27,20,17,0.04)] overflow-hidden">
+        <div className="p-5 border-b border-[#E5DACF] flex flex-row items-center justify-between bg-[#FAF5F0]/40">
+          <div>
+            <h2 className="text-sm font-bold flex items-center gap-2 text-[#1B1411]">
+              <FileText className="size-4 text-[#1F3954] shrink-0" />
+              Registered Application Dossiers
+            </h2>
+            <p className="text-xs text-[#66574F] mt-0.5">
+              Showing {applications.length} of {total} records from the regulatory store.
+            </p>
+          </div>
+          <span className="font-mono text-[10px] text-[#66574F] bg-[#EEE5DC] border border-[#E5DACF] px-2.5 py-0.5 rounded-full">
+            SQLite WAL · Immutable Audit
+          </span>
+        </div>
+
+        <div>
+          {loading ? (
+            <div className="p-6 space-y-3">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          ) : applications.length === 0 ? (
+            <div className="p-6">
+              <EmptyState
+                icon={FileText}
+                title="No applications found"
+                description={
+                  searchQuery || statusFilter
+                    ? 'No application dossiers match your active filter criteria.'
+                    : 'Get started by creating your first institutional application dossier.'
+                }
+                actionLabel={userRole !== 'REVIEWER' ? 'Create First Application' : undefined}
+                onAction={userRole !== 'REVIEWER' ? () => setIsModalOpen(true) : undefined}
+              />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader className="bg-muted/40">
+                <TableRow className="border-b border-border hover:bg-transparent">
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4">
+                    APPLICATION REFERENCE
+                  </TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4">
+                    INSTITUTION
+                  </TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4">
+                    CATEGORY
+                  </TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4">
+                    ACADEMIC YEAR
+                  </TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4">
+                    LIFECYCLE STATUS
+                  </TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4">
+                    PIPELINE
+                  </TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4">
+                    LAST MODIFIED
+                  </TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4 text-right">
+                    ACTIONS
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {applications.map((app) => (
-                  <tr
+                  <TableRow
                     key={app.id}
-                    className="hover:bg-[#FAF8FF] transition-colors group cursor-pointer"
                     onClick={() => onSelectApplication?.(app.id)}
+                    className="cursor-pointer hover:bg-muted/40 transition-colors"
                   >
-                    <td className="py-3.5 px-5">
+                    <TableCell className="py-3 px-4">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-[#FFF0EF] text-[#F04438] flex items-center justify-center font-bold text-[10px] shrink-0">
-                          PDF
+                        <div className="size-7 rounded-md bg-secondary text-primary flex items-center justify-center font-bold text-[10px] shrink-0">
+                          APP
                         </div>
-                        <span className="font-mono font-bold text-[#171B45] group-hover:text-[#7450D8] transition-colors underline-offset-2 group-hover:underline">
+                        <span className="font-mono font-semibold text-xs text-foreground group-hover:text-primary transition-colors">
                           {app.application_reference}
                         </span>
                       </div>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <div className="font-semibold text-[#171B45] flex items-center gap-1.5">
-                        <Building2 className="w-3.5 h-3.5 text-[#8589A6] shrink-0" />
-                        {app.institution.institution_name}
+                    </TableCell>
+
+                    <TableCell className="py-3 px-4">
+                      <div className="font-medium text-xs text-foreground flex items-center gap-1.5">
+                        <Building2 className="size-3.5 text-muted-foreground shrink-0" />
+                        <span className="truncate max-w-[200px]" title={app.institution.institution_name}>
+                          {app.institution.institution_name}
+                        </span>
                       </div>
-                      <div className="text-[11px] text-[#8589A6] font-mono pl-5">
-                        {app.institution.institution_identifier || app.institution.id}
+                      <div className="text-[10px] text-muted-foreground font-mono pl-5">
+                        {app.institution.institution_identifier || app.institution.id.slice(0, 8)}
                       </div>
-                    </td>
-                    <td className="py-3.5 px-4 text-[#5F6485]">
-                      <span className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-[#FAF9FC] border border-[#E9E6F2]">
+                    </TableCell>
+
+                    <TableCell className="py-3 px-4">
+                      <Badge variant="outline" className="font-mono text-[10px] bg-secondary text-primary border-primary/20">
                         {app.category_code}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-[#5F6485]">
-                      <span className="inline-flex items-center gap-1">
-                        <Calendar className="w-3 h-3 text-[#8589A6]" />
+                      </Badge>
+                    </TableCell>
+
+                    <TableCell className="py-3 px-4 text-xs text-muted-foreground">
+                      <span className="inline-flex items-center gap-1 font-mono text-[11px]">
+                        <Calendar className="size-3 text-muted-foreground" />
                         {app.academic_year || '—'}
                       </span>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      {getStatusBadge(app.lifecycle_status)}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className="text-[11px] font-mono text-[#5F6485]">
-                        {app.pipeline_status}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 font-mono text-[#8589A6] text-[11px]">
+                    </TableCell>
+
+                    <TableCell className="py-3 px-4">
+                      <StatusBadge status={app.lifecycle_status} category="lifecycle" />
+                    </TableCell>
+
+                    <TableCell className="py-3 px-4">
+                      <StatusBadge status={app.pipeline_status} category="pipeline" showIcon={false} />
+                    </TableCell>
+
+                    <TableCell className="py-3 px-4 font-mono text-muted-foreground text-[11px]">
                       {new Date(app.updated_at).toLocaleDateString()} {new Date(app.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </td>
-                    <td className="py-3.5 px-5 text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="inline-flex items-center gap-2">
+                    </TableCell>
+
+                    <TableCell className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="inline-flex items-center gap-1.5">
                         {onSelectApplication && (
                           <button
+                            type="button"
                             onClick={() => onSelectApplication(app.id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#7450D8] text-white hover:bg-[#5633B8] text-[11px] font-semibold transition-colors cursor-pointer"
+                            className="h-7 text-xs font-bold gap-1 px-3.5 rounded-full bg-[#33CC7A] hover:bg-[#2EB86E] text-[#1B1411] inline-flex items-center transition-all cursor-pointer shadow-xs"
                             title="Open Application Scrutiny Dossier"
                           >
-                            <span>Scrutinize →</span>
+                            <span>Scrutinize</span>
+                            <ArrowRight className="size-3" />
                           </button>
                         )}
-                        <button
-                          onClick={() => setUploadModalAppId(app.id)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#DCD0F7] text-[11px] font-semibold text-[#7450D8] hover:bg-[#F3EEFC] transition-colors cursor-pointer"
-                          title="Upload Document"
-                        >
-                          <Upload className="w-3 h-3" />
-                          <span>Upload</span>
-                        </button>
+                        {userRole !== 'REVIEWER' && (
+                          <button
+                            type="button"
+                            onClick={() => setUploadModalAppId(app.id)}
+                            className="h-7 text-xs font-semibold gap-1 px-3 rounded-full border border-[#E5DACF] bg-[#FAF5F0] hover:bg-[#EEE5DC] text-[#1B1411] inline-flex items-center transition-colors cursor-pointer"
+                            title="Upload Document"
+                          >
+                            <Upload className="size-3 text-[#1F3954]" />
+                            <span className="hidden sm:inline">Upload</span>
+                          </button>
+                        )}
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              </TableBody>
+            </Table>
+          )}
+        </div>
       </div>
 
       {/* Creation Modal */}

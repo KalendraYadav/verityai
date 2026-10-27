@@ -240,10 +240,10 @@ export const AuthModal: React.FC<Props> = ({
                 </button>
               </form>
 
-              {/* Quick Demo Switcher (Crucial for SIH 2026 Evaluation) */}
+              {/* Role Switcher */}
               <div className="pt-3 border-t border-[#EEEAF5] space-y-2">
                 <div className="text-[11px] font-bold text-[#8589A6] uppercase tracking-wider">
-                  Quick Demo Accounts (Synthetic Sandbox)
+                  Preset Role Credentials
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <button

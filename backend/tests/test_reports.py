@@ -12,11 +12,11 @@ from app.models.validation import ValidationRule, ValidationRun, RuleResult
 from app.models.finding import Finding, FindingEvidence
 from app.models.report import ScrutinyReport
 from app.models.user import User
-from app.core.security import hash_password
+from app.core.security import hash_password, create_access_token
 
 
 @pytest.fixture
-def base_test_user(db_session: Session):
+def base_test_user(client: TestClient, db_session: Session):
     user = User(
         id="usr-rep-reviewer",
         email="reports.officer@verityai.gov.in",
@@ -27,6 +27,10 @@ def base_test_user(db_session: Session):
     )
     db_session.add(user)
     db_session.commit()
+
+    token = create_access_token(user.id, user.role, user.email)
+    client.cookies.set("access_token", token)
+    client.headers["X-Requested-With"] = "VerityAI"
     return user
 
 
@@ -311,7 +315,7 @@ def test_json_scrutiny_report_generation(client: TestClient, db_session: Session
     assert "disclaimer" in content
 
 
-def test_reports_not_found(client: TestClient):
+def test_reports_not_found(client: TestClient, base_test_user: User):
     """Test 404 responses for missing applications or reports."""
     resp1 = client.get("/api/v1/applications/non-existent-app/review-summary")
     assert resp1.status_code == 404

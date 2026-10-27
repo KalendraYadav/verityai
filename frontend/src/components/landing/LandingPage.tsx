@@ -1,761 +1,602 @@
 import React from 'react';
-import { VerityAIExcelLogo } from '../brand/VerityAIExcelLogo';
 import {
   ArrowRight,
   ShieldCheck,
   FileSearch,
   ClipboardList,
-  UserCheck,
-  CheckCircle2,
   FileText,
   AlertTriangle,
   History,
-  ChevronRight,
   UploadCloud,
   Layers,
-  Sparkles,
+  Building2,
 } from 'lucide-react';
 import type { UserProfile } from '../../api/client';
 
 interface Props {
   onGetStarted: () => void;
   onSignIn: () => void;
+  onOfficerSignIn?: () => void;
+  onOpenApplicantPortal?: () => void;
   onEnterWorkspace?: () => void;
   currentUser?: UserProfile | null;
 }
 
-/* ── 4-Step Scrutiny Workflow ────────────────────────────────────────── */
+/* ── 4-Step Scrutiny Workflow (Adapted from Linea) ────────────────────────── */
 const WORKFLOW_STEPS = [
   {
     step: '01',
     name: 'Submit',
-    title: 'Create & Upload',
+    title: 'Institutional Intake & Dossier Upload',
     description:
-      'Create an institutional application and upload its supporting documents through a structured regulatory intake dossier.',
-    tag: 'Step 01',
+      'Institutions prepare, document, and submit statutory approval dossiers with declared campus metrics and mandatory certificate attachments under AICTE APH 2024–27 norms.',
+    tag: 'Step 01 · Intake',
     icon: UploadCloud,
-    accentColor: '#6941C6',
-    accentText: '#5631A8',
-    surfaceBg: '#F3EEFF',
-    borderColor: '#DCD0F7',
-    iconBg: '#FFFFFF',
   },
   {
     step: '02',
     name: 'Extract',
-    title: 'Extract & Understand',
+    title: 'Document Intelligence & RapidOCR',
     description:
-      'Extract available document text and present the results for inspection. Page-level OCR statuses and parsing confidence are preserved.',
-    tag: 'Step 02',
+      'Structured text extraction parses multilingual and Devanagari numerals. Page-level confidence, bounding boxes, and parsing integrity are preserved without cloud token dependencies.',
+    tag: 'Step 02 · Provenance',
     icon: FileSearch,
-    accentColor: '#3156A6',
-    accentText: '#1E3A8A',
-    surfaceBg: '#EEF4FF',
-    borderColor: '#C7D7FE',
-    iconBg: '#FFFFFF',
   },
   {
     step: '03',
     name: 'Validate',
-    title: 'Validate & Identify',
+    title: 'Deterministic Norm Verification',
     description:
-      'Apply configured validation rules and highlight missing requirements or discrepancies with direct evidence references.',
-    tag: 'Step 03',
+      'Zero-hallucination compliance rules verify contiguous land area, faculty cadres, structural stability, and approved intake ceilings against statutory baselines.',
+    tag: 'Step 03 · Validation',
     icon: Layers,
-    accentColor: '#5145CD',
-    accentText: '#4338CA',
-    surfaceBg: '#F0F0FF',
-    borderColor: '#D4D4FF',
-    iconBg: '#FFFFFF',
   },
   {
     step: '04',
     name: 'Review',
-    title: 'Review & Report',
+    title: 'Human Officer Determination & Audit',
     description:
-      'Allow authorized reviewers to examine evidence, record permitted decisions, and access available scrutiny reports.',
-    tag: 'Step 04',
+      'Authorized scrutiny officers inspect evidence-linked findings, record formal determinations, and export tamper-evident reports sealed in an immutable cryptographic audit trail.',
+    tag: 'Step 04 · Decision',
     icon: ClipboardList,
-    accentColor: '#15803D',
-    accentText: '#166534',
-    surfaceBg: '#ECFDF3',
-    borderColor: '#BBF7D0',
-    iconBg: '#FFFFFF',
   },
 ];
 
-/* ── 6 Verifiable Capabilities ───────────────────────────────────────── */
+/* ── 6 Core Scrutiny Capabilities ─────────────────────────────────────────── */
 const CAPABILITIES = [
   {
     icon: FileText,
-    title: 'Document Processing',
+    title: 'Document Ingestion & OCR',
     category: 'Ingestion & Extraction',
     body: 'Structured intake, multi-format validation, and automated text extraction with per-document status tracking across PDF and scanned filings.',
-    accentColor: '#6941C6',
-    accentBg: '#F3EEFF',
-    accentBorder: '#DCD0F7',
-    iconColor: '#6941C6',
-    pillText: 'Extraction',
+    pill: 'Offline OCR Engine',
   },
   {
     icon: ShieldCheck,
-    title: 'Configurable Validation',
+    title: 'Deterministic Validation',
     category: 'Statutory Criteria',
-    body: 'Deterministic checks for statutory land area, faculty ratios, AISHE identifiers, mandatory attachments, and temporal validity.',
-    accentColor: '#1D4ED8',
-    accentBg: '#EFF6FF',
-    accentBorder: '#BFDBFE',
-    iconColor: '#1D4ED8',
-    pillText: 'Validation',
+    body: 'Rigid compliance algorithms enforce contiguous land norms, faculty-to-student ratios (FSR), building age limits, and validity periods without LLM guesswork.',
+    pill: 'Zero Hallucination',
   },
   {
     icon: AlertTriangle,
     title: 'Discrepancy Detection',
-    category: 'Cross-Checking',
+    category: 'Cross-Document Checking',
     body: 'Rule-based cross-document comparison identifying conflicting declarations between titles, disclosures, and institutional registrations.',
-    accentColor: '#D97706',
-    accentBg: '#FFFBEB',
-    accentBorder: '#FDE68A',
-    iconColor: '#B45309',
-    pillText: 'Anomaly Flags',
+    pill: 'Anomaly Detection',
   },
   {
     icon: FileSearch,
     title: 'Evidence-Linked Review',
-    category: 'Provenance Links',
-    body: 'Every finding references the exact source document, page number, candidate extracted value, and governing evaluation rule.',
-    accentColor: '#7C3AED',
-    accentBg: '#F5F3FF',
-    accentBorder: '#DDD6FE',
-    iconColor: '#7C3AED',
-    pillText: 'Traceability',
+    category: 'Full Provenance',
+    body: 'Every finding cites the exact source document, page number, candidate extracted value, and governing evaluation rule for transparent scrutiny.',
+    pill: 'Traceable Findings',
   },
   {
     icon: History,
-    title: 'Audit Trail',
-    category: 'Accountability',
-    body: 'Append-only chronological audit logging recording every document upload, evaluation run, and reviewer action for legal accountability.',
-    accentColor: '#0891B2',
-    accentBg: '#ECFEFF',
-    accentBorder: '#A5F3FC',
-    iconColor: '#0E7490',
-    pillText: 'Append-Only',
+    title: 'Append-Only Audit Trail',
+    category: 'Legal Accountability',
+    body: 'Cryptographically sealed chronological audit logging recording every document upload, evaluation run, and reviewer action with SHA-256 integrity.',
+    pill: 'Tamper-Evident',
   },
   {
     icon: ClipboardList,
-    title: 'Scrutiny Reports',
-    category: 'Executive Summary',
-    body: 'Comprehensive, structured scrutiny summaries compiling document statuses, validation results, and reviewer determinations for board review.',
-    accentColor: '#15803D',
-    accentBg: '#F0FDF4',
-    accentBorder: '#BBF7D0',
-    iconColor: '#15803D',
-    pillText: 'Reporting',
+    title: 'Statutory Scrutiny Reports',
+    category: 'Board Reporting',
+    body: 'Comprehensive, structured scrutiny summaries compiling document statuses, validation results, and reviewer determinations for committee adjudication.',
+    pill: 'Official Dossier',
   },
 ];
 
 export const LandingPage: React.FC<Props> = ({
   onGetStarted,
   onSignIn,
+  onOfficerSignIn,
+  onOpenApplicantPortal,
   onEnterWorkspace,
   currentUser,
 }) => {
   return (
-    <div className="min-h-screen bg-[#F7F8FC] text-[#111827] relative selection:bg-[#E9D8FD] selection:text-[#581C87]">
-      {/* ── Accessible Skip to Main Content Link (GIGW 3.0 / WCAG 2.4.1) ─ */}
+    <div className="min-h-screen bg-[#FAF5F0] text-[#1B1411] font-sans antialiased relative selection:bg-[#33CC7A] selection:text-[#1B1411]">
+      {/* ── Accessible Skip to Main Content Link ── */}
       <a href="#main-content" className="skip-link">
         Skip to main content
       </a>
 
-      {/* ── SIH Institutional Banner ─────────────────────────────────── */}
-      <div className="bg-[#172554] text-white px-4 py-1.5 text-[11px] relative z-40">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#1E3A8A] text-blue-200 border border-[#2563EB]/40 text-[10px] font-semibold">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              Smart India Hackathon 2026
-            </span>
-            <span className="text-slate-300 hidden sm:inline">
-              Smart Automation Track · AI-Assisted Institutional Application Scrutiny
-            </span>
-          </div>
-          <span className="text-slate-400 text-[10px]">
-            Prototype Demonstration · Synthetic Data Only
-          </span>
-        </div>
-      </div>
-
-      {/* ── Public Navigation Header ─────────────────────────────────── */}
-      <header className="bg-white/95 backdrop-blur-md border-b border-[#E4E7EC] sticky top-0 z-30 px-4 sm:px-8 py-3.5">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      {/* ── Linea Floating Pill Navigation Bar ── */}
+      <header className="sticky top-4 z-50 px-4 sm:px-6 pointer-events-none mb-4">
+        <nav
+          aria-label="Primary Navigation"
+          className="max-w-5xl mx-auto linea-nav-pill px-5 sm:px-7 py-3 flex items-center justify-between pointer-events-auto transition-all shadow-[0_8px_32px_rgba(27,20,17,0.18)]"
+        >
           {/* Left: Brand */}
-          <VerityAIExcelLogo size="md" />
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-[#33CC7A] flex items-center justify-center text-[#1B1411] font-bold text-sm shadow-sm">
+              <ShieldCheck className="size-5" />
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-white font-bold text-lg tracking-tight">VerityAI</span>
+            </div>
+          </div>
 
-          {/* Center: Navigation Links */}
-          <nav aria-label="Primary Navigation" className="hidden md:flex items-center gap-8 text-xs font-semibold text-[#667085]">
-            <a
-              href="#how-it-works"
-              className="hover:text-[#111827] transition-colors"
-            >
-              How It Works
-            </a>
-            <a
-              href="#capabilities"
-              className="hover:text-[#111827] transition-colors"
-            >
-              Capabilities
-            </a>
-            <a
-              href="#governance"
-              className="hover:text-[#111827] transition-colors"
-            >
-              Governance &amp; Trust
-            </a>
-          </nav>
+          {/* Center Links */}
+          <ul className="hidden md:flex items-center gap-8 text-[13px] font-medium text-[#BACDE0]">
+            <li>
+              <a href="#how-it-works" className="hover:text-white transition-colors">
+                How It Works
+              </a>
+            </li>
+            <li>
+              <a href="#comparison" className="hover:text-white transition-colors">
+                Dual Verification
+              </a>
+            </li>
+            <li>
+              <a href="#capabilities" className="hover:text-white transition-colors">
+                Capabilities
+              </a>
+            </li>
+            <li>
+              <a href="#governance" className="hover:text-white transition-colors">
+                Governance
+              </a>
+            </li>
+          </ul>
 
-          {/* Right: Auth Triggers */}
-          <div className="flex items-center gap-2.5">
+          {/* Right CTAs */}
+          <div className="flex items-center gap-3">
             {currentUser ? (
               <button
+                type="button"
                 onClick={onEnterWorkspace || onGetStarted}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold bg-[#6941C6] text-white hover:bg-[#5631A8] transition-colors shadow-xs cursor-pointer"
+                className="linea-btn-mint px-5 py-2 text-xs font-semibold"
               >
-                <span>Enter Workspace</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                Enter Workspace →
               </button>
             ) : (
               <>
                 <button
+                  type="button"
                   onClick={onSignIn}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold text-[#374151] hover:bg-[#F5F0FF] hover:text-[#6941C6] transition-colors cursor-pointer"
+                  className="hidden sm:inline-flex text-[#FAF5F0] hover:text-white text-xs font-semibold px-3 py-1.5 transition-colors cursor-pointer"
                 >
                   Sign In
                 </button>
                 <button
-                  onClick={onGetStarted}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold bg-[#6941C6] text-white hover:bg-[#5631A8] transition-colors shadow-xs cursor-pointer"
+                  type="button"
+                  onClick={onOpenApplicantPortal || onGetStarted}
+                  className="linea-btn-mint px-4.5 py-2 text-xs font-semibold cursor-pointer"
                 >
-                  Get Started
+                  Applicant Portal
                 </button>
               </>
             )}
           </div>
-        </div>
+        </nav>
       </header>
 
-      {/* ── Main Landmark ────────────────────────────────────────────── */}
-      <main id="main-content" tabIndex={-1} className="outline-none">
-
-      {/* ── Hero Section (Split-Screen with Curved Background Accents) ─ */}
-      <section className="relative pt-10 sm:pt-16 pb-20 px-4 sm:px-8 overflow-hidden">
-        {/* Soft curved organic background shape behind the hero preview */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -top-24 right-[-10%] w-[680px] h-[680px] rounded-full bg-gradient-to-br from-[#F3EEFF]/80 via-[#EEF4FF]/50 to-transparent blur-3xl opacity-75 -z-10"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute top-40 left-[-5%] w-[420px] h-[420px] rounded-full bg-gradient-to-tr from-[#F0F0FF]/60 via-[#F3EEFF]/40 to-transparent blur-2xl opacity-60 -z-10"
-        />
-
-        {/* Subtle SVG organic wave divider accent at bottom edge of hero */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 text-white/50 -z-10 overflow-hidden leading-none"
+      {/* ── Main Content Area ── */}
+      <main id="main-content">
+        {/* ── SECTION 1: Linea Hero Showcase ─────────────────────────────── */}
+        <section
+          id="hero"
+          className="relative bg-[#1F3954] text-[#FAF5F0] pt-24 pb-28 sm:pt-32 sm:pb-36 px-6 sm:px-12 overflow-hidden border-b border-[#FAF5F0]/10"
         >
-          <svg
-            viewBox="0 0 1440 48"
-            fill="none"
-            preserveAspectRatio="none"
-            className="w-full h-full text-white"
-          >
-            <path
-              d="M0 48H1440V24C1200 4 960 40 720 20C480 0 240 32 0 16V48Z"
-              fill="currentColor"
-            />
-          </svg>
-        </div>
+          {/* Subtle Ambient Grain (no artificial scribbles) */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#BACDE0_1px,transparent_1px)] [background-size:24px_24px]" />
 
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
-            
-            {/* Left Column: Heading, Value Proposition, and CTAs */}
-            <div className="lg:col-span-6 space-y-6">
-              {/* Eyebrow */}
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F5F0FF] border border-[#DDD6FE] text-[11px] font-bold text-[#6941C6] uppercase tracking-wider shadow-2xs">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#6941C6]" />
-                Institutional Application Scrutiny
-              </div>
-
-              {/* Main Heading */}
-              <h1 className="text-3xl sm:text-5xl font-extrabold text-[#111827] tracking-tight leading-[1.1]">
-                Institutional Scrutiny,{' '}
-                <span className="text-[#6941C6]">Made Clearer.</span>
-              </h1>
-
-              {/* Supporting Copy */}
-              <p className="text-sm sm:text-base text-[#667085] leading-relaxed max-w-xl">
-                Review institutional applications with structured document extraction,
-                configurable validation rules, discrepancy detection, and evidence-linked
-                findings — all within an accountable, human-supervised regulatory workflow.
-              </p>
-
-              {/* Action Buttons */}
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <button
-                  onClick={onGetStarted}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold bg-[#6941C6] text-white hover:bg-[#5631A8] transition-all shadow-sm hover:shadow cursor-pointer"
-                >
-                  <span>{currentUser ? 'Enter Workspace' : 'Get Started'}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-                <a
-                  href="#how-it-works"
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold bg-white border border-[#E4E7EC] text-[#374151] hover:bg-[#F9FAFB] hover:border-[#D0D5DD] transition-all shadow-2xs cursor-pointer"
-                >
-                  <span>How It Works</span>
-                  <ChevronRight className="w-4 h-4" />
-                </a>
-              </div>
-
-              {/* Trust & Ethics Note */}
-              <div className="pt-2 flex items-center gap-2 text-xs text-[#667085]">
-                <ShieldCheck className="w-4 h-4 text-[#15803D] shrink-0" />
-                <span>
-                  Designed for regulatory reviewers. Final statutory decisions remain human-led.
-                </span>
-              </div>
+          <div className="max-w-4xl mx-auto text-center relative z-10 space-y-7">
+            {/* Tagline Pill */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FAF5F0]/10 border border-[#FAF5F0]/15 text-[#BACDE0] text-xs font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#33CC7A]" />
+              <span>AICTE Approval Process Handbook (APH 2024–27) Baseline</span>
             </div>
 
-            {/* Right Column: Purpose-Built Illustrative Hero UI Composition */}
-            <div className="lg:col-span-6 relative">
-              {/* Subtle organic halo behind the card */}
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute -inset-3 bg-gradient-to-r from-[#DDD6FE]/30 via-[#BFDBFE]/20 to-[#BBF7D0]/20 rounded-3xl blur-lg -z-10"
-              />
+            {/* Massive Clear Linea Headline */}
+            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-[-0.04em] leading-[1.02] text-[#FAF5F0]">
+              Every statutory filing, <br />
+              <span className="text-[#33CC7A]">verified to its source.</span>
+            </h1>
 
-              {/* Elegant illustrative banner above card */}
-              <div className="mb-2 flex items-center justify-between px-1 text-[11px]">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#F3EEFF] border border-[#DCD0F7] text-[#6941C6] font-bold text-[10px] tracking-wide uppercase">
-                  <Sparkles className="w-3 h-3 text-[#6941C6]" />
-                  <span>ILLUSTRATIVE SCRUTINY PREVIEW</span>
-                </div>
-                <span className="text-[10px] font-medium text-[#667085] bg-white/80 px-2 py-0.5 rounded-md border border-[#E4E7EC]">
-                  Synthetic demonstration data
-                </span>
-              </div>
-
-              <div className="bg-white rounded-2xl border border-[#E4E7EC] shadow-md p-5 sm:p-6 space-y-4 relative">
-                {/* 1. Institutional Application Header */}
-                <div className="flex items-start justify-between pb-3.5 border-b border-[#E4E7EC] gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-[#6941C6] bg-[#F5F0FF] px-2 py-0.5 rounded border border-[#DDD6FE]">
-                        APP-2026-0841
-                      </span>
-                      <span className="text-[10px] font-semibold text-[#667085] bg-[#F9FAFB] px-2 py-0.5 rounded border border-[#E4E7EC]">
-                        AISHE: C-41829 (Demo)
-                      </span>
-                    </div>
-                    <div className="text-sm font-bold text-[#111827] mt-1.5">
-                      St. Xavier Institute of Technology &amp; Management
-                    </div>
-                    <div className="text-[11px] text-[#667085]">
-                      Category: Technical Campus Approval (AY 2026–27) · Example Filing
-                    </div>
-                  </div>
-
-                  <div className="text-right shrink-0">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#1D4ED8] animate-pulse" />
-                      UNDER SCRUTINY
-                    </span>
-                    <div className="text-[9px] text-[#9CA3AF] mt-0.5 font-medium">
-                      Simulated State
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. Document Extraction Status Grid */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="font-bold text-[#374151] uppercase tracking-wider text-[10px]">
-                      Document Extraction &amp; OCR Status
-                    </span>
-                    <span className="text-[#6941C6] font-medium font-mono text-[10px] bg-[#F5F0FF] px-1.5 py-0.5 rounded">
-                      2 / 2 Verified (Demo OCR)
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                    <div className="p-2.5 rounded-xl border border-[#E4E7EC] bg-[#F9FAFB] space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-[#111827] truncate text-[11px]">
-                          Land Ownership Deed
-                        </span>
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#15803D]" />
-                      </div>
-                      <div className="text-[10px] text-[#667085] flex items-center justify-between">
-                        <span>14 Pages Parsed</span>
-                        <span className="font-mono font-bold text-[#15803D]">98.4% conf</span>
-                      </div>
-                    </div>
-
-                    <div className="p-2.5 rounded-xl border border-[#E4E7EC] bg-[#F9FAFB] space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-[#111827] truncate text-[11px]">
-                          AICTE Mandatory Disclosure
-                        </span>
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#15803D]" />
-                      </div>
-                      <div className="text-[10px] text-[#667085] flex items-center justify-between">
-                        <span>8 Pages Parsed</span>
-                        <span className="font-mono font-bold text-[#15803D]">96.1% conf</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 3. Validation Rules Assessment */}
-                <div className="space-y-2 pt-1">
-                  <span className="font-bold text-[#374151] uppercase tracking-wider text-[10px]">
-                    Deterministic Rule Assessment
-                  </span>
-
-                  <div className="space-y-1.5 text-xs">
-                    {/* Passed Rule */}
-                    <div className="p-2.5 rounded-xl bg-[#F0FDF4] border border-[#BBF7D0] flex items-center justify-between">
-                      <div className="space-y-0.5 min-w-0 pr-2">
-                        <div className="font-bold text-[#15803D] text-[11px] flex items-center gap-1.5">
-                          <span>VAL-LAND-01: Contiguous Land Area ≥ 5.0 Acres</span>
-                        </div>
-                        <div className="text-[10px] text-[#166534] truncate">
-                          Extracted Value: 7.42 acres (Survey Record #SR-409/2024)
-                        </div>
-                      </div>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#DCFCE7] text-[#15803D] border border-[#86EFAC] shrink-0">
-                        PASSED
-                      </span>
-                    </div>
-
-                    {/* Flagged Rule */}
-                    <div className="p-2.5 rounded-xl bg-[#FFFBEB] border border-[#FDE68A] flex items-center justify-between">
-                      <div className="space-y-0.5 min-w-0 pr-2">
-                        <div className="font-bold text-[#B45309] text-[11px] flex items-center gap-1.5">
-                          <AlertTriangle className="w-3 h-3 text-[#D97706]" />
-                          <span>VAL-FAC-03: Faculty Cadre Ratio ≥ 1:20</span>
-                        </div>
-                        <div className="text-[10px] text-[#92400E] truncate">
-                          Candidate Ratio: 1:22.4 · Flagged for reviewer inspection
-                        </div>
-                      </div>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#FEF3C7] text-[#B45309] border border-[#FCD34D] shrink-0">
-                        NEEDS REVIEW
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 4. Evidence-Linked Finding Citation */}
-                <div className="p-3 rounded-xl bg-[#F5F0FF] border border-[#DDD6FE] space-y-1">
-                  <div className="flex items-center justify-between text-[10px] font-bold text-[#6941C6] uppercase">
-                    <span className="flex items-center gap-1">
-                      <FileSearch className="w-3.5 h-3.5" />
-                      Traceable Evidence Link
-                    </span>
-                    <span className="font-mono">Doc #DOC-2026-4401</span>
-                  </div>
-                  <p className="text-[11px] text-[#4C1D95] leading-relaxed">
-                    Page 4, Clause 3.2: Declared built-up education area (14,250 sq.m) matches
-                    Municipal Sanction Certificate #MC-2025-110.
-                  </p>
-                </div>
-
-                {/* 5. Reviewer Sign-Off Footer */}
-                <div className="pt-2 flex items-center justify-between text-[11px] text-[#667085] border-t border-[#E4E7EC]">
-                  <div className="flex items-center gap-1.5 font-medium">
-                    <UserCheck className="w-3.5 h-3.5 text-[#15803D]" />
-                    <span>Officer: K. Ramanathan (Demo Scrutiny Lead)</span>
-                  </div>
-                  <span className="font-mono text-[10px] text-[#6B7280] font-semibold bg-[#F3F4F6] px-2 py-0.5 rounded">
-                    Pending Human Determination
-                  </span>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* ── How It Works (4 Coordinated Distinct Cards with Subtle Curve) ─ */}
-      <section id="how-it-works" className="py-20 px-4 sm:px-8 bg-white border-y border-[#E4E7EC] relative overflow-hidden">
-        {/* Soft background tint shape for section definition */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-64 bg-gradient-to-b from-[#FAF8FF] to-transparent -z-10"
-        />
-
-        <div className="max-w-7xl mx-auto space-y-12 relative">
-          {/* Section Header with subtle decorative pill */}
-          <div className="text-center space-y-2 max-w-2xl mx-auto">
-            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-[#F3EEFF] border border-[#DCD0F7] text-xs font-bold text-[#6941C6] uppercase tracking-wider">
-              Scrutiny Methodology
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#111827]">
-              How VerityAI Excel Works
-            </h2>
-            <p className="text-xs sm:text-sm text-[#667085]">
-              A four-stage verifiable workflow from institutional intake to evidence-linked determination.
+            {/* Editorial Lead Paragraph - Short, focused, confident */}
+            <p className="text-base sm:text-lg text-[#BACDE0] max-w-2xl mx-auto leading-relaxed font-normal">
+              Intelligent intake, deterministic norm validation, and evidence-traceable scrutiny
+              for institutional applications—built for technical education regulators and applicants.
             </p>
-          </div>
 
-          {/* 4-Step Coordinated Distinct Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {WORKFLOW_STEPS.map((s, idx) => {
-              const StepIcon = s.icon;
-              return (
-                <div
-                  key={s.step}
-                  className="workflow-card rounded-2xl border p-6 space-y-4 relative flex flex-col justify-between"
-                  style={{
-                    backgroundColor: s.surfaceBg,
-                    borderColor: s.borderColor,
-                  }}
-                >
-                  <div className="space-y-4">
-                    {/* Top Row: Prominent Step Number, Step Badge & Icon */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="font-mono text-2xl font-black tracking-tight"
-                          style={{ color: s.accentColor }}
-                        >
+            {/* Primary Action Buttons */}
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-4">
+              <button
+                type="button"
+                onClick={onOpenApplicantPortal || onGetStarted}
+                className="linea-btn-mint px-7 py-3.5 text-sm font-bold gap-2 cursor-pointer shadow-[0_4px_20px_rgba(51,204,122,0.3)]"
+              >
+                <Building2 className="size-4" />
+                Applicant Portal
+                <ArrowRight className="size-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={onOfficerSignIn || onSignIn}
+                className="linea-btn-sand px-6 py-3.5 text-sm font-semibold gap-2 cursor-pointer hover:bg-white text-[#1B1411]"
+              >
+                Officer Sign In
+                <ArrowRight className="size-4" />
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* ── SECTION 2: Dual Verification ("They Declare" vs "We Verify") ── */}
+        <section id="comparison" className="py-20 sm:py-28 px-6 sm:px-12 bg-[#FAF5F0]">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end mb-12">
+              <div className="lg:col-span-7">
+                <p className="text-xs font-semibold text-[#66574F] uppercase tracking-wider mb-2">
+                  Transparent Scrutiny Architecture
+                </p>
+                <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-[#1B1411] leading-[1.05]">
+                  Nothing lost between <br />
+                  a declaration and an audit.
+                </h2>
+              </div>
+              <div className="lg:col-span-5">
+                <p className="text-sm sm:text-base text-[#66574F] leading-relaxed">
+                  No gaps, no guesswork, and zero unverified assumptions. VerityAI operates as
+                  an evidence-traceable bridge: institutions submit declared parameters, and
+                  deterministic rules extract, evaluate, and trace every claim to exact PDF character spans.
+                </p>
+              </div>
+            </div>
+
+            {/* The Signature Dual Blocks (Refined & Balanced) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+              {/* Left: Applicant Declares (Deep Espresso) */}
+              <div className="bg-[#1B1411] text-[#FAF5F0] rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-lg border border-[#2E241F]">
+                <div>
+                  <div className="flex items-center justify-between pb-5 border-b border-[#FAF5F0]/10 mb-5">
+                    <div className="flex items-center gap-2">
+                      <span className="size-2 rounded-full bg-[#B8ABA3]" />
+                      <span className="text-xs font-bold text-[#FAF5F0] tracking-wider uppercase">
+                        Applicant Submission
+                      </span>
+                    </div>
+                    <span className="text-[11px] font-mono text-[#BACDE0]">
+                      DECLARED DOSSIER
+                    </span>
+                  </div>
+
+                  <div className="space-y-3.5">
+                    <div className="p-3.5 rounded-2xl bg-[#2A201B] border border-[#FAF5F0]/10">
+                      <p className="text-[10px] text-[#B8ABA3] uppercase font-bold tracking-wider mb-0.5">
+                        Institution Legal Title
+                      </p>
+                      <p className="text-sm font-semibold text-white">
+                        Apex Institute of Technology &amp; Management
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-[#2A201B] border border-[#FAF5F0]/10">
+                      <p className="text-[10px] text-[#B8ABA3] uppercase font-bold tracking-wider mb-0.5">
+                        Declared Campus Land
+                      </p>
+                      <p className="text-sm font-semibold text-white">
+                        7.42 Contiguous Acres (Rural / Mega City Zone)
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-[#2A201B] border border-[#FAF5F0]/10">
+                      <p className="text-[10px] text-[#B8ABA3] uppercase font-bold tracking-wider mb-0.5">
+                        Declared Student Intake
+                      </p>
+                      <p className="text-sm font-semibold text-white">
+                        120 Seats across Computer Science &amp; Engineering
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-5 mt-5 border-t border-[#FAF5F0]/10 flex items-center justify-between text-xs text-[#B8ABA3]">
+                  <span>Source: Application Form</span>
+                  <span className="text-[11px] font-mono text-[#BACDE0]">Unverified Claims</span>
+                </div>
+              </div>
+
+              {/* Right: VerityAI Verifies (Midnight Slate-Navy with Restrained Mint Accents) */}
+              <div className="bg-[#1F3954] text-[#FAF5F0] rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-lg border border-[#2D4E70]">
+                <div>
+                  <div className="flex items-center justify-between pb-5 border-b border-[#BACDE0]/20 mb-5">
+                    <div className="flex items-center gap-2">
+                      <span className="size-2 rounded-full bg-[#33CC7A]" />
+                      <span className="text-xs font-bold text-white tracking-wider uppercase">
+                        VerityAI Engine Scrutiny
+                      </span>
+                    </div>
+                    <span className="text-[11px] font-mono font-bold text-[#33CC7A] px-2.5 py-0.5 rounded-full bg-[#33CC7A]/15 border border-[#33CC7A]/30">
+                      DETERMINISTIC PROOF
+                    </span>
+                  </div>
+
+                  <div className="space-y-3.5">
+                    <div className="p-3.5 rounded-2xl bg-[#182C40] border border-[#BACDE0]/15">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-bold text-[#BACDE0] font-mono">
+                          VAL-LAND-01 Land Norm Check
+                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#33CC7A] text-[#1B1411]">
+                          PASSED
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#FAF5F0]/90">
+                        7.42 Acres ≥ 5.0 Acres Statutory Minimum. Verified on Page 4 of Land Deed.
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-[#182C40] border border-[#BACDE0]/15">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-bold text-[#BACDE0] font-mono">
+                          VAL-CMP-INTAKE Exact Match
+                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#33CC7A] text-[#1B1411]">
+                          PASSED
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#FAF5F0]/90">
+                        Declared 120 seats matches extracted EOA certificate value 120 (Page 1).
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-[#182C40] border border-[#BACDE0]/15">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-bold text-[#BACDE0] font-mono">
+                          Tamper-Evident SHA-256
+                        </span>
+                        <span className="text-[10px] font-mono text-[#33CC7A] font-bold bg-[#33CC7A]/10 px-1.5 py-0.5 rounded">
+                          0d322847...
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#FAF5F0]/90">
+                        Dossier payload sealed in append-only SQLite WAL ledger.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-5 mt-5 border-t border-[#BACDE0]/20 flex items-center justify-between text-xs text-[#BACDE0]">
+                  <span>Evidence-Linked Provenance</span>
+                  <span className="font-semibold text-[#33CC7A]">Officer Review Ready →</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── SECTION 3: 4-Step Scrutiny Methodology ─────────────────────── */}
+        <section id="how-it-works" className="py-20 sm:py-28 px-6 sm:px-12 bg-[#EEE5DC]">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center max-w-xl mx-auto mb-14">
+              <span className="text-xs font-bold text-[#66574F] uppercase tracking-wider">
+                Regulatory Methodology
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#1B1411] mt-2 mb-3">
+                A Four-Stage Verifiable Pipeline
+              </h2>
+              <p className="text-sm text-[#66574F] leading-relaxed">
+                From institutional applicant intake to evidence-linked officer determination.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+              {WORKFLOW_STEPS.map((s) => {
+                const IconComponent = s.icon;
+                return (
+                  <div
+                    key={s.step}
+                    className="bg-white rounded-3xl p-6 sm:p-7 border border-[#E5DDD5] shadow-sm flex flex-col justify-between hover:shadow-md transition-all hover:border-[#1B1411]/20"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-5">
+                        <span className="text-2xl font-bold text-[#1B1411] font-mono">
                           {s.step}
                         </span>
-                        <span
-                          className="px-2 py-0.5 rounded-md text-[10px] font-bold border uppercase tracking-wider"
-                          style={{
-                            color: s.accentText,
-                            backgroundColor: '#FFFFFF',
-                            borderColor: s.borderColor,
-                          }}
-                        >
-                          {s.name}
-                        </span>
+                        <div className="size-9 rounded-2xl bg-[#EEE5DC] flex items-center justify-center text-[#1B1411]">
+                          <IconComponent className="size-4.5" />
+                        </div>
                       </div>
-
-                      {/* Icon Container with subtle micro-interaction */}
-                      <div
-                        className="workflow-icon w-9 h-9 rounded-xl flex items-center justify-center shadow-2xs border"
-                        style={{
-                          backgroundColor: s.iconBg,
-                          borderColor: s.borderColor,
-                          color: s.accentColor,
-                        }}
-                      >
-                        <StepIcon className="w-4 h-4" />
-                      </div>
-                    </div>
-
-                    {/* Step Title & Description */}
-                    <div className="space-y-2">
-                      <h3 className="text-base font-bold text-[#172033]">
+                      <h3 className="text-base font-bold text-[#1B1411] mb-2 leading-snug">
                         {s.title}
                       </h3>
-                      <p className="text-xs text-[#667085] leading-relaxed">
+                      <p className="text-xs text-[#66574F] leading-relaxed">
                         {s.description}
                       </p>
                     </div>
                   </div>
-
-                  {/* Subtle progression connector / footer indicator */}
-                  <div className="pt-3 border-t border-black/[0.06] flex items-center justify-between text-[10px] font-semibold text-[#667085]">
-                    <span className="font-mono uppercase">{s.tag}</span>
-                    {idx < WORKFLOW_STEPS.length - 1 ? (
-                      <span className="inline-flex items-center text-[10px] text-[#9CA3AF] gap-0.5 font-sans">
-                        <span>Next</span>
-                        <ChevronRight className="w-3 h-3" />
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center text-[10px] text-[#15803D] gap-0.5 font-sans font-bold">
-                        <CheckCircle2 className="w-3 h-3" />
-                        <span>Decision</span>
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Statutory Decisions Note */}
-          <div className="text-center">
-            <p className="text-xs text-[#667085] flex items-center justify-center gap-1.5 bg-[#FAF8FF] py-2.5 px-4 rounded-xl border border-[#E9E6F2] max-w-2xl mx-auto">
-              <ShieldCheck className="w-4 h-4 text-[#15803D] shrink-0" />
-              <span>
-                <strong>Human-in-the-Loop Guarantee:</strong> The system surfaces facts and flags anomalies.
-                Final statutory determinations remain human-led.
-              </span>
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Capabilities (6 Verifiable Items) ───────────────────────── */}
-      <section id="capabilities" className="py-20 px-4 sm:px-8 bg-[#F7F8FC] relative">
-        <div className="max-w-7xl mx-auto space-y-12">
-          {/* Section Header */}
-          <div className="text-center space-y-2 max-w-2xl mx-auto">
-            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-[#F5F0FF] border border-[#DDD6FE] text-xs font-bold text-[#6941C6] uppercase tracking-wider">
-              Core Capabilities
+                );
+              })}
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#111827]">
-              Engineered for Regulatory Integrity
-            </h2>
-            <p className="text-xs sm:text-sm text-[#667085]">
-              Deterministic validation, page-level provenance, and evidence-linked findings.
-            </p>
           </div>
+        </section>
 
-          {/* 6 Capabilities Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {CAPABILITIES.map((cap) => {
-              const Icon = cap.icon;
-              return (
-                <div
-                  key={cap.title}
-                  className="capability-card bg-white rounded-2xl border border-[#E4E7EC] p-6 space-y-4 shadow-xs relative overflow-hidden flex flex-col justify-between"
-                  style={{
-                    borderTop: `3px solid ${cap.accentColor}`,
-                  }}
-                >
-                  <div className="space-y-3.5">
-                    {/* Header Row: Colored Icon & Category Badge */}
-                    <div className="flex items-center justify-between">
-                      <div
-                        className="capability-icon w-11 h-11 rounded-xl flex items-center justify-center shadow-2xs border"
-                        style={{
-                          backgroundColor: cap.accentBg,
-                          borderColor: cap.accentBorder,
-                          color: cap.iconColor,
-                        }}
-                      >
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <span
-                        className="px-2.5 py-0.5 rounded-full text-[10px] font-bold border tracking-wide uppercase"
-                        style={{
-                          backgroundColor: cap.accentBg,
-                          borderColor: cap.accentBorder,
-                          color: cap.iconColor,
-                        }}
-                      >
-                        {cap.pillText}
-                      </span>
-                    </div>
-
-                    {/* Title & Category */}
-                    <div>
-                      <div className="text-[11px] font-semibold text-[#8589A6] uppercase tracking-wider">
-                        {cap.category}
-                      </div>
-                      <h3 className="text-base font-bold text-[#111827] mt-0.5">
-                        {cap.title}
-                      </h3>
-                    </div>
-
-                    {/* Body */}
-                    <p className="text-xs text-[#5F6485] leading-relaxed">
-                      {cap.body}
-                    </p>
-                  </div>
-
-                  {/* Subtle verified check footer */}
-                  <div className="pt-3 border-t border-[#F2F4F7] flex items-center justify-between text-[11px] text-[#667085]">
-                    <span className="text-[10px] font-medium text-[#8589A6]">
-                      Built-in Scrutiny Rule
-                    </span>
-                    <span
-                      className="font-mono text-[10px] font-bold"
-                      style={{ color: cap.accentColor }}
-                    >
-                      Active
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Governance & Trust Section ──────────────────────────────── */}
-      <section id="governance" className="py-16 px-4 sm:px-8 bg-white border-t border-[#E4E7EC]">
-        <div className="max-w-4xl mx-auto bg-[#F9FAFB] rounded-2xl border border-[#E4E7EC] p-6 sm:p-8 space-y-4 text-center sm:text-left">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#DCFCE7] text-[#15803D] flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
-            <div className="space-y-1.5">
-              <h3 className="text-base font-bold text-[#111827]">
-                Regulatory Accountability &amp; Trust Principles
-              </h3>
-              <p className="text-xs text-[#667085] leading-relaxed">
-                VerityAI Excel is designed as decision support software. It adheres strictly to AICTE prototype
-                guidelines: all document findings are evidence-linked with document IDs and page numbers,
-                validation rules are deterministic, external registry checks are explicitly labeled when simulated,
-                and no adverse decision is executed autonomously by AI.
+        {/* ── SECTION 4: 6 Core Regulatory Capabilities ──────────────────── */}
+        <section id="capabilities" className="py-20 sm:py-28 px-6 sm:px-12 bg-[#FAF5F0]">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-6">
+              <div>
+                <span className="text-xs font-bold text-[#66574F] uppercase tracking-wider">
+                  Engineered for Compliance
+                </span>
+                <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#1B1411] mt-2">
+                  Built for Statutory Scrutiny
+                </h2>
+              </div>
+              <p className="text-sm text-[#66574F] max-w-md">
+                Architected according to AICTE Approval Process Handbook (APH 2024–27) standards.
               </p>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {CAPABILITIES.map((c) => {
+                const IconComponent = c.icon;
+                return (
+                  <div
+                    key={c.title}
+                    className="bg-white rounded-3xl p-6 sm:p-7 border border-[#E5DDD5] shadow-xs flex flex-col justify-between hover:border-[#1B1411]/20 hover:shadow-md transition-all"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="size-9 rounded-2xl bg-[#EEE5DC] flex items-center justify-center text-[#1B1411]">
+                          <IconComponent className="size-4.5" />
+                        </div>
+                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#33CC7A]/15 text-[#136639] border border-[#33CC7A]/30">
+                          {c.pill}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-bold text-[#66574F] uppercase tracking-wider">
+                        {c.category}
+                      </span>
+                      <h3 className="text-base font-bold text-[#1B1411] mt-1 mb-2">
+                        {c.title}
+                      </h3>
+                      <p className="text-xs text-[#66574F] leading-relaxed">
+                        {c.body}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ── Final Call to Action ────────────────────────────────────── */}
-      <section className="py-20 px-4 sm:px-8 bg-[#172554] text-white">
-        <div className="max-w-4xl mx-auto text-center space-y-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1E3A8A] text-blue-200 border border-[#2563EB]/40 text-[11px] font-semibold">
-            Ready for Evaluation
+        {/* ── SECTION 5: Institutional Governance & Trust ────────────────── */}
+        <section id="governance" className="py-20 sm:py-28 px-6 sm:px-12 bg-[#1F3954] text-[#FAF5F0]">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center max-w-xl mx-auto mb-14">
+              <span className="text-xs font-bold text-[#33CC7A] uppercase tracking-wider">
+                Strict Regulatory Guardrails
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mt-2 mb-3">
+                Non-Negotiable Trust Architecture
+              </h2>
+              <p className="text-sm text-[#BACDE0] leading-relaxed">
+                VerityAI is an evidence-traceable decision support system built under strict statutory principles.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div className="bg-[#182C40] rounded-3xl p-7 border border-[#BACDE0]/15 flex flex-col justify-between">
+                <div>
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#33CC7A]/15 text-[#33CC7A] border border-[#33CC7A]/25 mb-4 inline-block font-mono">
+                    HUMAN SOVEREIGNTY
+                  </span>
+                  <h3 className="text-base font-bold text-white mb-2">
+                    Human Review Authority
+                  </h3>
+                  <p className="text-xs text-[#BACDE0] leading-relaxed">
+                    The engine never makes final statutory determinations or adverse denials.
+                    Authorized scrutiny officers hold final decision-making power.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-[#182C40] rounded-3xl p-7 border border-[#BACDE0]/15 flex flex-col justify-between">
+                <div>
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#33CC7A]/15 text-[#33CC7A] border border-[#33CC7A]/25 mb-4 inline-block font-mono">
+                    PROVENANCE
+                  </span>
+                  <h3 className="text-base font-bold text-white mb-2">
+                    Complete Traceability
+                  </h3>
+                  <p className="text-xs text-[#BACDE0] leading-relaxed">
+                    Every finding cites source document, page number, and extracted character span.
+                    Extracted text is never confounded with verified authenticity.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-[#182C40] rounded-3xl p-7 border border-[#BACDE0]/15 flex flex-col justify-between">
+                <div>
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#33CC7A]/15 text-[#33CC7A] border border-[#33CC7A]/25 mb-4 inline-block font-mono">
+                    HONEST STATUS
+                  </span>
+                  <h3 className="text-base font-bold text-white mb-2">
+                    Simulated Status Transparency
+                  </h3>
+                  <p className="text-xs text-[#BACDE0] leading-relaxed">
+                    Synthetic reference registries (AISHE, Land Records) are clearly labeled.
+                    Evaluation runs transparently without claiming unconfigured external government connections.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Call to Action */}
+            <div className="mt-16 p-8 sm:p-12 rounded-3xl bg-[#1B1411] border border-[#FAF5F0]/15 text-center max-w-3xl mx-auto shadow-2xl">
+              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3 tracking-tight">
+                Inspect Institutional Scrutiny in Action
+              </h3>
+              <p className="text-xs sm:text-sm text-[#BACDE0] max-w-md mx-auto mb-6 leading-relaxed">
+                Explore the scrutiny platform with preloaded institutional dossiers
+                and deterministic AICTE validation rules.
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-3.5">
+                <button
+                  type="button"
+                  onClick={onOpenApplicantPortal || onGetStarted}
+                  className="linea-btn-mint px-6 py-3 text-xs font-bold gap-2 cursor-pointer"
+                >
+                  <Building2 className="size-4" />
+                  Applicant Portal
+                </button>
+                <button
+                  type="button"
+                  onClick={onOfficerSignIn || onSignIn}
+                  className="linea-btn-sand px-6 py-3 text-xs font-semibold gap-2 cursor-pointer hover:bg-white text-[#1B1411]"
+                >
+                  Officer Sign In
+                </button>
+              </div>
+            </div>
           </div>
-
-          <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-            Ready to Explore VerityAI Excel?
-          </h2>
-
-          <p className="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto leading-relaxed">
-            Enter the scrutiny workspace using authorized demonstration credentials to review applications,
-            inspect extracted document findings, and evaluate the compliance workflow.
-          </p>
-
-          <div className="pt-2">
-            <button
-              onClick={onGetStarted}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs sm:text-sm font-semibold bg-[#6941C6] text-white hover:bg-[#5631A8] transition-all shadow-md hover:shadow-lg cursor-pointer"
-            >
-              <span>Enter the Scrutiny Workspace</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </section>
-
+        </section>
       </main>
 
-      {/* ── Minimal Institutional Footer ────────────────────────────── */}
-      <footer className="bg-white border-t border-[#E4E7EC] py-6 px-4 sm:px-8 text-xs text-[#667085]">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-          <div className="space-y-1">
-            <div className="font-bold text-[#111827]">VerityAI Excel</div>
-            <p className="text-[11px] text-[#9CA3AF] max-w-md">
-              Institutional application scrutiny platform. Prototype built for Smart India Hackathon 2026.
-              Operates on synthetic and authorized test data only.
-            </p>
+      {/* ── Linea Editorial Footer ── */}
+      <footer className="bg-[#1B1411] text-[#FAF5F0] py-12 px-6 sm:px-12 border-t border-[#FAF5F0]/10">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-3">
+            <div className="w-7 h-7 rounded-full bg-[#33CC7A] flex items-center justify-center text-[#1B1411]">
+              <ShieldCheck className="size-4" />
+            </div>
+            <span className="font-bold text-sm tracking-tight text-white">
+              VerityAI Scrutiny Platform
+            </span>
           </div>
 
-          <div className="text-[11px] text-[#9CA3AF]">
-            Decision Support System · Not an Official AICTE Production Deployment
+          <div className="text-center md:text-right text-[11px] text-[#B8ABA3]">
+            <p>Institutional Regulatory Scrutiny System</p>
+            <p className="mt-0.5">Statutory Decision Support · Evidence-Traceable Provenance</p>
           </div>
         </div>
       </footer>

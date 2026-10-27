@@ -11,6 +11,7 @@ from app.models.user import User
 from app.models.document import Document
 from app.models.audit import AuditEvent
 from app.core.config import settings
+from app.core.security import create_access_token
 from app.services.storage import resolve_storage_path
 from app.core.exceptions import StorageException
 
@@ -26,15 +27,6 @@ def isolated_storage(monkeypatch):
 @pytest.fixture
 def seeded_application(db_session: Session) -> Application:
     """Seed prerequisite records and return an Application for document tests."""
-    user = User(
-        id="USR-TEST-01",
-        email="inst@test.invalid",
-        display_name="Test Institutional Rep",
-        password_hash="fakehash",
-        role="INSTITUTION_USER",
-    )
-    db_session.add(user)
-
     inst = Institution(
         id="INST-TEST-01",
         institution_identifier="C-99999",
@@ -43,6 +35,16 @@ def seeded_application(db_session: Session) -> Application:
         city="Pune",
     )
     db_session.add(inst)
+
+    user = User(
+        id="USR-TEST-01",
+        email="inst@test.invalid",
+        display_name="Test Institutional Rep",
+        password_hash="fakehash",
+        role="INSTITUTION_USER",
+        institution_id=inst.id,
+    )
+    db_session.add(user)
 
     cat = ApplicationCategory(
         code="EOA_TEST",
@@ -66,6 +68,18 @@ def seeded_application(db_session: Session) -> Application:
     db_session.commit()
     db_session.refresh(app)
     return app
+
+
+@pytest.fixture
+def auth_headers(seeded_application: Application) -> dict:
+    """Generate valid JWT auth header for the seeded institutional user."""
+    token = create_access_token(
+        subject="USR-TEST-01",
+        role="INSTITUTION_USER",
+        email="inst@test.invalid",
+        extra_claims={"institution_id": seeded_application.institution_id},
+    )
+    return {"Authorization": f"Bearer {token}"}
 
 
 def test_upload_pdf_success(client, seeded_application, db_session):
@@ -201,7 +215,7 @@ def test_duplicate_content_detected(client, seeded_application):
     assert res2.json()["data"]["possible_duplicate"] is True
 
 
-def test_list_and_get_document_metadata(client, seeded_application):
+def test_list_and_get_document_metadata(client, seeded_application, auth_headers):
     """Test listing documents for an application and retrieving metadata."""
     pdf_content = b"%PDF-1.4\nmetadata test\n%%EOF"
     res_upload = client.post(
@@ -211,7 +225,7 @@ def test_list_and_get_document_metadata(client, seeded_application):
     doc_id = res_upload.json()["data"]["id"]
 
     # List documents
-    res_list = client.get(f"/api/v1/applications/{seeded_application.id}/documents")
+    res_list = client.get(f"/api/v1/applications/{seeded_application.id}/documents", headers=auth_headers)
     assert res_list.status_code == 200
     items = res_list.json()["data"]
     assert len(items) == 1
@@ -222,7 +236,7 @@ def test_list_and_get_document_metadata(client, seeded_application):
     assert "path" not in items[0]
 
     # Get single document metadata
-    res_meta = client.get(f"/api/v1/documents/{doc_id}")
+    res_meta = client.get(f"/api/v1/documents/{doc_id}", headers=auth_headers)
     assert res_meta.status_code == 200
     meta = res_meta.json()["data"]
     assert meta["id"] == doc_id
@@ -230,7 +244,7 @@ def test_list_and_get_document_metadata(client, seeded_application):
     assert "storage_key" not in meta
 
 
-def test_preview_and_download_document_file(client, seeded_application):
+def test_preview_and_download_document_file(client, seeded_application, auth_headers):
     """Test retrieving stored file bytes with proper security headers."""
     pdf_content = b"%PDF-1.4\nstream content test\n%%EOF"
     res_upload = client.post(
@@ -240,7 +254,7 @@ def test_preview_and_download_document_file(client, seeded_application):
     doc_id = res_upload.json()["data"]["id"]
 
     # Preview (inline)
-    res_file = client.get(f"/api/v1/documents/{doc_id}/file")
+    res_file = client.get(f"/api/v1/documents/{doc_id}/file", headers=auth_headers)
     assert res_file.status_code == 200
     assert res_file.content == pdf_content
     assert res_file.headers["content-type"] == "application/pdf"
@@ -249,12 +263,12 @@ def test_preview_and_download_document_file(client, seeded_application):
     assert res_file.headers["cache-control"] == "no-store"
 
     # Download (attachment)
-    res_dl = client.get(f"/api/v1/documents/{doc_id}/file?download=true")
+    res_dl = client.get(f"/api/v1/documents/{doc_id}/file?download=true", headers=auth_headers)
     assert res_dl.status_code == 200
     assert "attachment" in res_dl.headers["content-disposition"]
 
 
-def test_missing_stored_file_handling(client, seeded_application, db_session):
+def test_missing_stored_file_handling(client, seeded_application, db_session, auth_headers):
     """Test graceful handling when DB record exists but filesystem file is missing."""
     pdf_content = b"%PDF-1.4\nwill be deleted from disk\n%%EOF"
     res_upload = client.post(
@@ -269,7 +283,7 @@ def test_missing_stored_file_handling(client, seeded_application, db_session):
     file_path.unlink()
 
     # Requesting the file should return 404 FILE_NOT_FOUND and set file_state to MISSING
-    res_file = client.get(f"/api/v1/documents/{doc_id}/file")
+    res_file = client.get(f"/api/v1/documents/{doc_id}/file", headers=auth_headers)
     assert res_file.status_code == 404
     assert res_file.json()["error"]["code"] == "FILE_NOT_FOUND"
 

@@ -1,6 +1,17 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createApplication, type Institution, type ApplicationCategory } from '../api/client';
-import { X, Plus, AlertCircle, Loader2, Sparkles, Building2 } from 'lucide-react';
+import { Plus, AlertCircle, Loader2, Sparkles, Building2 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface Props {
   isOpen: boolean;
@@ -39,8 +50,6 @@ export function ApplicationCreateModal({
       setError(null);
     }
   }, [isOpen, institutions, categories]);
-
-  if (!isOpen) return null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -85,68 +94,62 @@ export function ApplicationCreateModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl border border-[#E9E6F2] max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        {/* Modal Header */}
-        <div className="px-6 py-4 bg-[#FAF8FF] border-b border-[#EEEAF5] flex items-center justify-between">
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#F04438] text-white flex items-center justify-center">
-              <Building2 className="w-4 h-4" />
+            <div className="size-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+              <Building2 className="size-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-[#171B45]">New Institutional Application</h3>
-              <p className="text-[11px] text-[#5F6485]">Initiate a preliminary draft application record</p>
+              <DialogTitle className="text-base font-bold text-foreground">
+                New Institutional Application Dossier
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                Initiate a preliminary draft application record for statutory review.
+              </DialogDescription>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-[#8589A6] hover:text-[#171B45] hover:bg-[#F3EEFC] transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+        </DialogHeader>
 
-        {/* Modal Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 py-2">
           {error && (
-            <div className="p-3.5 rounded-xl bg-[#FFF0EF] border border-[#FECDCA] text-[#B42318] flex items-start gap-2.5 text-xs">
-              <AlertCircle className="w-4 h-4 text-[#F04438] shrink-0 mt-0.5" />
-              <div>
-                <span className="font-semibold">Creation Error: </span>
-                {error}
-              </div>
-            </div>
+            <Alert variant="destructive" className="py-2.5">
+              <AlertCircle className="size-4" />
+              <AlertTitle className="text-xs font-semibold">Creation Error</AlertTitle>
+              <AlertDescription className="text-xs">{error}</AlertDescription>
+            </Alert>
           )}
 
-          <div>
-            <label className="block text-xs font-semibold text-[#171B45] mb-1">
-              Applicant Institution <span className="text-[#F04438]">*</span>
+          <div className="space-y-1.5">
+            <label className="block text-xs font-medium text-foreground">
+              Applicant Institution <span className="text-destructive">*</span>
             </label>
             <select
               value={institutionId}
               onChange={(e) => setInstitutionId(e.target.value)}
               required
-              className="w-full text-xs rounded-xl border border-[#E9E6F2] px-3.5 py-2.5 bg-white text-[#171B45] focus:outline-hidden focus:ring-2 focus:ring-[#7450D8]/20 focus:border-[#7450D8] transition-all"
+              className="w-full text-xs rounded-md border border-input px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary transition-all"
             >
               <option value="" disabled>Select Institution</option>
               {institutions.map((inst) => (
                 <option key={inst.id} value={inst.id}>
-                  {inst.institution_name} ({inst.institution_identifier || inst.id})
+                  {inst.institution_name} [{inst.institution_identifier || inst.id.slice(0, 8)}]
                 </option>
               ))}
             </select>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-[#171B45] mb-1">
-                Category <span className="text-[#F04438]">*</span>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-foreground">
+                Category <span className="text-destructive">*</span>
               </label>
               <select
                 value={categoryCode}
                 onChange={(e) => setCategoryCode(e.target.value)}
                 required
-                className="w-full text-xs rounded-xl border border-[#E9E6F2] px-3.5 py-2.5 bg-white text-[#171B45] focus:outline-hidden focus:ring-2 focus:ring-[#7450D8]/20 focus:border-[#7450D8] transition-all"
+                className="w-full text-xs rounded-md border border-input px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary transition-all"
               >
                 {categories.map((cat) => (
                   <option key={cat.code} value={cat.code}>
@@ -156,114 +159,117 @@ export function ApplicationCreateModal({
               </select>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-[#171B45] mb-1">
-                Academic Year <span className="text-[#F04438]">*</span>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-foreground">
+                Academic Year <span className="text-destructive">*</span>
               </label>
-              <input
+              <Input
                 type="text"
                 value={academicYear}
                 onChange={(e) => setAcademicYear(e.target.value)}
                 placeholder="2026-27"
                 required
-                className="w-full text-xs rounded-xl border border-[#E9E6F2] px-3.5 py-2.5 text-[#171B45] focus:outline-hidden focus:ring-2 focus:ring-[#7450D8]/20 focus:border-[#7450D8] transition-all"
+                className="h-9 text-xs"
               />
             </div>
           </div>
 
-          <div className="border-t border-[#EEEAF5] pt-3.5">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-[#7450D8] uppercase tracking-wider mb-2.5">
-              <Sparkles className="w-3.5 h-3.5" />
+          <div className="border-t border-border pt-3">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-primary uppercase tracking-wider mb-2.5">
+              <Sparkles className="size-3.5" />
               <span>Declared Preliminary Fields</span>
             </div>
 
             <div className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-[#5F6485] mb-1">
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-medium text-muted-foreground">
                     Accreditation Certificate No.
                   </label>
-                  <input
+                  <Input
                     type="text"
                     value={certificateNumber}
                     onChange={(e) => setCertificateNumber(e.target.value)}
                     placeholder="CERT-SYN-000123"
-                    className="w-full text-xs rounded-xl border border-[#E9E6F2] px-3 py-2 text-[#171B45] focus:outline-hidden focus:ring-2 focus:ring-[#7450D8]/20 focus:border-[#7450D8]"
+                    className="h-8 text-xs"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-[#5F6485] mb-1">
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-medium text-muted-foreground">
                     Certificate Expiry Date
                   </label>
-                  <input
+                  <Input
                     type="date"
                     value={certificateExpiryDate}
                     onChange={(e) => setCertificateExpiryDate(e.target.value)}
-                    className="w-full text-xs rounded-xl border border-[#E9E6F2] px-3 py-2 text-[#171B45] focus:outline-hidden focus:ring-2 focus:ring-[#7450D8]/20 focus:border-[#7450D8]"
+                    className="h-8 text-xs"
                   />
-                  <span className="text-[10px] text-[#8589A6]">Format: YYYY-MM-DD</span>
+                  <span className="text-[10px] text-muted-foreground">Format: YYYY-MM-DD</span>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-[#5F6485] mb-1">
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-medium text-muted-foreground">
                     Primary Programme
                   </label>
-                  <input
+                  <Input
                     type="text"
                     value={programmeName}
                     onChange={(e) => setProgrammeName(e.target.value)}
                     placeholder="Computer Science and Engineering"
-                    className="w-full text-xs rounded-xl border border-[#E9E6F2] px-3 py-2 text-[#171B45] focus:outline-hidden focus:ring-2 focus:ring-[#7450D8]/20 focus:border-[#7450D8]"
+                    className="h-8 text-xs"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-[#5F6485] mb-1">
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-medium text-muted-foreground">
                     Approved Intake
                   </label>
-                  <input
+                  <Input
                     type="number"
                     min="0"
                     value={approvedIntake}
                     onChange={(e) => setApprovedIntake(e.target.value)}
                     placeholder="120"
-                    className="w-full text-xs rounded-xl border border-[#E9E6F2] px-3 py-2 text-[#171B45] focus:outline-hidden focus:ring-2 focus:ring-[#7450D8]/20 focus:border-[#7450D8]"
+                    className="h-8 text-xs"
                   />
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-[#EEEAF5]">
-            <button
+          <DialogFooter className="gap-2 sm:gap-0 pt-3 border-t border-border">
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={onClose}
               disabled={submitting}
-              className="px-4 py-2.5 rounded-xl text-xs font-semibold text-[#5F6485] hover:bg-[#FAF8FF] hover:text-[#171B45] transition-colors cursor-pointer"
+              className="text-xs"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              size="sm"
               disabled={submitting}
-              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-semibold bg-[#F04438] text-white hover:bg-[#E34234] transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+              className="text-xs font-semibold gap-1.5"
             >
               {submitting ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  Creating...
+                  <Loader2 className="size-3.5 animate-spin" />
+                  <span>Creating...</span>
                 </>
               ) : (
                 <>
-                  <Plus className="w-3.5 h-3.5" />
-                  Create Draft Application
+                  <Plus className="size-3.5" />
+                  <span>Create Draft Application</span>
                 </>
               )}
-            </button>
-          </div>
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

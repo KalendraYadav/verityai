@@ -16,6 +16,9 @@ import {
   fetchScrutinyQueue,
   type ScrutinyQueueItemData,
 } from '../../api/client';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/common/EmptyState';
 
 interface Props {
   onSelectApplication: (id: string) => void;
@@ -65,93 +68,103 @@ export const ScrutinyQueueView: React.FC<Props> = ({ onSelectApplication }) => {
     switch (state) {
       case 'READY_FOR_SCRUTINY':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#ECFDF3] text-[#027A48] border border-[#A6F4C5]">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            Ready for Scrutiny
-          </span>
+          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1 font-medium text-[11px]">
+            <CheckCircle2 className="size-3 text-emerald-600" />
+            <span>Ready for Scrutiny</span>
+          </Badge>
         );
       case 'DOCUMENTS_PENDING':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FFF0EF] text-[#B42318] border border-[#FECDCA]">
-            <FileWarning className="w-3.5 h-3.5" />
-            Documents Pending
-          </span>
+          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 gap-1 font-medium text-[11px]">
+            <FileWarning className="size-3 text-red-600" />
+            <span>Documents Pending</span>
+          </Badge>
         );
       case 'EXTRACTION_IN_PROGRESS':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#EFF8FF] text-[#175CD3] border border-[#B2DDFF]">
-            <Clock className="w-3.5 h-3.5 animate-spin" />
-            Text Extracting
-          </span>
+          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 gap-1 font-medium text-[11px] animate-pulse">
+            <Clock className="size-3 text-blue-600" />
+            <span>Text Extracting</span>
+          </Badge>
         );
       case 'VALIDATION_REQUIRED':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FFFAEB] text-[#B54708] border border-[#FEDF89]">
-            <AlertTriangle className="w-3.5 h-3.5" />
-            Validation Needed
-          </span>
+          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 gap-1 font-medium text-[11px]">
+            <AlertTriangle className="size-3 text-amber-600" />
+            <span>Validation Needed</span>
+          </Badge>
         );
       case 'ACTION_REQUIRED':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FFF4ED] text-[#C4320A] border border-[#FDCEB9]">
-            <AlertTriangle className="w-3.5 h-3.5" />
-            Action Required
-          </span>
+          <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200 gap-1 font-medium text-[11px]">
+            <AlertTriangle className="size-3 text-amber-700" />
+            <span>Action Required</span>
+          </Badge>
         );
       case 'SCRUTINY_COMPLETED':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#F4F3FF] text-[#5925DC] border border-[#D9D6FE]">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            Scrutiny Completed
-          </span>
+          <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 gap-1 font-medium text-[11px]">
+            <ShieldCheck className="size-3 text-purple-600" />
+            <span>Scrutiny Completed</span>
+          </Badge>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FAF9FC] text-[#5F6485] border border-[#E9E6F2]">
+          <Badge variant="outline" className="bg-muted text-muted-foreground border-border text-[11px]">
             {state}
-          </span>
+          </Badge>
         );
     }
   };
 
   return (
-    <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
       {/* 1. Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-[#171B45] flex items-center gap-2.5">
-            <ClipboardCheck className="w-6 h-6 text-[#7450D8]" />
-            Regulatory Scrutiny Queue
-          </h1>
-          <p className="text-xs sm:text-sm text-[#5F6485] mt-0.5">
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1B1411] flex items-center gap-2.5">
+              <ClipboardCheck className="size-6 text-[#33CC7A] shrink-0" />
+              Regulatory Scrutiny Queue
+            </h1>
+            <span className="text-xs font-bold bg-[#EBF7F0] text-[#1B1411] border border-[#33CC7A]/30 px-3 py-0.5 rounded-full">
+              {filteredItems.length} in Queue
+            </span>
+          </div>
+          <p className="text-xs text-[#66574F] mt-1">
             Prioritized workload queue of institutional applications awaiting statutory scrutiny, rule verification, and finding adjudication.
           </p>
         </div>
 
         <button
+          type="button"
           onClick={handleRefresh}
           disabled={refreshing}
-          className="p-2.5 rounded-xl border border-[#DCD0F7] text-[#5F6485] hover:text-[#171B45] bg-white transition-all cursor-pointer shadow-2xs"
+          className="h-9 px-4 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#66574F] hover:text-[#1B1411] inline-flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap shrink-0 transition-colors cursor-pointer"
           title="Refresh scrutiny queue"
         >
-          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-[#7450D8]' : ''}`} />
+          <RefreshCw className={`size-3.5 ${refreshing ? 'animate-spin text-[#33CC7A]' : ''}`} />
+          <span>Refresh Queue</span>
         </button>
       </div>
 
       {/* 2. Filters & Queue Scope */}
-      <div className="bg-white p-4 rounded-2xl border border-[#E9E6F2] shadow-2xs flex flex-col md:flex-row items-center gap-3">
+      <div className="bg-white rounded-2xl border border-[#E5DACF] p-3 sm:p-4 shadow-[0_4px_24px_-4px_rgba(27,20,17,0.04)] flex flex-col md:flex-row items-center gap-3">
         <div className="relative flex-1 w-full">
-          <Search className="w-4 h-4 text-[#8589A6] absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="size-3.5 text-[#66574F] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
+            id="scrutiny-queue-search-input"
+            name="queue_search"
+            aria-label="Search queue by reference, institution, or category"
             type="text"
-            placeholder="Search queue by application reference, institution, or category..."
+            placeholder="Search queue by reference, institution, or category..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-[#FAF8FF] border border-[#E9E6F2] text-[#171B45] focus:outline-hidden focus:ring-2 focus:ring-[#7450D8] transition-all placeholder:text-[#8589A6]"
+            className="w-full h-9 text-xs pl-9 pr-4 rounded-full border border-[#E5DACF] bg-[#FAF5F0]/50 focus:bg-white focus:outline-hidden focus:border-[#1B1411] text-[#1B1411]"
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto">
+        <div className="flex items-center gap-1 w-full md:w-auto overflow-x-auto bg-[#EEE5DC] p-1 rounded-full border border-[#E5DACF]">
           {[
             { key: 'ALL', label: 'All Active' },
             { key: 'READY_FOR_SCRUTINY', label: 'Ready for Review' },
@@ -161,11 +174,12 @@ export const ScrutinyQueueView: React.FC<Props> = ({ onSelectApplication }) => {
           ].map((pill) => (
             <button
               key={pill.key}
+              type="button"
               onClick={() => setReadinessFilter(pill.key)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              className={`h-7 text-xs px-3 rounded-full font-semibold transition-all cursor-pointer whitespace-nowrap ${
                 readinessFilter === pill.key
-                  ? 'bg-[#7450D8] text-white shadow-xs'
-                  : 'bg-[#FAF8FF] text-[#5F6485] hover:text-[#171B45] border border-[#E9E6F2]'
+                  ? 'bg-[#1B1411] text-[#FAF5F0] shadow-sm'
+                  : 'text-[#66574F] hover:text-[#1B1411]'
               }`}
             >
               {pill.label}
@@ -175,101 +189,105 @@ export const ScrutinyQueueView: React.FC<Props> = ({ onSelectApplication }) => {
       </div>
 
       {/* 3. Scrutiny Queue List */}
-      <div className="bg-white rounded-3xl border border-[#E9E6F2] shadow-xs overflow-hidden">
-        {loading ? (
-          <div className="p-16 text-center space-y-3">
-            <RefreshCw className="w-6 h-6 animate-spin text-[#7450D8] mx-auto" />
-            <p className="text-xs text-[#5F6485]">Evaluating queue readiness from persistent records...</p>
-          </div>
-        ) : filteredItems.length === 0 ? (
-          <div className="p-16 text-center space-y-3">
-            <div className="w-14 h-14 rounded-2xl bg-[#FAF8FF] border border-[#DCD0F7] flex items-center justify-center text-[#7450D8] mx-auto">
-              <ClipboardCheck className="w-7 h-7" />
+      <div className="bg-white rounded-2xl border border-[#E5DACF] shadow-[0_4px_24px_-4px_rgba(27,20,17,0.04)] overflow-hidden">
+        <div>
+          {loading ? (
+            <div className="p-8 space-y-4">
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-16 w-full" />
             </div>
-            <h3 className="text-sm font-bold text-[#171B45]">No applications matching this scrutiny filter</h3>
-            <p className="text-xs text-[#5F6485] max-w-sm mx-auto">
-              Applications enter this queue upon submission and are categorized according to multi-dimensional readiness.
-            </p>
-          </div>
-        ) : (
-          <div className="divide-y divide-[#E9E6F2]">
-            {filteredItems.map((item) => (
-              <div
-                key={item.id}
-                onClick={() => onSelectApplication(item.id)}
-                className="p-5 sm:p-6 hover:bg-[#FAF8FF]/60 transition-colors cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4 group"
-              >
-                <div className="space-y-1.5 flex-1">
-                  <div className="flex items-center gap-2.5 flex-wrap">
-                    <span className="font-mono text-sm sm:text-base font-extrabold text-[#171B45] group-hover:text-[#7450D8] transition-colors">
-                      {item.application_reference}
-                    </span>
-                    {getReadinessBadge(item.readiness_state)}
-                    <span className="font-mono text-[11px] font-semibold text-[#7450D8] bg-[#F3EEFC] px-2 py-0.5 rounded">
-                      {item.category_code}
-                    </span>
-                    <span className="text-[11px] font-medium text-[#8589A6] bg-[#FAF9FC] px-2 py-0.5 rounded border border-[#E9E6F2]">
-                      State: {item.lifecycle_status}
-                    </span>
-                  </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="p-8">
+              <EmptyState
+                icon={ClipboardCheck}
+                title="No applications matching this scrutiny filter"
+                description="Applications enter this prioritized queue upon submission and are categorized according to multi-dimensional readiness."
+              />
+            </div>
+          ) : (
+            <div className="divide-y divide-[#E5DACF]">
+              {filteredItems.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => onSelectApplication(item.id)}
+                  className="p-4 sm:p-5 hover:bg-[#FAF5F0]/60 transition-colors cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4 group"
+                >
+                  <div className="space-y-1.5 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mono text-xs sm:text-sm font-bold text-[#1B1411] group-hover:text-[#1F3954] transition-colors">
+                        {item.application_reference}
+                      </span>
+                      {getReadinessBadge(item.readiness_state)}
+                      <span className="font-mono text-[10px] font-bold bg-[#EEE5DC] text-[#1B1411] border border-[#E5DACF] px-2 py-0.5 rounded-full">
+                        {item.category_code}
+                      </span>
+                      <span className="text-[10px] text-[#66574F] bg-[#FAF5F0] border border-[#E5DACF] px-2 py-0.5 rounded-full">
+                        Lifecycle: {item.lifecycle_status}
+                      </span>
+                    </div>
 
-                  <div className="flex items-center gap-3 text-xs text-[#5F6485] flex-wrap">
-                    <span className="flex items-center gap-1 font-semibold text-[#171B45]">
-                      <Building2 className="w-3.5 h-3.5 text-[#8589A6]" />
-                      {item.institution_name}
-                    </span>
-                    <span>•</span>
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5 text-[#8589A6]" />
-                      {item.academic_year || '2026-27'}
-                    </span>
-                    <span>•</span>
-                    <span>Registered {new Date(item.created_at).toLocaleDateString()}</span>
-                  </div>
-                </div>
-
-                {/* Readiness Metrics & Direct Action */}
-                <div className="flex items-center gap-4 self-start md:self-center">
-                  <div className="text-right space-y-0.5">
-                    <div className="text-[11px] font-semibold text-[#171B45] flex items-center justify-end gap-2">
-                      {item.validation_failure_count > 0 ? (
-                        <span className="text-[#F04438] font-bold">
-                          {item.validation_failure_count} Rule Failure{item.validation_failure_count === 1 ? '' : 's'}
-                        </span>
-                      ) : (
-                        <span className="text-[#027A48] font-medium">Rules Satisfied</span>
-                      )}
+                    <div className="flex items-center gap-2.5 text-xs text-[#66574F] flex-wrap">
+                      <span className="flex items-center gap-1 font-medium text-[#1B1411]">
+                        <Building2 className="size-3.5 text-[#66574F] shrink-0" />
+                        {item.institution_name} {item.institution_identifier ? `[${item.institution_identifier}]` : ''}
+                      </span>
                       <span>•</span>
-                      {item.open_findings_count > 0 ? (
-                        <span className="text-[#F04438] font-bold">
-                          {item.open_findings_count} Open Finding{item.open_findings_count === 1 ? '' : 's'}
-                        </span>
-                      ) : (
-                        <span className="text-[#027A48] font-medium">0 Open Findings</span>
-                      )}
-                    </div>
-                    <div className="text-[10px] text-[#8589A6]">
-                      {item.blockers_count > 0
-                        ? `${item.blockers_count} blocker(s) identified`
-                        : 'No pending workflow blockers'}
+                      <span className="flex items-center gap-1 font-mono text-[11px]">
+                        <Calendar className="size-3 text-[#66574F] shrink-0" />
+                        {item.academic_year || '2026-27'}
+                      </span>
+                      <span>•</span>
+                      <span className="text-[11px]">
+                        Registered {new Date(item.created_at).toLocaleDateString()}
+                      </span>
                     </div>
                   </div>
 
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelectApplication(item.id);
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#F04438] hover:bg-[#E34234] text-white text-xs font-semibold transition-all shadow-2xs shrink-0 cursor-pointer"
-                  >
-                    <span>Examine Dossier</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+                  {/* Readiness Metrics & Direct Action */}
+                  <div className="flex items-center gap-4 self-start md:self-center shrink-0">
+                    <div className="text-right space-y-0.5">
+                      <div className="text-[11px] font-semibold text-[#1B1411] flex items-center justify-end gap-1.5">
+                        {item.validation_failure_count > 0 ? (
+                          <span className="text-rose-700 font-bold">
+                            {item.validation_failure_count} Rule Failure{item.validation_failure_count === 1 ? '' : 's'}
+                          </span>
+                        ) : (
+                          <span className="text-emerald-700 font-medium">Rules Satisfied</span>
+                        )}
+                        <span>•</span>
+                        {item.open_findings_count > 0 ? (
+                          <span className="text-rose-700 font-bold">
+                            {item.open_findings_count} Open Finding{item.open_findings_count === 1 ? '' : 's'}
+                          </span>
+                        ) : (
+                          <span className="text-emerald-700 font-medium">0 Open Findings</span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-[#66574F]">
+                        {item.blockers_count > 0
+                          ? `${item.blockers_count} blocker(s) identified`
+                          : 'No pending workflow blockers'}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectApplication(item.id);
+                      }}
+                      className="h-8 px-4 rounded-full bg-[#33CC7A] hover:bg-[#2EB86E] text-[#1B1411] font-bold text-xs inline-flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                    >
+                      <span>Examine</span>
+                      <ArrowRight className="size-3" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

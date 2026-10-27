@@ -70,3 +70,74 @@ def test_database_persistence_across_restart():
 
         session2.close()
         engine2.dispose()
+
+
+def test_scrutiny_job_persistence_and_startup_reconciliation_across_restart():
+    """Verify that ScrutinyJobs persist across restarts and startup reconciliation cleanly transitions abandoned jobs."""
+    from app.models.scrutiny_job import ScrutinyJob
+    from app.services.scrutiny_job import reconcile_abandoned_scrutiny_jobs
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_file = os.path.join(tmpdir, "persist_scrutiny_test.db")
+        db_url = f"sqlite:///{db_file}"
+
+        # 1. First run: insert institution, category, application, and PROCESSING scrutiny job
+        engine1 = create_engine(db_url)
+        Base.metadata.create_all(bind=engine1)
+        Session1 = sessionmaker(bind=engine1)
+        session1 = Session1()
+
+        inst = Institution(id="INS-RECON-1", institution_name="Recon College", status="ACTIVE")
+        cat = ApplicationCategory(code="EOA_RECON", name="Reconciliation Category")
+        app = Application(
+            id="APP-RECON-1",
+            application_reference="VAI-2026-RECON",
+            institution_id="INS-RECON-1",
+            category_code="EOA_RECON",
+            academic_year="2026-27",
+            lifecycle_status="SUBMITTED",
+            created_by="USR-OFFICER-01",
+        )
+        job = ScrutinyJob(
+            id="JOB-ABANDONED-01",
+            application_id="APP-RECON-1",
+            job_type="FULL_SCRUTINY",
+            status="PROCESSING",
+            triggered_by="USR-OFFICER-01",
+            retry_count=0,
+            max_retries=2,
+            safe_error_summary=None,
+        )
+        session1.add_all([inst, cat, app, job])
+        session1.commit()
+        session1.close()
+        engine1.dispose()
+
+        # 2. Simulated server crash / restart: engine restarts, lifespan hook triggers reconciliation
+        engine2 = create_engine(db_url)
+        Session2 = sessionmaker(bind=engine2)
+        session2 = Session2()
+
+        # Run startup reconciliation
+        reconciled_count = reconcile_abandoned_scrutiny_jobs(session2)
+        assert reconciled_count == 1
+
+        # Verify job transitioned to FAILED with exact error code
+        persisted_job = session2.scalar(select(ScrutinyJob).where(ScrutinyJob.id == "JOB-ABANDONED-01"))
+        assert persisted_job is not None
+        assert persisted_job.status == "FAILED"
+        assert persisted_job.error_code == "SERVER_RESTARTED_DURING_EXECUTION"
+        assert persisted_job.completed_at is not None
+
+        # Verify audit event recorded
+        recon_audit = session2.scalar(
+            select(AuditEvent).where(
+                AuditEvent.event_type == "SCRUTINY_JOB_RECONCILED",
+                AuditEvent.entity_id == "JOB-ABANDONED-01",
+            )
+        )
+        assert recon_audit is not None
+        assert recon_audit.actor_type == "SYSTEM"
+
+        session2.close()
+        engine2.dispose()
