@@ -156,15 +156,15 @@ function SidebarNavItem({
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-full text-xs transition-all relative cursor-pointer ${
+      className={`w-full flex items-center gap-2.5 px-3.5 py-2 rounded-full text-sm font-sans transition-all relative cursor-pointer ${
         isActive
-          ? 'bg-[#1B1411] text-[#FAF5F0] font-semibold shadow-sm'
-          : 'text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC] font-medium'
+          ? 'bg-[#1F3954] text-[#FAF5F0] font-semibold shadow-xs'
+          : 'text-[#536174] hover:text-[#202936] hover:bg-[#EAE4DC] font-medium'
       }`}
     >
-      <Icon className={`size-4 shrink-0 ${isActive ? 'text-[#33CC7A]' : 'text-[#66574F]'}`} />
+      <Icon className={`size-4 shrink-0 ${isActive ? 'text-[#37C2CC]' : 'text-[#536174]'}`} />
       <span className="truncate">{item.label}</span>
-      {isActive && <ChevronRight className="size-3 ml-auto text-[#33CC7A] shrink-0" />}
+      {isActive && <ChevronRight className="size-3.5 ml-auto text-[#37C2CC] shrink-0" />}
     </button>
   );
 }
@@ -204,11 +204,19 @@ function SidebarContent({
           title="Return to Public Landing Page"
         >
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-full bg-[#33CC7A] flex items-center justify-center text-[#1B1411] shadow-xs">
-              <ShieldCheck className="size-4" />
+            <div className="w-8 h-8 rounded-xl bg-[#1F3954] flex items-center justify-center text-white shadow-xs border border-[#37C2CC]/30 shrink-0">
+              <ShieldCheck className="size-4.5 text-[#37C2CC]" />
             </div>
-            <div className="flex items-baseline gap-1">
-              <span className="font-bold text-base tracking-tight text-[#1B1411]">VerityAI</span>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5 leading-none">
+                <span className="font-display font-extrabold text-[17px] tracking-tight text-[#202936]">Verity<span className="text-[#0E7490]">AI</span></span>
+                <span className="text-[#1F3954] font-bold text-[10px] uppercase tracking-wider bg-[#37C2CC]/25 px-1.5 py-0.5 rounded font-sans border border-[#37C2CC]/30">
+                  Excel
+                </span>
+              </div>
+              <span className="text-[11px] text-[#536174] font-medium tracking-normal mt-0.5 font-sans">
+                Regulatory Scrutiny Workspace
+              </span>
             </div>
           </div>
         </button>
@@ -218,7 +226,7 @@ function SidebarContent({
       <nav className="flex-1 min-h-0 px-3 py-4 space-y-5 overflow-y-auto">
         {getNavGroups(currentUser?.role).map((group) => (
           <div key={group.label}>
-            <div className="px-3.5 mb-1.5 text-[10px] font-bold text-[#66574F] uppercase tracking-wider">
+            <div className="px-3.5 mb-1.5 text-[11px] font-bold text-[#64748B] uppercase tracking-[0.06em] font-sans">
               {group.label}
             </div>
             <div className="space-y-0.5">
@@ -242,28 +250,28 @@ function SidebarContent({
       <div className="shrink-0 p-3 border-t border-[#E5DDD5] space-y-1.5 bg-[#F5EFEB] mt-auto">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="w-full flex items-center gap-2.5 p-2 rounded-2xl bg-white/70 border border-[#E5DDD5] hover:bg-white transition-all cursor-pointer text-left shadow-xs">
-              <Avatar className="size-8 rounded-full bg-[#1B1411] text-[#FAF5F0] font-semibold text-xs border border-[#FAF5F0]/20">
-                <AvatarFallback className="rounded-full bg-[#1B1411] text-[#FAF5F0]">
+            <button className="w-full flex items-center gap-2.5 p-2 rounded-2xl bg-white/80 border border-[#E5DDD5] hover:bg-white transition-all cursor-pointer text-left shadow-xs">
+              <Avatar className="size-8 rounded-full bg-[#1F3954] text-[#FAF5F0] font-semibold text-xs border border-[#37C2CC]/30">
+                <AvatarFallback className="rounded-full bg-[#1F3954] text-[#FAF5F0] font-semibold">
                   {currentUser ? currentUser.display_name.slice(0, 2).toUpperCase() : 'G'}
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
-                <div className="text-xs font-semibold text-[#1B1411] truncate">
+                <div className="text-xs sm:text-[13px] font-semibold text-[#202936] truncate font-sans">
                   {currentUser ? currentUser.display_name : 'Guest User'}
                 </div>
-                <div className="text-[10px] text-[#33CC7A] font-bold truncate">
+                <div className="text-xs text-[#0D7A48] font-semibold truncate font-sans">
                   {currentUser ? currentUser.role : 'Sign In Required'}
                 </div>
               </div>
-              <ChevronRight className="size-3.5 text-[#66574F]" />
+              <ChevronRight className="size-3.5 text-[#718096]" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56 bg-white border-[#E5DDD5] rounded-2xl shadow-lg">
             <DropdownMenuLabel>
               <div className="flex flex-col">
-                <span className="text-xs font-semibold text-[#1B1411]">{currentUser?.display_name || 'Guest'}</span>
-                <span className="text-[10px] text-[#66574F]">{currentUser?.email || 'Unauthorized'}</span>
+                <span className="text-xs font-semibold text-[#202936]">{currentUser?.display_name || 'Guest'}</span>
+                <span className="text-[10px] text-[#718096] font-mono">{currentUser?.email || 'Unauthorized'}</span>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -302,7 +310,7 @@ function SidebarContent({
               onLogout();
               onClose?.();
             }}
-            className="w-full h-8 px-3 text-xs font-semibold justify-start text-[#66574F] hover:text-[#DC2626] hover:bg-[#FEE2E2]/60 rounded-xl transition-colors cursor-pointer"
+            className="w-full h-8 px-3 text-xs font-medium justify-start text-[#66574F] hover:text-[#DC2626] hover:bg-[#FEE2E2]/60 rounded-xl transition-colors cursor-pointer"
           >
             <LogOut className="size-3.5 mr-2 text-[#66574F]" />
             <span>Sign Out</span>
@@ -328,7 +336,7 @@ export const AppShell: React.FC<Props> = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="h-screen h-[100dvh] max-h-[100dvh] flex flex-col bg-[#FAF5F0] text-[#1B1411] font-sans overflow-hidden">
+    <div className="h-screen h-[100dvh] max-h-[100dvh] flex flex-col bg-[#FAF5F0] text-[#202936] font-sans overflow-hidden">
       {/* ── Accessible Skip to Main Content Link ─ */}
       <a href="#workspace-main" className="skip-link">
         Skip to main content
@@ -365,15 +373,19 @@ export const AppShell: React.FC<Props> = ({
 
               {/* Quick Search */}
               <div className="relative flex-1">
-                <Search className="size-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#66574F] pointer-events-none" />
-                <input
-                  id="global-header-search"
-                  name="global_search"
-                  type="search"
-                  placeholder="Search dossiers, institutions, statutory norms..."
-                  aria-label="Search applications, documents, institutions"
-                  className="w-full text-xs rounded-full border border-[#E5DDD5] bg-white pl-9 pr-4 py-1.5 text-[#1B1411] placeholder:text-[#66574F]/70 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#33CC7A] focus:border-[#33CC7A] transition-all shadow-xs"
-                />
+                <div className="verity-search-container">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <Search className="size-4 verity-search-icon" />
+                  </div>
+                  <input
+                    id="global-header-search"
+                    name="global_search"
+                    type="search"
+                    placeholder="Search dossiers, institutions, statutory norms..."
+                    aria-label="Search applications, documents, institutions"
+                    className="verity-search-input"
+                  />
+                </div>
               </div>
             </div>
 
@@ -382,7 +394,7 @@ export const AppShell: React.FC<Props> = ({
               <Button
                 variant="ghost"
                 size="icon-sm"
-                className="text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC] rounded-full relative"
+                className="text-[#536174] hover:text-[#202936] hover:bg-[#EEE5DC] rounded-full relative"
                 aria-label="Notifications"
               >
                 <Bell className="size-4" />
@@ -394,19 +406,19 @@ export const AppShell: React.FC<Props> = ({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="flex items-center gap-2 pl-2 hover:opacity-80 transition-opacity cursor-pointer outline-none"
+                    className="flex items-center gap-2 pl-2 hover:opacity-85 transition-opacity cursor-pointer outline-none"
                     title={currentUser ? `${currentUser.display_name} · ${currentUser.role}` : 'Sign In'}
                   >
-                    <Avatar className="size-8 rounded-full bg-[#1B1411] text-[#FAF5F0] font-semibold text-xs border border-[#FAF5F0]/20">
-                      <AvatarFallback className="rounded-full bg-[#1B1411] text-[#FAF5F0]">
+                    <Avatar className="size-8 rounded-full bg-[#1F3954] text-[#FAF5F0] font-semibold text-xs border border-[#37C2CC]/30">
+                      <AvatarFallback className="rounded-full bg-[#1F3954] text-[#FAF5F0] font-semibold">
                         {currentUser ? currentUser.display_name.slice(0, 2).toUpperCase() : 'G'}
                       </AvatarFallback>
                     </Avatar>
                     <div className="hidden sm:block text-left">
-                      <div className="text-xs font-semibold text-[#1B1411] leading-tight">
+                      <div className="text-xs sm:text-[13px] font-semibold text-[#202936] leading-tight font-sans">
                         {currentUser ? currentUser.display_name : 'Guest User'}
                       </div>
-                      <div className="text-[10px] text-[#33CC7A] font-bold leading-tight">
+                      <div className="text-xs text-[#0D7A48] font-semibold leading-tight font-sans">
                         {currentUser ? currentUser.role : 'Sign In'}
                       </div>
                     </div>
@@ -414,8 +426,8 @@ export const AppShell: React.FC<Props> = ({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-52">
                   <DropdownMenuLabel>
-                    <div className="text-xs font-semibold">{currentUser?.display_name || 'Guest User'}</div>
-                    <div className="text-[10px] text-muted-foreground font-normal">{currentUser?.email || 'Not authenticated'}</div>
+                    <div className="text-xs font-semibold text-[#202936]">{currentUser?.display_name || 'Guest User'}</div>
+                    <div className="text-[10px] text-[#718096] font-mono font-normal">{currentUser?.email || 'Not authenticated'}</div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
@@ -428,7 +440,7 @@ export const AppShell: React.FC<Props> = ({
                         <Activity className="size-3.5 mr-2 text-primary" />
                         <span>Diagnostics &amp; Health</span>
                       </div>
-                      <span className={`size-2 rounded-full ${apiHealthy ? 'bg-[#33CC7A]' : 'bg-[#DC2626]'}`} title={apiHealthy ? 'API Active' : 'API Offline'} />
+                      <span className={`size-2 rounded-full ${apiHealthy ? 'bg-[#0D7A48]' : 'bg-[#B91C1C]'}`} title={apiHealthy ? 'API Active' : 'API Offline'} />
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                   {currentUser && onLogout && (
@@ -454,11 +466,11 @@ export const AppShell: React.FC<Props> = ({
           </main>
 
           {/* Institutional Footer */}
-          <footer className="shrink-0 border-t border-[#E5DDD5] bg-[#FAF5F0] py-2.5 px-6 text-center text-xs text-[#66574F] flex flex-col sm:flex-row items-center justify-between gap-2">
+          <footer className="shrink-0 border-t border-[#E5DDD5] bg-[#FAF5F0] py-2.5 px-6 text-center text-xs text-[#536174] flex flex-col sm:flex-row items-center justify-between gap-2 font-sans font-normal">
             <span>
-              <strong className="text-[#1B1411]">VerityAI</strong> · Institutional Application Scrutiny System
+              <span className="font-semibold text-[#202936]">VerityAI</span> · Institutional Application Scrutiny System
             </span>
-            <span className="text-[11px]">
+            <span className="text-xs text-[#718096] font-normal">
               Decision-Support Architecture · Transparent Evidence Provenance
             </span>
           </footer>

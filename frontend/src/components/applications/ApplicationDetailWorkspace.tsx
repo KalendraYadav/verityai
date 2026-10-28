@@ -646,8 +646,8 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
         );
       case 'QUEUED':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F3EEFC] text-[#7450D8] border border-[#DCD0F7]">
-            <Clock className="w-3 h-3" />
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E3FDFF] text-[#0E7490] border border-[#A5F3FC]">
+            <Clock className="w-3 h-3 text-[#0E7490]" />
             QUEUED
           </span>
         );
@@ -676,9 +676,9 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
 
   if (loading) {
     return (
-      <div className="p-16 text-center space-y-3">
-        <RefreshCw className="w-8 h-8 animate-spin text-[#7450D8] mx-auto" />
-        <h3 className="text-sm font-bold text-[#171B45]">Loading Application Scrutiny Workspace...</h3>
+      <div className="p-16 text-center space-y-4">
+        <div className="concentric-spinner mx-auto" />
+        <h3 className="text-sm font-bold text-[#1F3954] font-display">Loading Application Scrutiny Workspace...</h3>
         <p className="text-xs text-[#5F6485]">Retrieving application dossier, documents, and audit records.</p>
       </div>
     );
@@ -689,7 +689,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
       <div className="p-8 max-w-4xl mx-auto space-y-4">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-2 text-xs font-bold text-[#7450D8] hover:underline cursor-pointer"
+          className="inline-flex items-center gap-2 text-xs font-bold text-[#1F3954] hover:text-[#0E7490] transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Applications
         </button>
@@ -716,7 +716,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-2 text-xs font-semibold text-[#66574F] hover:text-[#1B1411] bg-[#EEE5DC]/70 hover:bg-[#EEE5DC] px-4 py-2 rounded-full transition-colors cursor-pointer self-start"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-[#536174] hover:text-[#202936] bg-[#EEE5DC]/70 hover:bg-[#EEE5DC] px-4 py-2 rounded-full transition-colors cursor-pointer self-start"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Applications</span>
@@ -726,7 +726,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => loadWorkspaceData(true)}
-            className="h-9 w-9 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#66574F] hover:text-[#1B1411] flex items-center justify-center transition-colors cursor-pointer"
+            className="h-9 w-9 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#536174] hover:text-[#202936] flex items-center justify-center transition-colors cursor-pointer"
             title="Refresh application workspace"
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -736,7 +736,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             type="button"
             onClick={handleTriggerScrutinyJob}
             disabled={runningWorkflow || jobPolling || (activeScrutinyJob?.status === 'QUEUED' || activeScrutinyJob?.status === 'PROCESSING')}
-            className="h-9 px-5 rounded-full bg-[#33CC7A] hover:bg-[#2EB86E] text-[#1B1411] font-bold text-xs inline-flex items-center gap-2 transition-all shadow-[0_2px_12px_rgba(51,204,122,0.3)] hover:shadow-[0_4px_16px_rgba(51,204,122,0.4)] cursor-pointer disabled:opacity-50"
+            className="h-9 px-5 rounded-full bg-[#33CC7A] hover:bg-[#2EB86E] text-[#202936] font-bold text-xs inline-flex items-center gap-2 transition-all shadow-[0_2px_12px_rgba(51,204,122,0.3)] hover:shadow-[0_4px_16px_rgba(51,204,122,0.4)] cursor-pointer disabled:opacity-50"
             title="Execute persistent scrutiny job through authoritative VerityAI scrutiny pipeline"
           >
             <Sparkles className={`w-3.5 h-3.5 ${(runningWorkflow || jobPolling) ? 'animate-spin' : ''}`} />
@@ -755,7 +755,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             type="button"
             onClick={() => handleGenerateScrutinyReport('PDF')}
             disabled={generatingReport}
-            className="h-9 px-4 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#1B1411] font-semibold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+            className="h-9 px-4 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#202936] font-semibold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
             title="Generate multi-page regulatory scrutiny dossier report"
           >
             {generatingReport ? (
@@ -770,7 +770,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             type="button"
             onClick={handleTriggerValidation}
             disabled={validating}
-            className="h-9 px-4 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#1B1411] font-semibold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+            className="h-9 px-4 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#202936] font-semibold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
             title="Execute deterministic compliance rules against application & documents"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${validating ? 'animate-spin text-[#1F3954]' : ''}`} />
@@ -780,7 +780,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => setUploadModalOpen(true)}
-            className="h-9 px-4 rounded-full border border-[#E5DACF] bg-[#FAF5F0] hover:bg-[#EEE5DC] text-[#1B1411] font-semibold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="h-9 px-4 rounded-full border border-[#E5DACF] bg-[#FAF5F0] hover:bg-[#EEE5DC] text-[#202936] font-semibold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <Upload className="w-3.5 h-3.5 text-[#1F3954]" />
             <span>Upload Document</span>
@@ -1075,23 +1075,22 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
       <Card className="shadow-xs border-border">
         <CardContent className="p-5 sm:p-6 space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4">
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <div className="flex items-center gap-3 flex-wrap">
                 <span className="font-mono text-base sm:text-lg font-bold text-foreground">
                   {application.application_reference}
                 </span>
                 <StatusBadge status={application.lifecycle_status} category="lifecycle" />
-                <Badge variant="outline" className="font-mono text-[11px]">
+                <Badge variant="outline" className="font-sans text-xs font-semibold">
                   {application.category_code}
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
-                <span className="flex items-center gap-1 font-semibold text-foreground">
-                  <Building2 className="w-3.5 h-3.5 text-primary" />
-                  {application.institution.institution_name}
-                </span>
-                <span>•</span>
-                <span className="font-mono text-[11px]">
+              <h2 className="text-xl sm:text-2xl font-display font-bold text-foreground tracking-tight flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-primary shrink-0" />
+                <span>{application.institution.institution_name}</span>
+              </h2>
+              <p className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap font-sans mt-0.5">
+                <span className="font-mono text-xs text-muted-foreground">
                   ID: {application.institution.institution_identifier || application.institution.id}
                 </span>
                 <span>•</span>
@@ -1099,9 +1098,9 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
               </p>
             </div>
 
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-3 text-xs text-muted-foreground font-sans">
               <div className="text-right">
-                <span className="text-[10px] uppercase font-bold text-muted-foreground">Created</span>
+                <span className="text-xs font-medium text-muted-foreground font-sans block">Created</span>
                 <p className="font-medium text-foreground text-xs">{formatDate(application.created_at)}</p>
               </div>
             </div>
@@ -1110,19 +1109,19 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
           {/* Quick Scrutiny Stat Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
             <div className="p-3 rounded-xl bg-muted/30 border border-border">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground">Submitted Documents</span>
-              <p className="text-base font-extrabold text-foreground mt-0.5">{documents.length}</p>
+              <span className="text-xs font-medium text-muted-foreground font-sans block">Submitted Documents</span>
+              <p className="text-2xl font-display font-semibold text-foreground mt-0.5">{documents.length}</p>
             </div>
             <div className="p-3 rounded-xl bg-muted/30 border border-border">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground">Text Extracted</span>
-              <p className="text-base font-extrabold text-emerald-600 mt-0.5">
+              <span className="text-xs font-medium text-muted-foreground font-sans block">Text Extracted</span>
+              <p className="text-2xl font-display font-semibold text-emerald-600 mt-0.5">
                 {documents.filter((d) => d.processing_status === 'COMPLETED' || d.processing_status === 'COMPLETED_WITH_WARNINGS').length}
               </p>
             </div>
             <div className="p-3 rounded-xl bg-muted/30 border border-border">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground">Validation Engine</span>
+              <span className="text-xs font-medium text-muted-foreground font-sans block">Validation Engine</span>
               {validationSummary ? (
-                <p className={`text-xs font-extrabold mt-1 truncate ${
+                <p className={`text-xs font-medium mt-1 truncate font-sans ${
                   validationSummary.failed > 0
                     ? 'text-destructive'
                     : validationSummary.needs_review > 0
@@ -1136,12 +1135,12 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                     : `${validationSummary.passed}/${validationSummary.total_rules} Passed`}
                 </p>
               ) : (
-                <p className="text-xs font-bold text-muted-foreground mt-1">Pending Validation</p>
+                <p className="text-xs font-medium text-muted-foreground mt-1 font-sans">Pending Validation</p>
               )}
             </div>
             <div className="p-3 rounded-xl bg-muted/30 border border-border">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground">Regulatory Category</span>
-              <p className="text-xs font-bold text-primary mt-1 truncate" title={currentCategory?.name || application.category_code}>
+              <span className="text-xs font-medium text-muted-foreground font-sans block">Regulatory Category</span>
+              <p className="text-xs font-medium text-primary mt-1 truncate font-sans" title={currentCategory?.name || application.category_code}>
                 {currentCategory?.name || application.category_code}
               </p>
             </div>
@@ -1154,10 +1153,10 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
         <div className="p-2 border-b border-[#E5DACF] flex items-center gap-1.5 overflow-x-auto bg-[#FAF5F0]/60">
           <button
             onClick={() => setActiveSubTab('documents')}
-            className={`py-2 px-3.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`py-2 px-3.5 text-xs font-medium font-sans rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === 'documents'
-                ? 'bg-[#1B1411] text-[#FAF5F0] font-bold shadow-xs'
-                : 'text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC]/50'
+                ? 'bg-[#1F3954] text-[#FAF5F0] shadow-xs'
+                : 'text-[#536174] hover:text-[#202936] hover:bg-[#EEE5DC]/50'
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
@@ -1166,10 +1165,10 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
 
           <button
             onClick={() => setActiveSubTab('validation')}
-            className={`py-2 px-3.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`py-2 px-3.5 text-xs font-medium font-sans rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === 'validation'
-                ? 'bg-[#1B1411] text-[#FAF5F0] font-bold shadow-xs'
-                : 'text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC]/50'
+                ? 'bg-[#1F3954] text-[#FAF5F0] shadow-xs'
+                : 'text-[#536174] hover:text-[#202936] hover:bg-[#EEE5DC]/50'
             }`}
           >
             <ShieldCheck className="w-3.5 h-3.5" />
@@ -1186,10 +1185,10 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
 
           <button
             onClick={() => setActiveSubTab('anomalies')}
-            className={`py-2 px-3.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`py-2 px-3.5 text-xs font-medium font-sans rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === 'anomalies'
-                ? 'bg-[#1B1411] text-[#FAF5F0] font-bold shadow-xs'
-                : 'text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC]/50'
+                ? 'bg-[#1F3954] text-[#FAF5F0] shadow-xs'
+                : 'text-[#536174] hover:text-[#202936] hover:bg-[#EEE5DC]/50'
             }`}
           >
             <Sparkles className="w-3.5 h-3.5 text-[#33CC7A]" />
@@ -1197,7 +1196,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
               Anomalies &amp; Fields {analysisData ? `(${analysisData.findings.length})` : ''}
             </span>
             {analysisData && analysisData.open_findings > 0 && (
-              <span className="bg-rose-50 text-rose-700 border border-rose-200 px-1.5 py-0 rounded-full text-[10px] font-bold">
+              <span className="bg-rose-50 text-rose-700 border border-rose-200 px-1.5 py-0 rounded-full text-xs font-medium font-sans">
                 {analysisData.open_findings}
               </span>
             )}
@@ -1205,10 +1204,10 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
 
           <button
             onClick={() => setActiveSubTab('requirements')}
-            className={`py-2 px-3.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`py-2 px-3.5 text-xs font-medium font-sans rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === 'requirements'
-                ? 'bg-[#1B1411] text-[#FAF5F0] font-bold shadow-xs'
-                : 'text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC]/50'
+                ? 'bg-[#1F3954] text-[#FAF5F0] shadow-xs'
+                : 'text-[#536174] hover:text-[#202936] hover:bg-[#EEE5DC]/50'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
@@ -1217,10 +1216,10 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
 
           <button
             onClick={() => setActiveSubTab('audit')}
-            className={`py-2 px-3.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`py-2 px-3.5 text-xs font-medium font-sans rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === 'audit'
-                ? 'bg-[#1B1411] text-[#FAF5F0] font-bold shadow-xs'
-                : 'text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC]/50'
+                ? 'bg-[#1F3954] text-[#FAF5F0] shadow-xs'
+                : 'text-[#536174] hover:text-[#202936] hover:bg-[#EEE5DC]/50'
             }`}
           >
             <History className="w-3.5 h-3.5" />
@@ -1229,10 +1228,10 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
 
           <button
             onClick={() => setActiveSubTab('institution')}
-            className={`py-2 px-3.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`py-2 px-3.5 text-xs font-medium font-sans rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === 'institution'
-                ? 'bg-[#1B1411] text-[#FAF5F0] font-bold shadow-xs'
-                : 'text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC]/50'
+                ? 'bg-[#1F3954] text-[#FAF5F0] shadow-xs'
+                : 'text-[#536174] hover:text-[#202936] hover:bg-[#EEE5DC]/50'
             }`}
           >
             <Building2 className="w-3.5 h-3.5" />
@@ -1241,10 +1240,10 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
 
           <button
             onClick={() => setActiveSubTab('reports')}
-            className={`py-2 px-3.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`py-2 px-3.5 text-xs font-medium font-sans rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === 'reports'
-                ? 'bg-[#1B1411] text-[#FAF5F0] font-bold shadow-xs'
-                : 'text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC]/50'
+                ? 'bg-[#1F3954] text-[#FAF5F0] shadow-xs'
+                : 'text-[#536174] hover:text-[#202936] hover:bg-[#EEE5DC]/50'
             }`}
           >
             <Download className="w-3.5 h-3.5" />
@@ -1253,10 +1252,10 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
 
           <button
             onClick={() => setActiveSubTab('registry')}
-            className={`py-2 px-3.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`py-2 px-3.5 text-xs font-medium font-sans rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === 'registry'
-                ? 'bg-[#1B1411] text-[#FAF5F0] font-bold shadow-xs'
-                : 'text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC]/50'
+                ? 'bg-[#1F3954] text-[#FAF5F0] shadow-xs'
+                : 'text-[#536174] hover:text-[#202936] hover:bg-[#EEE5DC]/50'
             }`}
           >
             <Database className="w-3.5 h-3.5" />
@@ -1269,8 +1268,8 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             onClick={() => setActiveSubTab('history')}
             className={`py-2 px-3.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === 'history'
-                ? 'bg-[#1B1411] text-[#FAF5F0] font-bold shadow-xs'
-                : 'text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC]/50'
+                ? 'bg-[#1F3954] text-[#FAF5F0] font-bold shadow-xs'
+                : 'text-[#536174] hover:text-[#202936] hover:bg-[#EEE5DC]/50'
             }`}
           >
             <GitCompare className="w-3.5 h-3.5" />
@@ -1283,8 +1282,8 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             onClick={() => setActiveSubTab('portals')}
             className={`py-2 px-3.5 text-xs font-semibold rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === 'portals'
-                ? 'bg-[#1B1411] text-[#FAF5F0] font-bold shadow-xs'
-                : 'text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC]/50'
+                ? 'bg-[#1F3954] text-[#FAF5F0] font-bold shadow-xs'
+                : 'text-[#536174] hover:text-[#202936] hover:bg-[#EEE5DC]/50'
             }`}
           >
             <Network className="w-3.5 h-3.5" />
@@ -1300,7 +1299,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             {documents.length === 0 ? (
               <div className="p-12 text-center space-y-3">
                 <FileText className="w-10 h-10 text-[#8589A6] mx-auto" />
-                <h4 className="text-sm font-bold text-[#171B45]">No documents uploaded for this application</h4>
+                <h4 className="text-sm font-bold text-[#202936]">No documents uploaded for this application</h4>
                 <p className="text-xs text-[#5F6485] max-w-sm mx-auto">
                   Upload the mandatory institutional documents (e.g. NOC, Land/Building Certificate, Approval Letter) to enable extraction and scrutiny.
                 </p>
@@ -1330,11 +1329,11 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                       <tr key={doc.id} className="hover:bg-[#FAF8FF] transition-colors">
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-[#F3EEFC] text-[#7450D8] flex items-center justify-center shrink-0">
+                            <div className="w-8 h-8 rounded-lg bg-[#E3FDFF] text-[#0E7490] flex items-center justify-center shrink-0">
                               <FileText className="w-4 h-4" />
                             </div>
                             <div className="overflow-hidden max-w-[240px]">
-                              <p className="font-bold text-[#171B45] truncate" title={doc.original_filename}>
+                              <p className="font-bold text-[#202936] truncate" title={doc.original_filename}>
                                 {doc.original_filename}
                               </p>
                               <p className="text-[10px] font-mono text-[#8589A6] truncate" title={doc.sha256}>
@@ -1345,14 +1344,14 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                         </td>
 
                         <td className="py-3.5 px-4">
-                          <span className="font-medium text-[#171B45]">
+                          <span className="font-medium text-[#202936]">
                             {doc.declared_type || doc.media_type.split('/')[1]?.toUpperCase()}
                           </span>
                         </td>
 
                         <td className="py-3.5 px-4 text-[#5F6485]">
                           <div className="flex flex-col">
-                            <span className="font-semibold text-[#171B45]">
+                            <span className="font-semibold text-[#202936]">
                               {doc.page_count !== null && doc.page_count !== undefined ? `${doc.page_count} pg` : '—'}
                             </span>
                             <span className="font-mono text-[10px]">{formatBytes(doc.file_size_bytes)}</span>
@@ -1363,7 +1362,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                           <div className="flex flex-col gap-1 items-start">
                             {renderDocumentStatusBadge(doc.processing_status)}
                             {doc.extraction_quality_band && (
-                              <span className="text-[10px] font-semibold text-[#7450D8]">
+                              <span className="text-[10px] font-semibold text-[#0E7490]">
                                 Band: {doc.extraction_quality_band}
                               </span>
                             )}
@@ -1379,7 +1378,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                             {onInspectDocument && (
                               <button
                                 onClick={() => onInspectDocument(doc)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#DCD0F7] bg-[#FAF8FF] text-[11px] font-semibold text-[#7450D8] hover:bg-[#F3EEFC] transition-colors cursor-pointer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#A5F3FC] bg-[#E3FDFF]/50 text-[11px] font-semibold text-[#0E7490] hover:bg-[#E3FDFF] transition-colors cursor-pointer"
                                 title="Inspect Extracted Text and OCR Records"
                               >
                                 <Eye className="w-3.5 h-3.5" />
@@ -1390,7 +1389,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                             <a
                               href={getDocumentFileUrl(doc.id, true)}
                               download={doc.original_filename}
-                              className="p-1 rounded-lg border border-[#E9E6F2] text-[#5F6485] hover:text-[#171B45] hover:bg-white transition-colors"
+                              className="p-1 rounded-lg border border-[#E9E6F2] text-[#5F6485] hover:text-[#202936] hover:bg-white transition-colors"
                               title="Download original document file"
                             >
                               <Download className="w-3.5 h-3.5" />
@@ -1425,18 +1424,18 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             )}
 
             {!validationSummary || !validationSummary.validation_run_id ? (
-              <div className="p-12 text-center rounded-3xl border border-dashed border-[#DCD0F7] bg-[#FAF8FF] space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-[#F3EEFC] text-[#7450D8] flex items-center justify-center mx-auto">
+              <div className="p-12 text-center rounded-3xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-[#E3FDFF] text-[#0E7490] flex items-center justify-center mx-auto">
                   <ShieldCheck className="w-6 h-6" />
                 </div>
-                <h3 className="text-sm font-bold text-[#171B45]">No Validation Run Executed Yet</h3>
+                <h3 className="text-sm font-bold text-[#1F3954] font-display">No Validation Run Executed Yet</h3>
                 <p className="text-xs text-[#5F6485] max-w-md mx-auto leading-relaxed">
                   Evaluate mandatory document requirements, extracted certificates, validity expiry baselines, and institution field consistency.
                 </p>
                 <button
                   onClick={handleTriggerValidation}
                   disabled={validating}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#7450D8] hover:bg-[#623ec2] disabled:opacity-60 text-white text-xs sm:text-sm font-semibold transition-all shadow-xs cursor-pointer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl main-btn btn-hover text-white text-xs sm:text-sm font-semibold transition-all cursor-pointer"
                 >
                   <RefreshCw className={`w-4 h-4 ${validating ? 'animate-spin' : ''}`} />
                   <span>{validating ? 'Evaluating Scrutiny Rules...' : 'Run Scrutiny Validation'}</span>
@@ -1481,7 +1480,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                       </div>
                       <p className="text-[11px] text-[#5F6485] mt-1.5">
                         Evaluated {validationSummary.evaluated_at ? formatDate(validationSummary.evaluated_at) : 'recently'} • Baseline Date:{' '}
-                        <span className="font-mono font-semibold text-[#171B45]">{validationSummary.evaluation_date || 'Current Date'}</span> • Engine v{validationSummary.pipeline_version}
+                        <span className="font-mono font-semibold text-[#202936]">{validationSummary.evaluation_date || 'Current Date'}</span> • Engine v{validationSummary.pipeline_version}
                       </p>
                     </div>
 
@@ -1499,7 +1498,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                     <div className="p-3 rounded-xl bg-white border border-[#E9E6F2]">
                       <span className="text-[10px] uppercase font-bold text-[#8589A6]">Total Evaluated</span>
-                      <p className="text-base font-extrabold text-[#171B45] mt-0.5">{validationSummary.total_rules}</p>
+                      <p className="text-base font-extrabold text-[#202936] mt-0.5">{validationSummary.total_rules}</p>
                     </div>
                     <div className="p-3 rounded-xl bg-white border border-[#E9E6F2]">
                       <span className="text-[10px] uppercase font-bold text-[#027A48]">Passed</span>
@@ -1544,7 +1543,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                           className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                             resultFilter === filterKey
                               ? 'bg-[#7450D8] text-white shadow-2xs'
-                              : 'bg-white border border-[#E9E6F2] text-[#5F6485] hover:border-[#DCD0F7] hover:text-[#171B45]'
+                              : 'bg-white border border-[#E9E6F2] text-[#5F6485] hover:border-[#DCD0F7] hover:text-[#202936]'
                           }`}
                         >
                           {filterKey.replace(/_/g, ' ')} ({count})
@@ -1568,7 +1567,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                           {/* Card Header */}
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#F4F2F9] pb-3">
                             <div className="flex items-center gap-2.5 flex-wrap">
-                              <span className="font-mono text-xs font-extrabold text-[#171B45]">
+                              <span className="font-mono text-xs font-extrabold text-[#202936]">
                                 {res.rule_code}
                               </span>
                               <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#F3EEFC] text-[#7450D8]">
@@ -1609,7 +1608,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                           </div>
 
                           {/* Rule Explanation */}
-                          <p className="text-xs sm:text-[13px] text-[#171B45] font-medium leading-relaxed">
+                          <p className="text-xs sm:text-[13px] text-[#202936] font-medium leading-relaxed">
                             {res.explanation}
                           </p>
 
@@ -1620,7 +1619,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                                 <span className="text-[10px] font-bold uppercase text-[#8589A6] block">
                                   Expected Statutory Value
                                 </span>
-                                <span className="font-mono text-xs font-semibold text-[#171B45]">
+                                <span className="font-mono text-xs font-semibold text-[#202936]">
                                   {res.expected_value || 'None specified'}
                                 </span>
                               </div>
@@ -1643,7 +1642,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                           <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-[#F8F7FB] text-[11px] text-[#5F6485]">
                             <div className="flex items-center gap-3 flex-wrap">
                               {sourceDoc ? (
-                                <span className="flex items-center gap-1.5 font-medium text-[#171B45]">
+                                <span className="flex items-center gap-1.5 font-medium text-[#202936]">
                                   <FileText className="w-3.5 h-3.5 text-[#7450D8]" />
                                   <span>{sourceDoc.original_filename}</span>
                                 </span>
@@ -1715,7 +1714,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                     LOCAL ENGINE ACTIVE
                   </span>
                 </div>
-                <p className="text-xs text-[#171B45] font-medium leading-relaxed max-w-2xl">
+                <p className="text-xs text-[#202936] font-medium leading-relaxed max-w-2xl">
                   Cross-document consistency checking, chronological date sanity validation, duplicate upload collision detection, and OCR extraction quality monitoring.
                   All findings require human scrutiny officer review before final decisions.
                 </p>
@@ -1724,7 +1723,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
               <button
                 onClick={handleTriggerAnalysis}
                 disabled={analyzing}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#7450D8] hover:bg-[#5E3EB8] disabled:opacity-50 text-white text-xs sm:text-sm font-semibold transition-all shadow-xs cursor-pointer shrink-0"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl main-btn btn-hover disabled:opacity-50 text-white text-xs sm:text-sm font-semibold transition-all cursor-pointer shrink-0"
               >
                 <RefreshCw className={`w-4 h-4 ${analyzing ? 'animate-spin' : ''}`} />
                 <span>{analyzing ? 'Executing Scrutiny Scan...' : 'Run Anomaly Detection Scan'}</span>
@@ -1742,7 +1741,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               <div className="p-3.5 rounded-xl bg-[#FAF9FC] border border-[#E9E6F2]">
                 <span className="text-[10px] uppercase font-bold text-[#8589A6]">Total Anomalies</span>
-                <p className="text-lg font-extrabold text-[#171B45] mt-0.5">
+                <p className="text-lg font-extrabold text-[#202936] mt-0.5">
                   {analysisData?.total_anomalies ?? 0}
                 </p>
               </div>
@@ -1779,8 +1778,8 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                   onClick={() => setActiveAnomalySection('findings')}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     activeAnomalySection === 'findings'
-                      ? 'bg-[#171B45] text-white shadow-xs'
-                      : 'bg-[#FAF8FF] text-[#5F6485] hover:text-[#171B45] border border-[#E9E6F2]'
+                      ? 'bg-[#1F3954] text-white shadow-xs'
+                      : 'bg-[#FAF8FF] text-[#5F6485] hover:text-[#202936] border border-[#E9E6F2]'
                   }`}
                 >
                   Cross-Document Discrepancies & Anomalies ({analysisData?.findings?.length ?? 0})
@@ -1789,8 +1788,8 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                   onClick={() => setActiveAnomalySection('fields')}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     activeAnomalySection === 'fields'
-                      ? 'bg-[#171B45] text-white shadow-xs'
-                      : 'bg-[#FAF8FF] text-[#5F6485] hover:text-[#171B45] border border-[#E9E6F2]'
+                      ? 'bg-[#1F3954] text-white shadow-xs'
+                      : 'bg-[#FAF8FF] text-[#5F6485] hover:text-[#202936] border border-[#E9E6F2]'
                   }`}
                 >
                   Candidate Extracted Fields ({analysisData?.extracted_fields?.length ?? 0})
@@ -1804,7 +1803,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                     <select
                       value={anomalySeverityFilter}
                       onChange={(e) => setAnomalySeverityFilter(e.target.value as any)}
-                      className="px-2 py-1 rounded-lg border border-[#E9E6F2] bg-white text-xs font-semibold text-[#171B45]"
+                      className="px-2 py-1 rounded-lg border border-[#E9E6F2] bg-white text-xs font-semibold text-[#202936]"
                     >
                       <option value="ALL">All Severities</option>
                       <option value="CRITICAL">Critical</option>
@@ -1818,7 +1817,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                     <select
                       value={anomalyReviewFilter}
                       onChange={(e) => setAnomalyReviewFilter(e.target.value as any)}
-                      className="px-2 py-1 rounded-lg border border-[#E9E6F2] bg-white text-xs font-semibold text-[#171B45]"
+                      className="px-2 py-1 rounded-lg border border-[#E9E6F2] bg-white text-xs font-semibold text-[#202936]"
                     >
                       <option value="ALL">All Verdicts</option>
                       <option value="OPEN">Open</option>
@@ -1838,7 +1837,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                 {(!analysisData || analysisData.findings.length === 0) ? (
                   <div className="p-12 text-center space-y-3 bg-[#FAF8FF] rounded-2xl border border-dashed border-[#DCD0F7]">
                     <Sparkles className="w-8 h-8 text-[#7450D8] mx-auto opacity-70" />
-                    <h4 className="text-sm font-bold text-[#171B45]">No Anomalies or Discrepancies Recorded</h4>
+                    <h4 className="text-sm font-bold text-[#202936]">No Anomalies or Discrepancies Recorded</h4>
                     <p className="text-xs text-[#5F6485] max-w-md mx-auto">
                       Click &quot;Run Anomaly Detection Scan&quot; above to cross-reference document names, intake figures, certificate dates, and upload checksums.
                     </p>
@@ -1879,7 +1878,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                               {/* Header Badges */}
                               <div className="flex items-center justify-between gap-2 flex-wrap">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-mono text-xs font-extrabold px-2.5 py-0.5 rounded-md bg-[#171B45] text-white">
+                                  <span className="font-mono text-xs font-extrabold px-2.5 py-0.5 rounded-md bg-[#1F3954] text-white">
                                     {finding.rule_code}
                                   </span>
                                   <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold ${
@@ -1915,7 +1914,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
 
                               {/* Title & Explanation */}
                               <div>
-                                <h5 className="text-sm font-extrabold text-[#171B45]">
+                                <h5 className="text-sm font-extrabold text-[#202936]">
                                   {finding.title}
                                 </h5>
                                 <p className="text-xs text-[#5F6485] mt-1 leading-relaxed">
@@ -1928,7 +1927,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-[#FAF9FC] border border-[#EEEAF5] text-xs">
                                   <div>
                                     <span className="text-[10px] uppercase font-bold text-[#027A48]">Expected Reference</span>
-                                    <p className="font-mono text-xs font-semibold text-[#171B45] mt-0.5 break-words">
+                                    <p className="font-mono text-xs font-semibold text-[#202936] mt-0.5 break-words">
                                       {finding.expected_value || 'N/A'}
                                     </p>
                                   </div>
@@ -1953,7 +1952,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                                         key={ev.id || idx}
                                         className="p-2.5 rounded-lg bg-[#FAF8FF] border border-[#E9E6F2] text-[11px] space-y-1"
                                       >
-                                        <div className="flex items-center justify-between font-semibold text-[#171B45]">
+                                        <div className="flex items-center justify-between font-semibold text-[#202936]">
                                           <span className="truncate">{ev.label}</span>
                                           {ev.page_number && (
                                             <span className="text-[10px] px-1.5 py-0.2 rounded bg-white text-[#7450D8] border border-[#DCD0F7] shrink-0">
@@ -1973,7 +1972,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                               )}
 
                               {/* Recommended Action */}
-                              <div className="p-3 rounded-xl bg-[#FAF8FF] border border-[#E9E6F2] flex items-start gap-2.5 text-xs text-[#171B45]">
+                              <div className="p-3 rounded-xl bg-[#FAF8FF] border border-[#E9E6F2] flex items-start gap-2.5 text-xs text-[#202936]">
                                 <AlertTriangle className="w-4 h-4 text-[#7450D8] shrink-0 mt-0.5" />
                                 <div>
                                   <span className="text-[10px] uppercase font-bold text-[#7450D8] block">
@@ -1994,7 +1993,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                                       <span>{new Date(finding.reviewed_at).toLocaleString()}</span>
                                     )}
                                   </div>
-                                  <p className="text-xs text-[#171B45] italic">
+                                  <p className="text-xs text-[#202936] italic">
                                     &quot;{finding.review_comment}&quot;
                                   </p>
                                 </div>
@@ -2003,7 +2002,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                               {/* Reviewer Action Controls */}
                               <div className="pt-2 flex items-center justify-between flex-wrap gap-2 border-t border-[#EEEAF5]">
                                 <div className="text-[11px] text-[#8589A6]">
-                                  Detection Method: <span className="font-mono font-medium text-[#171B45]">{finding.detection_method}</span>
+                                  Detection Method: <span className="font-mono font-medium text-[#202936]">{finding.detection_method}</span>
                                 </div>
 
                                 <div>
@@ -2021,7 +2020,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                                     </button>
                                   ) : (
                                     <div className="space-y-3 p-4 rounded-xl bg-[#FAF8FF] border border-[#DCD0F7] mt-2 w-full max-w-lg">
-                                      <h6 className="text-xs font-extrabold text-[#171B45]">
+                                      <h6 className="text-xs font-extrabold text-[#202936]">
                                         Record Scrutiny Officer Verdict
                                       </h6>
 
@@ -2037,7 +2036,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                                               onClick={() => setReviewStatusInput(st)}
                                               className={`py-1.5 px-2 rounded-lg text-[11px] font-bold border text-center transition-all cursor-pointer ${
                                                 reviewStatusInput === st
-                                                  ? 'bg-[#171B45] text-white border-[#171B45]'
+                                                  ? 'bg-[#1F3954] text-white border-[#1F3954]'
                                                   : 'bg-white text-[#5F6485] border-[#E9E6F2] hover:bg-[#FAF9FC]'
                                               }`}
                                             >
@@ -2095,7 +2094,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h5 className="text-xs sm:text-sm font-extrabold text-[#171B45]">
+                    <h5 className="text-xs sm:text-sm font-extrabold text-[#202936]">
                       Normalized Candidate Fields Across Uploaded Documents
                     </h5>
                     <p className="text-[11px] text-[#5F6485]">
@@ -2123,7 +2122,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                       <tbody className="divide-y divide-[#EEEAF5] bg-white">
                         {analysisData.extracted_fields.map((ef) => (
                           <tr key={ef.id} className="hover:bg-[#FAF8FF]/60 transition-colors">
-                            <td className="py-3 px-4 font-mono font-bold text-[#171B45]">
+                            <td className="py-3 px-4 font-mono font-bold text-[#202936]">
                               {ef.field_key}
                             </td>
                             <td className="py-3 px-4 font-mono font-semibold text-[#7450D8]">
@@ -2135,7 +2134,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                             <td className="py-3 px-4 text-[#5F6485]">
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 {ef.page_number && (
-                                  <span className="px-1.5 py-0.5 rounded bg-[#FAF8FF] text-[#171B45] border border-[#E9E6F2] font-mono text-[10px]">
+                                  <span className="px-1.5 py-0.5 rounded bg-[#FAF8FF] text-[#202936] border border-[#E9E6F2] font-mono text-[10px]">
                                     P.{ef.page_number}
                                   </span>
                                 )}
@@ -2171,7 +2170,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
-                  <h4 className="text-xs sm:text-sm font-extrabold text-[#171B45] flex items-center gap-2">
+                  <h4 className="text-xs sm:text-sm font-extrabold text-[#202936] flex items-center gap-2">
                     <span>Statutory Document Scrutiny Checklist</span>
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FAF8FF] text-[#7450D8] border border-[#E9E6F2]">
                       APH 2024–27
@@ -2246,7 +2245,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                             </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5 flex-wrap">
-                                <p className="font-bold text-xs text-[#171B45] truncate">{item.title}</p>
+                                <p className="font-bold text-xs text-[#202936] truncate">{item.title}</p>
                                 <span className="font-mono text-[9px] text-[#8589A6] px-1.5 py-0.2 rounded bg-white border border-[#E9E6F2]">
                                   {item.document_code}
                                 </span>
@@ -2323,7 +2322,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                             {isPresent ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
                           </div>
                           <div>
-                            <p className="font-bold text-xs text-[#171B45]">{reqType}</p>
+                            <p className="font-bold text-xs text-[#202936]">{reqType}</p>
                             <p className="text-[10px] text-[#5F6485]">
                               {isPresent ? 'Document uploaded & registered' : 'Mandatory document missing'}
                             </p>
@@ -2346,7 +2345,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
 
             {/* Declared Application Data Fields */}
             <div className="space-y-3 pt-2">
-              <h4 className="text-xs sm:text-sm font-extrabold text-[#171B45]">
+              <h4 className="text-xs sm:text-sm font-extrabold text-[#202936]">
                 Institution-Declared Form Data
               </h4>
               <p className="text-[11px] text-[#5F6485]">
@@ -2364,7 +2363,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                       <span className="text-[10px] font-bold text-[#8589A6] uppercase tracking-wider block">
                         {key.replace(/_/g, ' ')}
                       </span>
-                      <p className="font-semibold text-xs text-[#171B45] mt-0.5 break-words">
+                      <p className="font-semibold text-xs text-[#202936] mt-0.5 break-words">
                         {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                       </p>
                     </div>
@@ -2380,7 +2379,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
           <div className="p-4 sm:p-6 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-xs sm:text-sm font-extrabold text-[#171B45]">
+                <h4 className="text-xs sm:text-sm font-extrabold text-[#202936]">
                   Immutable Regulatory Event Log
                 </h4>
                 <p className="text-[11px] text-[#5F6485]">
@@ -2408,7 +2407,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                         <span className="text-[11px] text-[#5F6485]">by Actor: {evt.actor_id || 'System'}</span>
                       </div>
                       {evt.metadata && Object.keys(evt.metadata).length > 0 && (
-                        <p className="font-mono text-[11px] text-[#171B45]">
+                        <p className="font-mono text-[11px] text-[#202936]">
                           {JSON.stringify(evt.metadata)}
                         </p>
                       )}
@@ -2426,13 +2425,13 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
         {/* Tab 4: Institution Dossier */}
         {activeSubTab === 'institution' && (
           <div className="p-4 sm:p-6 space-y-4">
-            <h4 className="text-xs sm:text-sm font-extrabold text-[#171B45]">
+            <h4 className="text-xs sm:text-sm font-extrabold text-[#202936]">
               Institution Profile & Regulatory Record
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div className="p-4 rounded-xl bg-[#FAF9FC] border border-[#E9E6F2] space-y-1">
                 <span className="text-[10px] uppercase font-bold text-[#8589A6]">Institution Name</span>
-                <p className="font-bold text-sm text-[#171B45]">{application.institution.institution_name}</p>
+                <p className="font-bold text-sm text-[#202936]">{application.institution.institution_name}</p>
               </div>
               <div className="p-4 rounded-xl bg-[#FAF9FC] border border-[#E9E6F2] space-y-1">
                 <span className="text-[10px] uppercase font-bold text-[#8589A6]">Permanent / AISHE Identifier</span>
@@ -2442,7 +2441,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
               </div>
               <div className="p-4 rounded-xl bg-[#FAF9FC] border border-[#E9E6F2] space-y-1">
                 <span className="text-[10px] uppercase font-bold text-[#8589A6]">State & City</span>
-                <p className="font-semibold text-xs text-[#171B45]">
+                <p className="font-semibold text-xs text-[#202936]">
                   {application.institution.city ? `${application.institution.city}, ` : ''}
                   {application.institution.state || 'India'}
                 </p>
@@ -2463,7 +2462,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             {/* Header & Generation Toolbar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-[#FAF8FF] border border-[#E9E6F2]">
               <div>
-                <h4 className="text-sm sm:text-base font-extrabold text-[#171B45] flex items-center gap-2">
+                <h4 className="text-sm sm:text-base font-extrabold text-[#202936] flex items-center gap-2">
                   <Download className="w-4 h-4 text-[#7450D8]" />
                   Regulatory Scrutiny Dossier & Evidence Reports
                 </h4>
@@ -2476,7 +2475,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                 <button
                   onClick={() => handleGenerateScrutinyReport('PDF')}
                   disabled={generatingReport}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#7450D8] hover:bg-[#5D3FBD] disabled:opacity-60 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl main-btn btn-hover disabled:opacity-60 text-white text-xs font-bold transition-all cursor-pointer"
                 >
                   <Download className={`w-3.5 h-3.5 ${generatingReport ? 'animate-spin' : ''}`} />
                   <span>{generatingReport ? 'Generating...' : 'Generate PDF Dossier'}</span>
@@ -2484,7 +2483,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                 <button
                   onClick={() => handleGenerateScrutinyReport('JSON')}
                   disabled={generatingReport}
-                  className="inline-flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white border border-[#DCD0F7] hover:bg-[#FAF8FF] disabled:opacity-60 text-[#7450D8] text-xs font-bold transition-all shadow-xs cursor-pointer"
+                  className="inline-flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white border border-[#37C2CC]/40 hover:bg-[#E3FDFF] disabled:opacity-60 text-[#0E7490] text-xs font-bold transition-all cursor-pointer"
                 >
                   <span>Export JSON</span>
                 </button>
@@ -2506,7 +2505,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             {/* Actionable Reviewer Recommendations */}
             {reviewSummary?.recommended_actions && reviewSummary.recommended_actions.length > 0 && (
               <div className="p-5 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs space-y-3">
-                <h5 className="text-xs font-bold uppercase tracking-wider text-[#171B45] flex items-center gap-2">
+                <h5 className="text-xs font-bold uppercase tracking-wider text-[#202936] flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-[#7450D8]" />
                   Recommended Reviewer Actions ({reviewSummary.recommended_actions.length})
                 </h5>
@@ -2517,7 +2516,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                       className="p-3.5 rounded-xl border border-[#E9E6F2] bg-[#FAF8FF] space-y-1 text-xs"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-bold text-[#171B45]">{rec.title}</span>
+                        <span className="font-bold text-[#202936]">{rec.title}</span>
                         <span
                           className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${
                             rec.priority === 'HIGH'
@@ -2539,7 +2538,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
 
             {/* Explainable Validation Rule Explanations */}
             <div className="p-5 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs space-y-3">
-              <h5 className="text-xs font-bold uppercase tracking-wider text-[#171B45] flex items-center gap-2">
+              <h5 className="text-xs font-bold uppercase tracking-wider text-[#202936] flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-[#7450D8]" />
                 Explainable Validation Rule Breakdowns
               </h5>
@@ -2563,7 +2562,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                       {reviewSummary.rule_explanations.map((r, idx) => (
                         <tr key={idx} className="hover:bg-[#FAF9FD]">
                           <td className="py-3 px-3">
-                            <span className="font-mono font-bold text-[#171B45] block">{r.rule_code}</span>
+                            <span className="font-mono font-bold text-[#202936] block">{r.rule_code}</span>
                             <span className="text-[11px] text-[#5F6485]">{r.name}</span>
                           </td>
                           <td className="py-3 px-3 whitespace-nowrap">
@@ -2582,10 +2581,10 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                           <td className="py-3 px-3 text-[#5F6485]">{r.purpose}</td>
                           <td className="py-3 px-3 space-y-0.5">
                             <div className="text-[11px]">
-                              <span className="font-bold text-[#171B45]">Exp:</span> {r.expected}
+                              <span className="font-bold text-[#202936]">Exp:</span> {r.expected}
                             </div>
                             <div className="text-[11px] text-[#5F6485]">
-                              <span className="font-bold text-[#171B45]">Obs:</span> {r.observed}
+                              <span className="font-bold text-[#202936]">Obs:</span> {r.observed}
                             </div>
                           </td>
                           <td className="py-3 px-3 text-[#7450D8] font-mono text-[11px]">
@@ -2601,7 +2600,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
 
             {/* Generated Reports & Artifacts */}
             <div className="p-5 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs space-y-3">
-              <h5 className="text-xs font-bold uppercase tracking-wider text-[#171B45] flex items-center gap-2">
+              <h5 className="text-xs font-bold uppercase tracking-wider text-[#202936] flex items-center gap-2">
                 <FileText className="w-4 h-4 text-[#7450D8]" />
                 Generated Scrutiny Artifacts ({reportsList.length})
               </h5>
@@ -2624,7 +2623,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                     <tbody className="divide-y divide-[#F0EDF7]">
                       {reportsList.map((rep) => (
                         <tr key={rep.id} className="hover:bg-[#FAF9FD]">
-                          <td className="py-3 px-3 font-mono font-bold text-[#171B45]">
+                          <td className="py-3 px-3 font-mono font-bold text-[#202936]">
                             {rep.id.slice(0, 8)}...
                           </td>
                           <td className="py-3 px-3">
@@ -2675,7 +2674,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             {/* Provider Trigger Bar */}
             <div className="p-4 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="space-y-1">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#171B45] flex items-center gap-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#202936] flex items-center gap-2">
                   <Database className="w-4 h-4 text-[#7450D8]" />
                   Regulatory Verification Engine
                 </h4>
@@ -2688,7 +2687,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                 <select
                   value={selectedProvider}
                   onChange={(e) => setSelectedProvider(e.target.value)}
-                  className="text-xs bg-[#FAF9FC] border border-[#DCD0F7] rounded-xl px-3 py-2 text-[#171B45] font-medium focus:outline-none focus:border-[#7450D8]"
+                  className="text-xs bg-[#FAF9FC] border border-[#DCD0F7] rounded-xl px-3 py-2 text-[#202936] font-medium focus:outline-none focus:border-[#7450D8]"
                 >
                   {registryProviders.map((p) => (
                     <option key={p.provider_code} value={p.provider_code}>
@@ -2703,7 +2702,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                 <button
                   onClick={handleTriggerRegistryVerification}
                   disabled={verifyingRegistry}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#7450D8] text-white font-bold text-xs hover:bg-[#6039C8] transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl main-btn btn-hover text-white font-bold text-xs transition-all cursor-pointer disabled:opacity-50"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${verifyingRegistry ? 'animate-spin' : ''}`} />
                   <span>{verifyingRegistry ? 'Verifying...' : 'Execute Registry Verification'}</span>
@@ -2712,7 +2711,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             </div>
 
             {registryMessage && (
-              <div className="p-3 rounded-xl bg-[#F3EEFC] border border-[#DCD0F7] text-xs text-[#7450D8] font-medium">
+              <div className="p-3 rounded-xl bg-[#E3FDFF] border border-[#A5F3FC] text-xs text-[#0E7490] font-medium">
                 {registryMessage}
               </div>
             )}
@@ -2761,7 +2760,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                       <tbody className="divide-y divide-[#F0EDF7]">
                         {registryRuns[0].results.map((r) => (
                           <tr key={r.id} className="hover:bg-[#FAF9FD]">
-                            <td className="py-3 px-3 font-mono font-bold text-[#171B45]">
+                            <td className="py-3 px-3 font-mono font-bold text-[#202936]">
                               {r.check_type}
                             </td>
                             <td className="py-3 px-3">
@@ -2775,10 +2774,10 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                                 {r.status}
                               </span>
                             </td>
-                            <td className="py-3 px-3 font-medium text-[#171B45]">
+                            <td className="py-3 px-3 font-medium text-[#202936]">
                               {r.application_value || '—'}
                             </td>
-                            <td className="py-3 px-3 font-medium text-[#171B45]">
+                            <td className="py-3 px-3 font-medium text-[#202936]">
                               {r.registry_value || '—'}
                             </td>
                             <td className="py-3 px-3 text-[#5F6485] max-w-xs">
@@ -2820,14 +2819,14 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                 {/* Historical Verification Runs */}
                 {registryRuns.length > 1 && (
                   <div className="p-4 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs space-y-3">
-                    <h5 className="text-xs font-bold uppercase tracking-wider text-[#171B45]">
+                    <h5 className="text-xs font-bold uppercase tracking-wider text-[#202936]">
                       Verification History ({registryRuns.length - 1} prior runs)
                     </h5>
                     <div className="divide-y divide-[#EEEAF5] text-xs">
                       {registryRuns.slice(1).map((hr) => (
                         <div key={hr.id} className="py-2.5 flex items-center justify-between">
                           <div className="space-y-0.5">
-                            <span className="font-mono font-bold text-[#171B45]">{hr.provider_code}</span>
+                            <span className="font-mono font-bold text-[#202936]">{hr.provider_code}</span>
                             <p className="text-[#8589A6] text-[11px]">{hr.summary}</p>
                           </div>
                           <div className="text-right">
@@ -2847,7 +2846,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             ) : (
               <div className="p-12 text-center rounded-2xl bg-white border border-[#E9E6F2] space-y-3">
                 <Database className="w-10 h-10 text-[#8589A6] mx-auto" />
-                <h4 className="text-sm font-bold text-[#171B45]">No Registry Verification Runs Yet</h4>
+                <h4 className="text-sm font-bold text-[#202936]">No Registry Verification Runs Yet</h4>
                 <p className="text-xs text-[#5F6485] max-w-md mx-auto">
                   Click "Execute Registry Verification" above to check the institution's accreditation, AISHE code, intake quota, and legal name against reference regulatory records.
                 </p>
@@ -2864,7 +2863,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <GitBranch className="w-5 h-5 text-[#7450D8]" />
-                  <h4 className="text-sm font-bold text-[#171B45]">Dossier Version History & Freshness Auditing</h4>
+                  <h4 className="text-sm font-bold text-[#202936]">Dossier Version History & Freshness Auditing</h4>
                   {versionsList.length > 0 && (
                     <span className="px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-[#FAF8FF] text-[#7450D8] border border-[#DCD0F7]">
                       Current: v{versionsList[0].version_number}
@@ -2957,7 +2956,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
             <div className="p-5 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#EEEAF5] pb-3">
                 <div>
-                  <h5 className="text-xs font-bold uppercase tracking-wider text-[#171B45] flex items-center gap-1.5">
+                  <h5 className="text-xs font-bold uppercase tracking-wider text-[#202936] flex items-center gap-1.5">
                     <GitCompare className="w-4 h-4 text-[#7450D8]" />
                     Comparative Version Diff Engine
                   </h5>
@@ -2972,7 +2971,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                     <select
                       value={selectedV1}
                       onChange={(e) => setSelectedV1(Number(e.target.value))}
-                      className="text-xs p-1.5 rounded-lg border border-[#DCD0F7] bg-[#FAF9FC] font-mono font-bold text-[#171B45]"
+                      className="text-xs p-1.5 rounded-lg border border-[#DCD0F7] bg-[#FAF9FC] font-mono font-bold text-[#202936]"
                     >
                       {versionsList.map((v) => (
                         <option key={v.id} value={v.version_number}>
@@ -2989,7 +2988,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                     <select
                       value={selectedV2}
                       onChange={(e) => setSelectedV2(Number(e.target.value))}
-                      className="text-xs p-1.5 rounded-lg border border-[#DCD0F7] bg-[#FAF9FC] font-mono font-bold text-[#171B45]"
+                      className="text-xs p-1.5 rounded-lg border border-[#DCD0F7] bg-[#FAF9FC] font-mono font-bold text-[#202936]"
                     >
                       {versionsList.map((v) => (
                         <option key={v.id} value={v.version_number}>
@@ -3019,7 +3018,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
               {comparisonResult && (
                 <div className="space-y-3 pt-1">
                   <div className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E9E6F2] flex items-center justify-between text-xs">
-                    <span className="font-bold text-[#171B45]">
+                    <span className="font-bold text-[#202936]">
                       Comparison: <span className="font-mono text-[#7450D8]">v{comparisonResult.v1_version}</span> vs{' '}
                       <span className="font-mono text-[#7450D8]">v{comparisonResult.v2_version}</span>
                     </span>
@@ -3042,7 +3041,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                         <tbody className="divide-y divide-[#EEEAF5]">
                           {comparisonResult.differences.map((diff: VersionDifferenceItem, idx: number) => (
                             <tr key={idx} className="hover:bg-[#FAF9FC]">
-                              <td className="py-2 px-3 font-mono font-bold text-[#171B45]">{diff.field}</td>
+                              <td className="py-2 px-3 font-mono font-bold text-[#202936]">{diff.field}</td>
                               <td className="py-2 px-3 font-mono text-[#B42318] bg-[#FEF3F2]/50">
                                 {diff.v1_value !== null && diff.v1_value !== undefined ? String(diff.v1_value) : '<none>'}
                               </td>
@@ -3074,7 +3073,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
 
             {/* Application Version Timeline */}
             <div className="p-5 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs space-y-4">
-              <h5 className="text-xs font-bold uppercase tracking-wider text-[#171B45]">
+              <h5 className="text-xs font-bold uppercase tracking-wider text-[#202936]">
                 Application Dossier Version Timeline ({versionsList.length} recorded versions)
               </h5>
 
@@ -3107,7 +3106,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                               )}
                             </div>
                           </td>
-                          <td className="py-3 px-3 text-[#171B45] font-semibold max-w-xs truncate">
+                          <td className="py-3 px-3 text-[#202936] font-semibold max-w-xs truncate">
                             {ver.change_summary || 'Dossier snapshot recorded'}
                           </td>
                           <td className="py-3 px-3">
@@ -3147,7 +3146,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <Network className="w-5 h-5 text-[#7450D8]" />
-                  <h4 className="text-sm font-bold text-[#171B45]">Regulatory Portal Interoperability & External Gateways</h4>
+                  <h4 className="text-sm font-bold text-[#202936]">Regulatory Portal Interoperability & External Gateways</h4>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FAF8FF] text-[#7450D8] border border-[#DCD0F7]">
                     SSRF Protected & TLS Enforced
                   </span>
@@ -3224,17 +3223,17 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                       </span>
                     </div>
 
-                    <h5 className="text-xs font-bold text-[#171B45] leading-snug">{portal.name}</h5>
+                    <h5 className="text-xs font-bold text-[#202936] leading-snug">{portal.name}</h5>
                     <p className="text-[11px] text-[#5F6485] leading-relaxed">{portal.description}</p>
                     <div className="text-[10px] font-mono text-[#8589A6] pt-1 border-t border-[#EEEAF5]">
-                      Authority: <span className="text-[#171B45] font-semibold">{portal.statutory_authority}</span>
+                      Authority: <span className="text-[#202936] font-semibold">{portal.statutory_authority}</span>
                     </div>
                   </div>
 
                   <div className="space-y-2 pt-2 border-t border-[#EEEAF5]">
                     <div className="flex items-center justify-between text-[11px]">
                       <span className="text-[#8589A6]">Latency:</span>
-                      <span className="font-mono font-bold text-[#171B45]">
+                      <span className="font-mono font-bold text-[#202936]">
                         {portal.latency_ms !== null && portal.latency_ms !== undefined ? `${portal.latency_ms} ms` : 'N/A'}
                       </span>
                     </div>
@@ -3268,7 +3267,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
               <div className="p-5 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#EEEAF5] pb-3">
                   <div>
-                    <h5 className="text-xs font-bold uppercase tracking-wider text-[#171B45] flex items-center gap-2">
+                    <h5 className="text-xs font-bold uppercase tracking-wider text-[#202936] flex items-center gap-2">
                       <ShieldCheck className="w-4 h-4 text-[#7450D8]" />
                       External Gateway Verification Outcome: {externalVerifData.provider_name}
                     </h5>
@@ -3288,7 +3287,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
 
                 {/* Provenance Banner */}
                 <div className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E9E6F2] flex flex-wrap items-center justify-between gap-2 text-xs">
-                  <span className="font-semibold text-[#171B45]">
+                  <span className="font-semibold text-[#202936]">
                     Target Identifier: <span className="font-mono text-[#7450D8]">{externalVerifData.target_identifier}</span>
                   </span>
                   <div className="flex items-center gap-2 text-[11px] font-mono text-[#5F6485]">
@@ -3321,7 +3320,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                     <tbody className="divide-y divide-[#EEEAF5]">
                       {externalVerifData.checks.map((chk, i) => (
                         <tr key={i} className="hover:bg-[#FAF9FC]">
-                          <td className="py-3 px-3 font-semibold text-[#171B45]">{chk.check_name}</td>
+                          <td className="py-3 px-3 font-semibold text-[#202936]">{chk.check_name}</td>
                           <td className="py-3 px-3">
                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                               chk.status === 'MATCH' ? 'bg-[#ECFDF3] text-[#027A48]' : 'bg-[#FEF3F2] text-[#B42318]'
@@ -3329,7 +3328,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                               {chk.status}
                             </span>
                           </td>
-                          <td className="py-3 px-3 font-mono text-[#171B45]">
+                          <td className="py-3 px-3 font-mono text-[#202936]">
                             {chk.declared_value !== null && chk.declared_value !== undefined ? String(chk.declared_value) : 'N/A'}
                           </td>
                           <td className="py-3 px-3 font-mono font-bold text-[#7450D8]">
@@ -3346,7 +3345,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
 
             {/* Outbound Sync & Security Audit Logs */}
             <div className="p-5 rounded-2xl bg-white border border-[#E9E6F2] shadow-xs space-y-3">
-              <h5 className="text-xs font-bold uppercase tracking-wider text-[#171B45] flex items-center gap-2">
+              <h5 className="text-xs font-bold uppercase tracking-wider text-[#202936] flex items-center gap-2">
                 <ShieldAlert className="w-4 h-4 text-[#7450D8]" />
                 Outbound Gateway Activity & Security Audit Ledger
               </h5>
@@ -3371,7 +3370,7 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
                     <tbody className="divide-y divide-[#EEEAF5]">
                       {portalSyncLogs.map((log) => (
                         <tr key={log.id} className="hover:bg-[#FAF9FC]">
-                          <td className="py-2.5 px-3 font-mono font-bold text-[#171B45]">{log.provider_id}</td>
+                          <td className="py-2.5 px-3 font-mono font-bold text-[#202936]">{log.provider_id}</td>
                           <td className="py-2.5 px-3 font-semibold text-[#5F6485]">{log.action}</td>
                           <td className="py-2.5 px-3">
                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -3409,13 +3408,13 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
           <div className="bg-white rounded-3xl border border-[#E9E6F2] shadow-xl w-full max-w-lg p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-[#EEEAF5] pb-3">
-              <h4 className="text-sm font-bold text-[#171B45] flex items-center gap-2">
+              <h4 className="text-sm font-bold text-[#202936] flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-[#7450D8]" />
                 Reviewer Discrepancy Adjudication
               </h4>
               <button
                 onClick={() => setResolutionModalOpen(false)}
-                className="text-[#8589A6] hover:text-[#171B45] cursor-pointer"
+                className="text-[#8589A6] hover:text-[#202936] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -3423,11 +3422,11 @@ export const ApplicationDetailWorkspace: React.FC<Props> = ({
 
             <div className="space-y-2 text-xs">
               <div className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E9E6F2] space-y-1">
-                <span className="font-bold text-[#171B45]">{targetResult.check_type}</span>
+                <span className="font-bold text-[#202936]">{targetResult.check_type}</span>
                 <p className="text-[#5F6485]">{targetResult.explanation}</p>
                 <div className="grid grid-cols-2 gap-2 pt-1 font-mono text-[11px]">
-                  <div>Declared: <span className="font-bold text-[#171B45]">{targetResult.application_value || 'None'}</span></div>
-                  <div>Reference: <span className="font-bold text-[#171B45]">{targetResult.registry_value || 'None'}</span></div>
+                  <div>Declared: <span className="font-bold text-[#202936]">{targetResult.application_value || 'None'}</span></div>
+                  <div>Reference: <span className="font-bold text-[#202936]">{targetResult.registry_value || 'None'}</span></div>
                 </div>
               </div>
 

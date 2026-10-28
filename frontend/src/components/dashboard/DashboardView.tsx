@@ -109,19 +109,39 @@ export const DashboardView: React.FC<Props> = ({
     }
   }
 
+  function formatCategory(code: string) {
+    if (!code) return '';
+    switch (code) {
+      case 'EOA_TECHNICAL':
+        return 'EOA — Technical';
+      case 'EOA_ILLUSTRATIVE':
+        return 'EOA — Illustrative';
+      case 'NEW_INSTITUTION':
+        return 'New Institution';
+      case 'EXTENSION_APPROVAL':
+        return 'Extension of Approval';
+      default:
+        return code.replace(/_/g, ' ');
+    }
+  }
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
       {/* 1. Header & Quick Actions */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#1F3954]/10 text-[#1F3954] text-[11px] font-semibold tracking-wider uppercase font-sans mb-1.5">
+            <ShieldCheck className="size-3 text-[#1F3954]" />
+            <span>Statutory Adjudication Console</span>
+          </div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1B1411]">
+            <h1 className="text-2xl sm:text-[30px] font-display font-bold tracking-tight text-[#202936]">
               {userRole === 'ADMIN'
                 ? 'Executive Governance & Scrutiny Overview'
                 : 'Scrutiny Officer Workspace Overview'}
             </h1>
           </div>
-          <p className="text-xs text-[#66574F] mt-1">
+          <p className="text-sm text-[#536174] mt-1 font-sans font-normal leading-relaxed">
             Operational overview of institutional applications, document processing, and scrutiny queue status.
           </p>
         </div>
@@ -131,7 +151,7 @@ export const DashboardView: React.FC<Props> = ({
             type="button"
             onClick={handleRefresh}
             title="Refresh overview metrics"
-            className="h-9 px-3.5 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#66574F] hover:text-[#1B1411] inline-flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap shrink-0 transition-colors cursor-pointer"
+            className="h-9 px-3.5 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#536174] hover:text-[#202936] inline-flex items-center gap-1.5 text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer"
           >
             <RefreshCw className={`size-3.5 ${refreshing ? 'animate-spin text-[#33CC7A]' : ''}`} />
             <span className="hidden sm:inline">Refresh</span>
@@ -141,7 +161,7 @@ export const DashboardView: React.FC<Props> = ({
             <button
               type="button"
               onClick={onOpenUploadDocument}
-              className="h-9 px-4 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#1B1411] inline-flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap shrink-0 transition-colors cursor-pointer"
+              className="h-9 px-4 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#202936] hover:text-[#1F3954] inline-flex items-center gap-1.5 text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer"
             >
               <Upload className="size-3.5 text-[#1F3954]" />
               <span>Upload Document</span>
@@ -152,18 +172,18 @@ export const DashboardView: React.FC<Props> = ({
             <button
               type="button"
               onClick={onOpenNewApplication}
-              className="h-9 px-4 rounded-full bg-[#33CC7A] hover:bg-[#2EB86E] text-[#1B1411] inline-flex items-center gap-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition-all shadow-[0_2px_10px_rgba(51,204,122,0.25)] cursor-pointer"
+              className="main-btn btn-hover !py-2 !px-4 text-xs font-semibold gap-1.5 whitespace-nowrap shrink-0 cursor-pointer shadow-xs"
             >
-              <Plus className="size-3.5" />
+              <Plus className="size-3.5 text-white" />
               <span>New Application</span>
             </button>
           ) : (
             <button
               type="button"
               onClick={() => onNavigateToTab?.('scrutiny')}
-              className="h-9 px-4 rounded-full bg-[#33CC7A] hover:bg-[#2EB86E] text-[#1B1411] inline-flex items-center gap-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition-all shadow-[0_2px_10px_rgba(51,204,122,0.25)] cursor-pointer"
+              className="main-btn btn-hover !py-2 !px-4 text-xs font-semibold gap-1.5 whitespace-nowrap shrink-0 cursor-pointer shadow-xs"
             >
-              <ClipboardCheck className="size-3.5" />
+              <ClipboardCheck className="size-3.5 text-white" />
               <span>Open Scrutiny Queue</span>
             </button>
           )}
@@ -204,14 +224,14 @@ export const DashboardView: React.FC<Props> = ({
       </div>
 
       {/* 3. Central Application Scrutiny Queue Table */}
-      <div className="bg-white rounded-2xl border border-[#E5DACF] shadow-[0_4px_24px_-4px_rgba(27,20,17,0.04)] overflow-hidden">
-        <div className="p-5 border-b border-[#E5DACF] flex flex-row items-center justify-between bg-[#FAF5F0]/40">
+      <div className="bg-white rounded-2xl border border-[#E5DACF] shadow-[0_4px_24px_-4px_rgba(32,41,54,0.05)] overflow-hidden">
+        <div className="p-5 border-b border-[#E5DACF] flex flex-row items-center justify-between bg-[#FAF5F0]/60">
           <div>
-            <h2 className="text-sm font-bold flex items-center gap-2 text-[#1B1411]">
+            <h2 className="text-[18px] font-display font-semibold flex items-center gap-2 text-[#202936]">
               <ClipboardCheck className="size-4 text-[#1F3954] shrink-0" />
               Active Application Workload &amp; Scrutiny Queue
             </h2>
-            <p className="text-xs text-[#66574F] mt-0.5">
+            <p className="text-xs sm:text-[13px] text-[#536174] mt-0.5 font-sans font-normal">
               Institutional dossiers requiring statutory document verification and officer review.
             </p>
           </div>
@@ -219,7 +239,7 @@ export const DashboardView: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => onNavigateToTab?.('applications')}
-            className="text-xs font-semibold text-[#1F3954] hover:text-[#1B1411] bg-[#EEE5DC]/70 hover:bg-[#EEE5DC] h-7 px-3 rounded-full inline-flex items-center transition-colors cursor-pointer"
+            className="text-xs font-semibold text-[#1F3954] hover:text-[#202936] bg-[#EEE5DC]/70 hover:bg-[#EEE5DC] h-7 px-3.5 rounded-full inline-flex items-center transition-colors cursor-pointer font-sans"
           >
             <span>View All</span>
             <ChevronRight className="size-3.5 ml-1" />
@@ -247,24 +267,24 @@ export const DashboardView: React.FC<Props> = ({
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="bg-[#FAF5F0] border-b border-[#E5DACF] text-[11px] font-mono font-bold text-[#66574F] uppercase tracking-wider hover:bg-transparent">
-                  <TableHead className="py-3 px-4 text-[#66574F]">
-                    APPLICATION REFERENCE
+                <TableRow className="bg-[#FAF5F0] border-b border-[#E5DACF] text-xs font-semibold text-[#536174] font-sans hover:bg-transparent">
+                  <TableHead className="py-3 px-4 text-[#536174] font-semibold text-xs font-sans tracking-wide">
+                    Application Reference
                   </TableHead>
-                  <TableHead className="py-3 px-4 text-[#66574F]">
-                    INSTITUTION
+                  <TableHead className="py-3 px-4 text-[#536174] font-semibold text-xs font-sans tracking-wide">
+                    Institution
                   </TableHead>
-                  <TableHead className="py-3 px-4 text-[#66574F]">
-                    CATEGORY
+                  <TableHead className="py-3 px-4 text-[#536174] font-semibold text-xs font-sans tracking-wide">
+                    Category
                   </TableHead>
-                  <TableHead className="py-3 px-4 text-[#66574F]">
-                    LIFECYCLE STATUS
+                  <TableHead className="py-3 px-4 text-[#536174] font-semibold text-xs font-sans tracking-wide">
+                    Lifecycle Status
                   </TableHead>
-                  <TableHead className="py-3 px-4 text-[#66574F]">
-                    SUPPORTING DOCS
+                  <TableHead className="py-3 px-4 text-[#536174] font-semibold text-xs font-sans tracking-wide">
+                    Supporting Documents
                   </TableHead>
-                  <TableHead className="py-3 px-4 text-right text-[#66574F]">
-                    ACTION
+                  <TableHead className="py-3 px-4 text-right text-[#536174] font-semibold text-xs font-sans tracking-wide">
+                    Action
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -273,34 +293,34 @@ export const DashboardView: React.FC<Props> = ({
                   <TableRow
                     key={app.id}
                     onClick={() => onSelectApplication(app.id)}
-                    className="cursor-pointer hover:bg-[#FAF5F0]/60 border-b border-[#E5DACF]/60 transition-colors"
+                    className="cursor-pointer hover:bg-[#FAF5F0]/70 border-b border-[#E5DACF]/60 transition-colors"
                   >
                     <TableCell className="py-3 px-4">
                       <div>
-                        <p className="font-mono font-bold text-xs text-[#1B1411]">
+                        <p className="font-mono font-medium text-[13px] text-[#202936]">
                           {app.application_reference}
                         </p>
-                        <p className="text-[10px] text-[#66574F]">
+                        <p className="text-xs text-[#718096] font-sans font-normal mt-0.5">
                           AY {app.academic_year || '2026-27'}
                         </p>
                       </div>
                     </TableCell>
 
                     <TableCell className="py-3 px-4">
-                      <div className="font-medium text-xs text-[#1B1411] flex items-center gap-1.5">
-                        <Building2 className="size-3.5 text-[#66574F] shrink-0" />
-                        <span className="truncate max-w-[200px]" title={app.institution.institution_name}>
+                      <div className="font-semibold text-sm text-[#202936] flex items-center gap-1.5 font-sans">
+                        <Building2 className="size-3.5 text-[#536174] shrink-0" />
+                        <span className="truncate max-w-[220px]" title={app.institution.institution_name}>
                           {app.institution.institution_name}
                         </span>
                       </div>
-                      <div className="text-[10px] text-[#66574F] font-mono pl-5">
+                      <div className="text-xs text-[#718096] font-mono font-normal pl-5 mt-0.5">
                         {app.institution.institution_identifier || app.institution.id.slice(0, 8)}
                       </div>
                     </TableCell>
 
                     <TableCell className="py-3 px-4">
-                      <span className="font-mono text-[10px] rounded-full bg-[#EEE5DC] text-[#1B1411] px-2.5 py-0.5 font-bold">
-                        {app.category_code}
+                      <span className="font-sans text-xs rounded-md bg-[#EEE5DC] text-[#202936] px-2.5 py-0.5 font-medium">
+                        {formatCategory(app.category_code)}
                       </span>
                     </TableCell>
 
@@ -308,11 +328,11 @@ export const DashboardView: React.FC<Props> = ({
                       <StatusBadge status={app.lifecycle_status} category="lifecycle" />
                     </TableCell>
 
-                    <TableCell className="py-3 px-4 text-xs text-[#66574F]">
-                      <span className="font-bold text-[#1B1411]">
+                    <TableCell className="py-3 px-4 text-xs font-sans font-normal">
+                      <span className="font-semibold text-[#202936]">
                         {documents.filter((d) => d.application_id === app.id).length}
                       </span>{' '}
-                      documents
+                      <span className="text-[#718096]">documents</span>
                     </TableCell>
 
                     <TableCell className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
@@ -320,10 +340,10 @@ export const DashboardView: React.FC<Props> = ({
                         variant="outline"
                         size="sm"
                         onClick={() => onSelectApplication(app.id)}
-                        className="h-7 text-xs gap-1 rounded-full border border-[#E5DACF] bg-[#FAF5F0] hover:bg-[#EEE5DC] text-[#1B1411] transition-colors"
+                        className="h-7 text-xs gap-1 rounded-full border border-[#E5DACF] bg-[#FAF5F0] hover:bg-[#EEE5DC] text-[#202936] hover:text-[#1F3954] transition-colors font-sans font-medium"
                       >
                         <span>Inspect</span>
-                        <ArrowRight className="size-3 text-[#66574F]" />
+                        <ArrowRight className="size-3 text-[#536174]" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -337,14 +357,14 @@ export const DashboardView: React.FC<Props> = ({
       {/* 4. Operational Panels: Document Pipeline & Audit Trail */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Document Intake & OCR Pipeline */}
-        <Card className="lg:col-span-7 border-border shadow-[0_1px_3px_0_rgba(23,27,69,0.04)]">
-          <CardHeader className="p-4 sm:p-5 border-b border-border flex flex-row items-center justify-between space-y-0">
+        <Card className="lg:col-span-7 border-[#E5DACF] shadow-[0_4px_24px_-4px_rgba(32,41,54,0.05)] bg-white rounded-2xl">
+          <CardHeader className="p-4 sm:p-5 border-b border-[#E5DACF] flex flex-row items-center justify-between space-y-0 bg-[#FAF5F0]/60">
             <div>
-              <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground">
-                <FileText className="size-4 text-primary shrink-0" />
-                Document Intake & Extraction Pipeline
+              <CardTitle className="text-[18px] font-display font-semibold flex items-center gap-2 text-[#202936]">
+                <FileText className="size-4 text-[#1F3954] shrink-0" />
+                Document Intake &amp; Extraction Pipeline
               </CardTitle>
-              <CardDescription className="text-xs text-muted-foreground mt-0.5">
+              <CardDescription className="text-xs sm:text-[13px] text-[#536174] mt-0.5 font-sans font-normal">
                 PyMuPDF digital extraction and RapidOCR scanned fallback tracking.
               </CardDescription>
             </div>
@@ -352,7 +372,7 @@ export const DashboardView: React.FC<Props> = ({
               variant="ghost"
               size="sm"
               onClick={() => onNavigateToTab?.('documents')}
-              className="text-xs text-primary hover:text-primary hover:bg-secondary h-7 px-2"
+              className="text-xs text-[#1F3954] hover:text-[#202936] hover:bg-[#EEE5DC] h-7 px-2.5 font-sans font-semibold rounded-full"
             >
               All Docs ({totalDocs}) →
             </Button>
@@ -360,22 +380,22 @@ export const DashboardView: React.FC<Props> = ({
 
           <CardContent className="p-4 sm:p-5 space-y-4">
             <div className="grid grid-cols-3 gap-2 text-center text-xs">
-              <div className="p-3 rounded-lg bg-emerald-50/80 border border-emerald-200">
-                <span className="text-[10px] font-bold text-emerald-800 block">EXTRACTED</span>
-                <p className="text-lg font-bold text-emerald-700 mt-0.5">{extractedDocs}</p>
+              <div className="p-3 rounded-xl bg-emerald-50/80 border border-emerald-200/80">
+                <span className="text-[11px] font-semibold text-emerald-800 block font-sans uppercase tracking-wider">Extracted</span>
+                <p className="stat-number-display text-2xl sm:text-[28px] text-[#0D7A48] mt-0.5 tabular-nums">{extractedDocs}</p>
               </div>
-              <div className="p-3 rounded-lg bg-blue-50/80 border border-blue-200">
-                <span className="text-[10px] font-bold text-blue-800 block">IN PROGRESS</span>
-                <p className="text-lg font-bold text-blue-700 mt-0.5">{processingDocs}</p>
+              <div className="p-3 rounded-xl bg-blue-50/80 border border-blue-200/80">
+                <span className="text-[11px] font-semibold text-blue-800 block font-sans uppercase tracking-wider">In Progress</span>
+                <p className="stat-number-display text-2xl sm:text-[28px] text-[#1F3954] mt-0.5 tabular-nums">{processingDocs}</p>
               </div>
-              <div className="p-3 rounded-lg bg-amber-50/80 border border-amber-200">
-                <span className="text-[10px] font-bold text-amber-800 block">NEEDS REVIEW</span>
-                <p className="text-lg font-bold text-amber-700 mt-0.5">{reviewRequiredDocs}</p>
+              <div className="p-3 rounded-xl bg-amber-50/80 border border-amber-200/80">
+                <span className="text-[11px] font-semibold text-amber-800 block font-sans uppercase tracking-wider">Needs Review</span>
+                <p className="stat-number-display text-2xl sm:text-[28px] text-[#B45309] mt-0.5 tabular-nums">{reviewRequiredDocs}</p>
               </div>
             </div>
 
             <div className="space-y-2 pt-1">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground block tracking-wider">
+              <span className="text-xs font-semibold text-[#536174] block font-sans uppercase tracking-wider">
                 Recent Ingested Dossier Files
               </span>
 
@@ -383,17 +403,17 @@ export const DashboardView: React.FC<Props> = ({
                 <div
                   key={doc.id}
                   onClick={() => onInspectDocument?.(doc)}
-                  className="p-2.5 rounded-lg border border-border bg-card hover:bg-muted/40 transition-colors flex items-center justify-between cursor-pointer group"
+                  className="p-2.5 rounded-lg border border-[#E5DACF] bg-[#FAF5F0]/30 hover:bg-[#FAF5F0] transition-colors flex items-center justify-between cursor-pointer group"
                 >
                   <div className="flex items-center gap-2.5 overflow-hidden">
-                    <div className="size-7 rounded-md bg-secondary text-primary flex items-center justify-center shrink-0">
+                    <div className="size-7 rounded-md bg-[#EEE5DC] text-[#1F3954] flex items-center justify-center shrink-0">
                       <FileText className="size-3.5" />
                     </div>
                     <div className="overflow-hidden">
-                      <p className="font-medium text-xs text-foreground group-hover:text-primary transition-colors truncate" title={doc.original_filename}>
+                      <p className="font-semibold text-sm text-[#202936] group-hover:text-[#1F3954] transition-colors truncate font-sans" title={doc.original_filename}>
                         {doc.original_filename}
                       </p>
-                      <p className="text-[10px] font-mono text-muted-foreground truncate">
+                      <p className="text-xs text-[#718096] truncate font-sans font-normal mt-0.5">
                         Format: {doc.media_type || 'application/pdf'} · {doc.page_count ? `${doc.page_count} pages` : 'Uploaded'}
                       </p>
                     </div>
@@ -401,7 +421,7 @@ export const DashboardView: React.FC<Props> = ({
 
                   <div className="flex items-center gap-2 shrink-0">
                     <StatusBadge status={doc.processing_status} category="pipeline" showIcon={false} />
-                    <ChevronRight className="size-3.5 text-muted-foreground" />
+                    <ChevronRight className="size-3.5 text-[#718096]" />
                   </div>
                 </div>
               ))}
@@ -410,16 +430,16 @@ export const DashboardView: React.FC<Props> = ({
         </Card>
 
         {/* Right Column: Scrutiny Guidelines OR Recent Audit Trail */}
-        <Card className="lg:col-span-5 border-border shadow-[0_1px_3px_0_rgba(23,27,69,0.04)]">
+        <Card className="lg:col-span-5 border-[#E5DACF] shadow-[0_4px_24px_-4px_rgba(32,41,54,0.05)] bg-white rounded-2xl">
           {userRole === 'ADMIN' ? (
             <>
-              <CardHeader className="p-4 sm:p-5 border-b border-border flex flex-row items-center justify-between space-y-0">
+              <CardHeader className="p-4 sm:p-5 border-b border-[#E5DACF] flex flex-row items-center justify-between space-y-0 bg-[#FAF5F0]/60">
                 <div>
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground">
-                    <History className="size-4 text-primary shrink-0" />
+                  <CardTitle className="text-[18px] font-display font-semibold flex items-center gap-2 text-[#202936]">
+                    <History className="size-4 text-[#1F3954] shrink-0" />
                     Recent Audit Trail Events
                   </CardTitle>
-                  <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                  <CardDescription className="text-xs sm:text-[13px] text-[#536174] mt-0.5 font-sans font-normal">
                     Immutable append-only regulatory log.
                   </CardDescription>
                 </div>
@@ -427,7 +447,7 @@ export const DashboardView: React.FC<Props> = ({
                   variant="ghost"
                   size="sm"
                   onClick={() => onNavigateToTab?.('audit')}
-                  className="text-xs text-primary hover:text-primary hover:bg-secondary h-7 px-2"
+                  className="text-xs text-[#1F3954] hover:text-[#202936] hover:bg-[#EEE5DC] h-7 px-2.5 font-sans font-semibold rounded-full"
                 >
                   Full Log →
                 </Button>
@@ -435,25 +455,25 @@ export const DashboardView: React.FC<Props> = ({
 
               <CardContent className="p-4 sm:p-5 space-y-3">
                 {auditEvents.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-muted-foreground">
+                  <div className="p-6 text-center text-xs text-[#718096] font-sans font-normal">
                     No audit events recorded yet.
                   </div>
                 ) : (
                   auditEvents.map((evt) => (
                     <div
                       key={evt.id}
-                      className="p-2.5 rounded-lg border border-border bg-muted/20 text-xs space-y-1"
+                      className="p-2.5 rounded-lg border border-[#E5DACF] bg-[#FAF5F0]/30 text-xs space-y-1"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-foreground text-[11px] font-mono">
+                        <span className="font-medium text-[#202936] text-xs font-mono">
                           {evt.event_type}
                         </span>
-                        <span className="text-[10px] text-muted-foreground">
+                        <span className="text-xs text-[#718096] font-sans font-normal">
                           {formatDate(evt.occurred_at)}
                         </span>
                       </div>
-                      <p className="text-[11px] text-muted-foreground truncate">
-                        Actor: {evt.actor_id || 'SYSTEM'} · Target: {evt.actor_type}
+                      <p className="text-xs text-[#536174] truncate font-sans font-normal">
+                        Actor: <span className="font-mono text-xs text-[#202936]">{evt.actor_id || 'SYSTEM'}</span> · Target: {evt.actor_type}
                       </p>
                     </div>
                   ))
@@ -462,39 +482,39 @@ export const DashboardView: React.FC<Props> = ({
             </>
           ) : (
             <>
-              <CardHeader className="p-4 sm:p-5 border-b border-border">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground">
-                  <ShieldCheck className="size-4 text-primary shrink-0" />
+              <CardHeader className="p-4 sm:p-5 border-b border-[#E5DACF] bg-[#FAF5F0]/60">
+                <CardTitle className="text-[18px] font-display font-semibold flex items-center gap-2 text-[#202936]">
+                  <ShieldCheck className="size-4 text-[#1F3954] shrink-0" />
                   Statutory Scrutiny Directives
                 </CardTitle>
-                <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                <CardDescription className="text-xs sm:text-[13px] text-[#536174] mt-0.5 font-sans font-normal">
                   Standard operating procedures for decision-support evaluation.
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-4 sm:p-5 space-y-3 text-xs">
-                <div className="p-3 rounded-lg bg-secondary/60 border border-primary/20 space-y-1">
-                  <span className="font-bold text-primary block text-[11px]">
+                <div className="p-3 rounded-xl bg-blue-50/60 border border-blue-200/80 space-y-1">
+                  <span className="font-semibold text-[#1F3954] block text-[13px] font-sans">
                     1. Traceability Principle
                   </span>
-                  <p className="text-muted-foreground text-[11px] leading-relaxed">
+                  <p className="text-[#536174] text-xs leading-relaxed font-sans font-normal">
                     Every automated finding must link directly to the source document, page, and bounding box coordinates.
                   </p>
                 </div>
 
-                <div className="p-3 rounded-lg bg-amber-50/70 border border-amber-200/80 space-y-1">
-                  <span className="font-bold text-amber-900 block text-[11px]">
+                <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200/80 space-y-1">
+                  <span className="font-semibold text-amber-900 block text-[13px] font-sans">
                     2. Human Authority Mandate
                   </span>
-                  <p className="text-amber-800 text-[11px] leading-relaxed">
+                  <p className="text-amber-800 text-xs leading-relaxed font-sans font-normal">
                     AI flags and anomaly alerts are advisory indicators. Rejection and deficiency decisions require human officer sign-off.
                   </p>
                 </div>
 
-                <div className="p-3 rounded-lg bg-muted/50 border border-border space-y-1">
-                  <span className="font-bold text-foreground block text-[11px]">
+                <div className="p-3 rounded-xl bg-[#FAF5F0] border border-[#E5DACF] space-y-1">
+                  <span className="font-semibold text-[#202936] block text-[13px] font-sans">
                     3. Registry Ground Truth
                   </span>
-                  <p className="text-muted-foreground text-[11px] leading-relaxed">
+                  <p className="text-[#536174] text-xs leading-relaxed font-sans font-normal">
                     AISHE, Land, and GST checks use simulated external registries labeled honestly with verified timestamps.
                   </p>
                 </div>

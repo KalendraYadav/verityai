@@ -43,15 +43,15 @@ export const EntitiesView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-display font-bold tracking-tight text-foreground flex items-center gap-2">
               <Building2 className="size-6 text-primary shrink-0" />
               Registered Institutional Entities
             </h1>
-            <Badge variant="outline" className="text-xs font-semibold bg-secondary text-primary border-primary/20">
+            <Badge variant="outline" className="text-xs font-semibold bg-secondary text-primary border-primary/20 font-sans">
               {institutions.length} Entities
             </Badge>
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 font-sans">
             Accredited higher-education institutions, polytechnics, and universities evaluated under AICTE regulatory scrutiny norms.
           </p>
         </div>
@@ -151,7 +151,7 @@ export const EntitiesView: React.FC = () => {
               </CardContent>
 
               <CardFooter className="px-4 sm:px-5 py-3 border-t border-border flex items-center justify-between text-[11px] text-muted-foreground bg-muted/20">
-                <span className="font-mono text-[10px]">Tenant Isolation: Enforced</span>
+                <span className="text-[11px] text-muted-foreground">{inst.state || 'National Jurisdiction'}</span>
                 <span className="font-semibold text-primary inline-flex items-center gap-1 hover:underline cursor-pointer">
                   <span>Dossiers</span>
                   <ArrowRight className="size-3" />

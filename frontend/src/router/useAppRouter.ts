@@ -17,6 +17,7 @@ const VALID_TABS: Record<string, NavItemKey> = {
   gateways: 'gateways',
   audit: 'audit',
   users: 'users',
+  platform: 'platform',
 };
 
 /**

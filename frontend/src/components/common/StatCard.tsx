@@ -27,25 +27,25 @@ export const StatCard: React.FC<StatCardProps> = ({
   return (
     <Card
       onClick={onClick}
-      className={`border-[#E5DDD5] bg-white rounded-2xl shadow-[0_2px_12px_-2px_rgba(27,20,17,0.04)] transition-all duration-200 hover:border-[#1B1411]/25 hover:shadow-[0_8px_24px_-4px_rgba(27,20,17,0.08)] ${
+      className={`border-[#E5DDD5] bg-white rounded-2xl shadow-[0_2px_12px_-2px_rgba(32,41,54,0.04)] transition-all duration-200 hover:border-[#202936]/25 hover:shadow-[0_8px_24px_-4px_rgba(32,41,54,0.08)] ${
         onClick ? 'cursor-pointer' : ''
       } ${className}`}
     >
       <CardContent className="p-4 sm:p-5 flex items-start justify-between">
         <div className="space-y-1">
-          <p className="text-[11px] font-semibold text-[#66574F] uppercase tracking-wider">
+          <p className="text-xs font-semibold text-[#536174] uppercase tracking-wider font-sans">
             {title}
           </p>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1B1411]">
+            <span className="stat-number-display text-3xl sm:text-[34px] tracking-tight text-[#202936] font-bold tabular-nums">
               {value}
             </span>
             {trend && (
               <span
-                className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                className={`text-xs font-medium px-2 py-0.5 rounded-full font-sans ${
                   trend.isPositive
-                    ? 'bg-[#33CC7A]/15 text-[#136639]'
-                    : 'bg-[#D97706]/15 text-[#92400E]'
+                    ? 'bg-emerald-50 text-[#0D7A48] border border-emerald-200/70'
+                    : 'bg-amber-50 text-[#B45309] border border-amber-200/70'
                 }`}
               >
                 {trend.value}
@@ -53,11 +53,11 @@ export const StatCard: React.FC<StatCardProps> = ({
             )}
           </div>
           {subtitle && (
-            <p className="text-[11px] text-[#66574F]/85 pt-0.5">{subtitle}</p>
+            <p className="text-xs text-[#718096] font-sans font-normal pt-0.5">{subtitle}</p>
           )}
         </div>
-        <div className="p-2.5 rounded-xl bg-[#EEE5DC]/70 text-[#1B1411] border border-[#E5DDD5]/60 shrink-0">
-          <Icon className="size-5 shrink-0" />
+        <div className="p-2.5 rounded-xl bg-[#E3FDFF] text-[#1F3954] border border-[#D5F1F3] shrink-0 shadow-xs">
+          <Icon className="size-5 shrink-0 text-[#1F3954]" />
         </div>
       </CardContent>
     </Card>

@@ -123,15 +123,15 @@ export const ScrutinyQueueView: React.FC<Props> = ({ onSelectApplication }) => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1B1411] flex items-center gap-2.5">
-              <ClipboardCheck className="size-6 text-[#33CC7A] shrink-0" />
+            <h1 className="text-2xl sm:text-[30px] font-display font-bold tracking-tight text-[#202936] flex items-center gap-2.5">
+              <ClipboardCheck className="size-6 text-[#1F3954] shrink-0" />
               Regulatory Scrutiny Queue
             </h1>
-            <span className="text-xs font-bold bg-[#EBF7F0] text-[#1B1411] border border-[#33CC7A]/30 px-3 py-0.5 rounded-full">
+            <span className="stat-number-display text-xs font-bold bg-[#EBF7F0] text-[#0D7A48] border border-[#0D7A48]/20 px-3 py-0.5 rounded-full">
               {filteredItems.length} in Queue
             </span>
           </div>
-          <p className="text-xs text-[#66574F] mt-1">
+          <p className="text-sm text-[#536174] mt-1 font-sans font-normal leading-relaxed">
             Prioritized workload queue of institutional applications awaiting statutory scrutiny, rule verification, and finding adjudication.
           </p>
         </div>
@@ -140,7 +140,7 @@ export const ScrutinyQueueView: React.FC<Props> = ({ onSelectApplication }) => {
           type="button"
           onClick={handleRefresh}
           disabled={refreshing}
-          className="h-9 px-4 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#66574F] hover:text-[#1B1411] inline-flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap shrink-0 transition-colors cursor-pointer"
+          className="h-9 px-4 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#536174] hover:text-[#202936] inline-flex items-center gap-1.5 text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer"
           title="Refresh scrutiny queue"
         >
           <RefreshCw className={`size-3.5 ${refreshing ? 'animate-spin text-[#33CC7A]' : ''}`} />
@@ -149,9 +149,9 @@ export const ScrutinyQueueView: React.FC<Props> = ({ onSelectApplication }) => {
       </div>
 
       {/* 2. Filters & Queue Scope */}
-      <div className="bg-white rounded-2xl border border-[#E5DACF] p-3 sm:p-4 shadow-[0_4px_24px_-4px_rgba(27,20,17,0.04)] flex flex-col md:flex-row items-center gap-3">
+      <div className="bg-white rounded-2xl border border-[#E5DACF] p-3 sm:p-4 shadow-[0_4px_24px_-4px_rgba(32,41,54,0.04)] flex flex-col md:flex-row items-center gap-3">
         <div className="relative flex-1 w-full">
-          <Search className="size-3.5 text-[#66574F] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="size-3.5 text-[#536174] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             id="scrutiny-queue-search-input"
             name="queue_search"
@@ -160,7 +160,7 @@ export const ScrutinyQueueView: React.FC<Props> = ({ onSelectApplication }) => {
             placeholder="Search queue by reference, institution, or category..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-9 text-xs pl-9 pr-4 rounded-full border border-[#E5DACF] bg-[#FAF5F0]/50 focus:bg-white focus:outline-hidden focus:border-[#1B1411] text-[#1B1411]"
+            className="w-full h-9 text-xs pl-9 pr-4 rounded-full border border-[#E5DACF] bg-[#FAF5F0]/50 focus:bg-white focus:outline-hidden focus:border-[#1F3954] text-[#202936] font-sans"
           />
         </div>
 
@@ -176,10 +176,10 @@ export const ScrutinyQueueView: React.FC<Props> = ({ onSelectApplication }) => {
               key={pill.key}
               type="button"
               onClick={() => setReadinessFilter(pill.key)}
-              className={`h-7 text-xs px-3 rounded-full font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              className={`h-7 text-xs px-3 rounded-full font-medium transition-all cursor-pointer whitespace-nowrap font-sans ${
                 readinessFilter === pill.key
-                  ? 'bg-[#1B1411] text-[#FAF5F0] shadow-sm'
-                  : 'text-[#66574F] hover:text-[#1B1411]'
+                  ? 'bg-[#1F3954] text-[#FAF5F0] shadow-sm'
+                  : 'text-[#536174] hover:text-[#202936]'
               }`}
             >
               {pill.label}
@@ -215,30 +215,35 @@ export const ScrutinyQueueView: React.FC<Props> = ({ onSelectApplication }) => {
                 >
                   <div className="space-y-1.5 flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono text-xs sm:text-sm font-bold text-[#1B1411] group-hover:text-[#1F3954] transition-colors">
+                      <span className="font-mono text-[13px] font-medium text-[#202936] group-hover:text-[#1F3954] transition-colors">
                         {item.application_reference}
                       </span>
                       {getReadinessBadge(item.readiness_state)}
-                      <span className="font-mono text-[10px] font-bold bg-[#EEE5DC] text-[#1B1411] border border-[#E5DACF] px-2 py-0.5 rounded-full">
-                        {item.category_code}
+                      <span className="font-sans text-xs font-medium bg-[#EEE5DC] text-[#202936] border border-[#E5DACF] px-2.5 py-0.5 rounded-full">
+                        {item.category_code.replace(/_/g, ' ')}
                       </span>
-                      <span className="text-[10px] text-[#66574F] bg-[#FAF5F0] border border-[#E5DACF] px-2 py-0.5 rounded-full">
+                      <span className="text-xs font-sans text-[#536174] bg-[#FAF5F0] border border-[#E5DACF] px-2 py-0.5 rounded-full font-normal">
                         Lifecycle: {item.lifecycle_status}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2.5 text-xs text-[#66574F] flex-wrap">
-                      <span className="flex items-center gap-1 font-medium text-[#1B1411]">
-                        <Building2 className="size-3.5 text-[#66574F] shrink-0" />
-                        {item.institution_name} {item.institution_identifier ? `[${item.institution_identifier}]` : ''}
+                    <div className="flex items-center gap-2.5 text-xs text-[#536174] flex-wrap font-sans">
+                      <span className="flex items-center gap-1 font-medium text-sm text-[#202936]">
+                        <Building2 className="size-3.5 text-[#536174] shrink-0" />
+                        {item.institution_name}
                       </span>
+                      {item.institution_identifier && (
+                        <span className="font-mono text-xs text-[#536174] font-normal">
+                          [{item.institution_identifier}]
+                        </span>
+                      )}
                       <span>•</span>
-                      <span className="flex items-center gap-1 font-mono text-[11px]">
-                        <Calendar className="size-3 text-[#66574F] shrink-0" />
+                      <span className="flex items-center gap-1 text-xs font-normal">
+                        <Calendar className="size-3 text-[#536174] shrink-0" />
                         {item.academic_year || '2026-27'}
                       </span>
                       <span>•</span>
-                      <span className="text-[11px]">
+                      <span className="text-xs font-normal">
                         Registered {new Date(item.created_at).toLocaleDateString()}
                       </span>
                     </div>
@@ -246,10 +251,10 @@ export const ScrutinyQueueView: React.FC<Props> = ({ onSelectApplication }) => {
 
                   {/* Readiness Metrics & Direct Action */}
                   <div className="flex items-center gap-4 self-start md:self-center shrink-0">
-                    <div className="text-right space-y-0.5">
-                      <div className="text-[11px] font-semibold text-[#1B1411] flex items-center justify-end gap-1.5">
+                    <div className="text-right space-y-0.5 font-sans">
+                      <div className="text-xs font-medium text-[#202936] flex items-center justify-end gap-1.5">
                         {item.validation_failure_count > 0 ? (
-                          <span className="text-rose-700 font-bold">
+                          <span className="text-rose-700 font-medium">
                             {item.validation_failure_count} Rule Failure{item.validation_failure_count === 1 ? '' : 's'}
                           </span>
                         ) : (
@@ -257,14 +262,14 @@ export const ScrutinyQueueView: React.FC<Props> = ({ onSelectApplication }) => {
                         )}
                         <span>•</span>
                         {item.open_findings_count > 0 ? (
-                          <span className="text-rose-700 font-bold">
+                          <span className="text-rose-700 font-medium">
                             {item.open_findings_count} Open Finding{item.open_findings_count === 1 ? '' : 's'}
                           </span>
                         ) : (
                           <span className="text-emerald-700 font-medium">0 Open Findings</span>
                         )}
                       </div>
-                      <div className="text-[10px] text-[#66574F]">
+                      <div className="text-xs text-[#536174] font-normal">
                         {item.blockers_count > 0
                           ? `${item.blockers_count} blocker(s) identified`
                           : 'No pending workflow blockers'}
@@ -277,10 +282,10 @@ export const ScrutinyQueueView: React.FC<Props> = ({ onSelectApplication }) => {
                         e.stopPropagation();
                         onSelectApplication(item.id);
                       }}
-                      className="h-8 px-4 rounded-full bg-[#33CC7A] hover:bg-[#2EB86E] text-[#1B1411] font-bold text-xs inline-flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                      className="main-btn btn-hover !py-1.5 !px-3.5 !text-xs font-medium gap-1 cursor-pointer shadow-xs text-white font-sans"
                     >
                       <span>Examine</span>
-                      <ArrowRight className="size-3" />
+                      <ArrowRight className="size-3 text-white" />
                     </button>
                   </div>
                 </div>

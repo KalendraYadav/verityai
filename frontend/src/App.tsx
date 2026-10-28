@@ -43,8 +43,8 @@ function ViewFallback() {
   return (
     <div className="flex-1 flex items-center justify-center min-h-[360px] p-8">
       <div className="flex flex-col items-center gap-3">
-        <div className="size-7 rounded-full border-2 border-[#1B1411]/20 border-t-[#33CC7A] animate-spin" />
-        <span className="text-xs font-mono font-medium text-[#66574F]">Loading workspace module...</span>
+        <div className="concentric-spinner" />
+        <span className="text-xs font-mono font-medium text-[#536174]">Loading workspace module...</span>
       </div>
     </div>
   );
@@ -178,11 +178,11 @@ export function App() {
   /* ── 1. Loading splash for protected workspace routes ───────── */
   if (route.type === 'workspace' && authChecking) {
     return (
-      <div className="min-h-screen bg-[#F7F8FC] flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen bg-[#FAF5F0] flex flex-col items-center justify-center p-4">
         <div className="text-center space-y-4">
           <VerityAIExcelLogo size="lg" />
-          <div className="flex items-center justify-center gap-2 text-xs font-semibold text-[#667085]">
-            <RefreshCw className="w-4 h-4 animate-spin text-[#6941C6]" />
+          <div className="flex items-center justify-center gap-2.5 text-xs font-semibold text-[#536174]">
+            <div className="concentric-spinner !w-4 !h-4 !border-2" />
             <span>Verifying Scrutiny Session &amp; Credentials...</span>
           </div>
         </div>
@@ -456,7 +456,7 @@ export function App() {
           <div className="bg-white rounded-xl border border-[#E4E7EC] shadow-2xl max-w-md w-full p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-[#E4E7EC] pb-3">
               <div className="flex items-center gap-2 font-bold text-sm text-[#111827]">
-                <ShieldCheck className="w-5 h-5 text-[#6941C6]" />
+                <ShieldCheck className="w-5 h-5 text-[#37C2CC]" />
                 API &amp; Database Diagnostics
               </div>
               <button
@@ -509,7 +509,7 @@ export function App() {
               <button
                 onClick={checkHealth}
                 disabled={healthLoading}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-[#6941C6] text-white hover:bg-[#5631A8] transition-colors cursor-pointer disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold main-btn btn-hover text-white transition-colors cursor-pointer disabled:opacity-50"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${healthLoading ? 'animate-spin' : ''}`} />
                 {healthLoading ? 'Testing...' : 'Probe Health'}

@@ -130,16 +130,16 @@ export const VerityAIPlatformWorkspace: React.FC = () => {
   return (
     <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6">
       {/* Brand Header Banner */}
-      <div className="bg-gradient-to-r from-[#171B45] via-[#242A68] to-[#171B45] rounded-2xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+      <div className="bg-[#1F3954] rounded-2xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-[#2E4F73]">
         <div className="absolute right-0 top-0 bottom-0 opacity-10 flex items-center pr-8 pointer-events-none">
           <Cpu className="w-64 h-64 text-white" />
         </div>
         <div className="relative z-10 space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#7450D8]/30 border border-[#7450D8]/50 text-xs font-semibold text-[#D1C4F8]">
-            <Layers className="w-3.5 h-3.5" />
-            INDEPENDENT SCRUTINY PLATFORM & API GATEWAY
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-semibold text-[#BACDE0]">
+            <Layers className="w-3.5 h-3.5 text-[#33CC7A]" />
+            API Gateway &amp; Integration Services
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+          <h1 className="text-2xl sm:text-[30px] font-display font-bold tracking-tight text-white leading-[1.15]">
             VerityAI Intelligence Engine
           </h1>
           <p className="text-sm text-[#E2E8F0] max-w-2xl leading-relaxed">
@@ -252,13 +252,13 @@ export const VerityAIPlatformWorkspace: React.FC = () => {
 
             <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm">
               <div className="flex items-center justify-between text-xs font-semibold text-[#64748B]">
-                <span>HUMAN SUPREMACY</span>
+                <span>OFFICER REVIEW MANDATE</span>
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               </div>
               <div className="text-xl font-extrabold text-[#0F172A] mt-2">
-                Strict Sign-Off
+                Human Sign-Off
               </div>
-              <p className="text-xs text-[#64748B] mt-1">AI never issues autonomous legal grants</p>
+              <p className="text-xs text-[#64748B] mt-1">AI advisory only; officers make statutory decisions</p>
             </div>
           </div>
 

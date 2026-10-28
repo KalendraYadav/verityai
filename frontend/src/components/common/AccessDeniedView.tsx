@@ -38,15 +38,15 @@ export const AccessDeniedView: React.FC<Props> = ({
               </p>
               <p>
                 Your currently authenticated session lacks the required privilege level (
-                <span className="font-mono font-bold text-[#6941C6]">{requiredRole}</span>).
+                <span className="font-mono font-bold text-[#1F3954]">{requiredRole}</span>).
                 Under statutory scrutiny guidelines, scrutiny officers and administrative operators maintain
                 strictly partitioned interfaces, permissions, and audit boundaries.
               </p>
             </div>
           </div>
 
-          <div className="space-y-2 text-xs text-[#667085]">
-            <h3 className="font-semibold text-[#344054]">What you can do:</h3>
+          <div className="space-y-2 text-xs text-[#536174]">
+            <h3 className="font-semibold text-[#202936]">What you can do:</h3>
             <ul className="list-disc pl-5 space-y-1">
               <li>Return to your designated scrutiny workspace to inspect applications and evidence.</li>
               <li>If you require administrative configuration access, request role escalation through your department administrator.</li>
@@ -57,9 +57,9 @@ export const AccessDeniedView: React.FC<Props> = ({
           <div className="pt-2 flex items-center gap-3 border-t border-[#EAECF0]">
             <button
               onClick={onReturn}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold bg-[#6941C6] text-white hover:bg-[#5631A8] transition-colors cursor-pointer shadow-sm"
+              className="main-btn btn-hover !py-2 !px-4 text-xs font-semibold gap-2 cursor-pointer shadow-sm text-white"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4 text-white" />
               <span>Return to Permitted Workspace</span>
             </button>
           </div>

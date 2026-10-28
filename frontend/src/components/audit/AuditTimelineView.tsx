@@ -31,19 +31,19 @@ export const AuditTimelineView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#EEE5DC]">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="size-9 rounded-xl bg-[#1B1411] text-[#33CC7A] flex items-center justify-center shadow-sm">
+            <div className="size-9 rounded-xl bg-[#1F3954] text-[#33CC7A] flex items-center justify-center shadow-sm">
               <History className="size-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1B1411]">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#202936]">
                   Regulatory Audit Trail &amp; Compliance Log
                 </h1>
-                <span className="rounded-full bg-[#1B1411] text-[#FAF5F0] font-mono text-[10px] font-bold px-2.5 py-0.5">
+                <span className="rounded-full bg-[#1F3954] text-[#FAF5F0] font-mono text-[10px] font-bold px-2.5 py-0.5">
                   {events.length} Events
                 </span>
               </div>
-              <p className="text-xs text-[#66574F] mt-0.5">
+              <p className="text-xs text-[#536174] mt-0.5">
                 Cryptographically sealed, append-only log of institutional submissions, AI validation pipelines, and officer determinations.
               </p>
             </div>
@@ -55,10 +55,10 @@ export const AuditTimelineView: React.FC = () => {
           size="sm"
           onClick={load}
           disabled={loading}
-          className="h-8 gap-1.5 text-xs text-[#1B1411] bg-white border-[#EEE5DC] hover:bg-[#FAF5F0] rounded-full px-4 shadow-sm self-start sm:self-auto shrink-0"
+          className="h-8 gap-1.5 text-xs text-[#202936] bg-white border-[#EEE5DC] hover:bg-[#FAF5F0] rounded-full px-4 shadow-sm self-start sm:self-auto shrink-0"
           title="Refresh audit log"
         >
-          <RefreshCw className={`size-3.5 ${loading ? 'animate-spin text-[#33CC7A]' : 'text-[#66574F]'}`} />
+          <RefreshCw className={`size-3.5 ${loading ? 'animate-spin text-[#33CC7A]' : 'text-[#536174]'}`} />
           <span>Refresh Audit</span>
         </Button>
       </div>
@@ -69,15 +69,15 @@ export const AuditTimelineView: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <ShieldCheck className="size-4 text-[#33CC7A] shrink-0" />
-              <h2 className="text-sm font-bold text-[#1B1411]">
+              <h2 className="text-sm font-bold text-[#202936]">
                 Chronological Audit Trail
               </h2>
             </div>
-            <p className="text-xs text-[#66574F] mt-0.5">
+            <p className="text-xs text-[#536174] mt-0.5">
               Non-repudiable, append-only record of all regulatory actions.
             </p>
           </div>
-          <span className="font-mono text-[10px] rounded-full bg-[#EEE5DC] text-[#1B1411] px-3 py-1 font-bold">
+          <span className="font-mono text-[10px] rounded-full bg-[#EEE5DC] text-[#202936] px-3 py-1 font-bold">
             Tamper-Evident SHA-256
           </span>
         </div>
@@ -100,36 +100,36 @@ export const AuditTimelineView: React.FC = () => {
               {events.map((event) => (
                 <div key={event.id} className="relative pl-5 sm:pl-6 group">
                   {/* Timeline Node */}
-                  <div className="absolute -left-2 top-1.5 size-4 rounded-full bg-[#1B1411] border-2 border-[#33CC7A] flex items-center justify-center">
+                  <div className="absolute -left-2 top-1.5 size-4 rounded-full bg-[#1F3954] border-2 border-[#33CC7A] flex items-center justify-center">
                     <span className="size-1 rounded-full bg-[#33CC7A]" />
                   </div>
 
                   <div className="bg-[#FAF5F0] border border-[#EEE5DC] rounded-xl p-4 space-y-2.5 hover:border-[#1B1411]/30 transition-all shadow-xs">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="font-bold text-xs text-[#1B1411] font-mono">
+                      <span className="font-bold text-xs text-[#202936] font-mono">
                         {event.event_type}
                       </span>
-                      <span className="text-[11px] font-mono text-[#66574F]">
+                      <span className="text-[11px] font-mono text-[#536174]">
                         {new Date(event.occurred_at).toLocaleString()}
                       </span>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-[#66574F]">
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-[#536174]">
                       <div className="flex items-center gap-1.5">
-                        <User className="size-3 text-[#66574F]" />
-                        <span>Actor: <strong className="text-[#1B1411]">{event.actor_id || 'System Worker'}</strong> ({event.actor_type})</span>
+                        <User className="size-3 text-[#536174]" />
+                        <span>Actor: <strong className="text-[#202936]">{event.actor_id || 'System Worker'}</strong> ({event.actor_type})</span>
                       </div>
 
                       {event.application_id && (
                         <div className="flex items-center gap-1.5">
-                          <FileText className="size-3 text-[#66574F]" />
+                          <FileText className="size-3 text-[#536174]" />
                           <span className="font-mono text-[#1F3954] font-semibold">App: {event.application_id}</span>
                         </div>
                       )}
                     </div>
 
                     {event.metadata && Object.keys(event.metadata).length > 0 && (
-                      <div className="text-[10px] font-mono bg-white p-2.5 rounded-lg border border-[#EEE5DC] text-[#1B1411] overflow-x-auto">
+                      <div className="text-[10px] font-mono bg-white p-2.5 rounded-lg border border-[#EEE5DC] text-[#202936] overflow-x-auto">
                         {JSON.stringify(event.metadata)}
                       </div>
                     )}

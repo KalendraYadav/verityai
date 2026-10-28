@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   FolderOpen,
   Search,
@@ -24,6 +24,7 @@ import {
   Sparkles,
   GitBranch,
   UploadCloud,
+  ArrowRight,
 } from 'lucide-react';
 import {
   fetchAllDocuments,
@@ -193,7 +194,7 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({ userRole, onOpenDo
 
   const pollIntervalRef = useRef<number | null>(null);
 
-  async function loadData() {
+  const loadData = useCallback(async () => {
     try {
       const [docsRes, appsRes] = await Promise.all([
         fetchAllDocuments({
@@ -213,11 +214,11 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({ userRole, onOpenDo
       setLoading(false);
       setRefreshing(false);
     }
-  }
+  }, [selectedApplication, searchQuery]);
 
   useEffect(() => {
     loadData();
-  }, [selectedApplication]);
+  }, [loadData]);
 
   // Load document detail, pages, and processing status when a document is opened
   async function openDocumentWorkspace(doc: DocumentListItem) {
@@ -517,6 +518,53 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({ userRole, onOpenDo
     }
   };
 
+  const renderApplicationStatusBadge = (status: string) => {
+    switch (status) {
+      case 'SUBMITTED':
+        return (
+          <Badge variant="outline" className="text-xs font-semibold bg-blue-50 text-blue-700 border-blue-200 gap-1.5 font-sans">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-600 inline-block" />
+            SUBMITTED
+          </Badge>
+        );
+      case 'UNDER_SCRUTINY':
+      case 'IN_REVIEW':
+        return (
+          <Badge variant="outline" className="text-xs font-semibold bg-amber-50 text-amber-700 border-amber-200 gap-1.5 font-sans">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-600 inline-block" />
+            UNDER SCRUTINY
+          </Badge>
+        );
+      case 'APPROVED':
+        return (
+          <Badge variant="outline" className="text-xs font-semibold bg-emerald-50 text-emerald-700 border-emerald-200 gap-1.5 font-sans">
+            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+            APPROVED
+          </Badge>
+        );
+      case 'REJECTED':
+        return (
+          <Badge variant="outline" className="text-xs font-semibold bg-red-50 text-red-700 border-red-200 gap-1.5 font-sans">
+            <AlertCircle className="w-3 h-3 text-red-600" />
+            REJECTED
+          </Badge>
+        );
+      case 'DRAFT':
+        return (
+          <Badge variant="outline" className="text-xs font-semibold bg-slate-100 text-slate-700 border-slate-300 gap-1.5 font-sans">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-500 inline-block" />
+            DRAFT
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="outline" className="text-xs font-medium bg-[#EEE5DC] text-[#536174] border-[#E5DACF] font-sans">
+            {status}
+          </Badge>
+        );
+    }
+  };
+
   const effectiveStatus = processingData?.processing_status || selectedDoc?.processing_status || 'QUEUED';
   const effectiveQualityBand = processingData?.extraction_quality_band || selectedDoc?.extraction_quality_band;
 
@@ -525,11 +573,11 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({ userRole, onOpenDo
       {/* 1. Header Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1B1411] flex items-center gap-2.5">
-            <FolderOpen className="w-6 h-6 text-[#33CC7A]" />
+          <h1 className="text-2xl sm:text-[30px] font-display font-bold tracking-tight text-[#202936] flex items-center gap-2.5">
+            <FolderOpen className="w-6 h-6 text-[#1F3954]" />
             Document Repository
           </h1>
-          <p className="text-xs sm:text-sm text-[#66574F] mt-1">
+          <p className="text-xs sm:text-sm text-[#536174] mt-1 font-sans font-normal">
             Institutional dossier documents, extraction confidence, and cryptographic integrity verification.
           </p>
         </div>
@@ -539,7 +587,7 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({ userRole, onOpenDo
             type="button"
             onClick={handleRefresh}
             disabled={refreshing}
-            className="h-9 w-9 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#66574F] hover:text-[#1B1411] flex items-center justify-center transition-colors cursor-pointer"
+            className="h-9 w-9 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#536174] hover:text-[#202936] flex items-center justify-center transition-colors cursor-pointer"
             title="Refresh repository"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-[#33CC7A]' : ''}`} />
@@ -549,7 +597,7 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({ userRole, onOpenDo
             <button
               type="button"
               onClick={() => setUploadModalOpen(true)}
-              className="h-9 px-4 rounded-full bg-[#33CC7A] hover:bg-[#2EB86E] text-[#1B1411] font-bold text-xs inline-flex items-center gap-2 transition-all shadow-[0_2px_10px_rgba(51,204,122,0.25)] cursor-pointer"
+              className="h-9 px-4 rounded-full bg-[#33CC7A] hover:bg-[#2EB86E] text-[#202936] font-semibold text-xs inline-flex items-center gap-2 transition-all shadow-[0_2px_10px_rgba(51,204,122,0.25)] cursor-pointer font-sans"
             >
               <Upload className="w-3.5 h-3.5" />
               Upload Document
@@ -559,15 +607,15 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({ userRole, onOpenDo
       </div>
 
       {/* 2. Filters & Search Bar */}
-      <div className="bg-white rounded-2xl border border-[#E5DACF] p-3.5 shadow-[0_4px_24px_-4px_rgba(27,20,17,0.04)] flex flex-col md:flex-row items-center justify-between gap-3">
+      <div className="bg-white rounded-2xl border border-[#E5DACF] p-3.5 shadow-[0_4px_24px_-4px_rgba(32,41,54,0.04)] flex flex-col md:flex-row items-center justify-between gap-3">
         <form onSubmit={handleSearchSubmit} className="relative flex-1 w-full">
-          <Search className="w-4 h-4 text-[#66574F] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="w-4 h-4 text-[#536174] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             placeholder="Search documents by original filename or SHA-256 hash..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 text-xs h-9 rounded-full border border-[#E5DACF] bg-[#FAF5F0]/50 focus:bg-white focus:outline-hidden focus:border-[#1B1411] text-[#1B1411]"
+            className="w-full pl-9 pr-3 text-xs h-9 rounded-full border border-[#E5DACF] bg-[#FAF5F0]/50 focus:bg-white focus:outline-hidden focus:border-[#1F3954] text-[#202936] font-sans"
           />
         </form>
 
@@ -576,7 +624,7 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({ userRole, onOpenDo
           <select
             value={selectedApplication}
             onChange={(e) => setSelectedApplication(e.target.value)}
-            className="px-3.5 py-1.5 text-xs rounded-full bg-[#FAF5F0]/50 border border-[#E5DACF] text-[#1B1411] focus:outline-hidden focus:border-[#1B1411] transition-all cursor-pointer w-full md:w-64"
+            className="px-3.5 py-1.5 text-xs rounded-full bg-[#FAF5F0]/50 border border-[#E5DACF] text-[#202936] focus:outline-hidden focus:border-[#1F3954] transition-all cursor-pointer w-full md:w-64 font-sans font-medium"
           >
             <option value="">All Applications</option>
             {applications.map((app) => (
@@ -590,10 +638,10 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({ userRole, onOpenDo
           <div className="flex items-center bg-[#EEE5DC] p-1 rounded-full border border-[#E5DACF] shrink-0">
             <button
               type="button"
-              className={`h-7 text-xs px-3 rounded-full font-semibold transition-all cursor-pointer ${
+              className={`h-7 text-xs px-3 rounded-full font-medium transition-all cursor-pointer font-sans ${
                 viewMode === 'hierarchy'
-                  ? 'bg-[#1B1411] text-[#FAF5F0] shadow-sm'
-                  : 'text-[#66574F] hover:text-[#1B1411]'
+                  ? 'bg-[#1F3954] text-[#FAF5F0] shadow-sm'
+                  : 'text-[#536174] hover:text-[#202936]'
               }`}
               onClick={() => setViewMode('hierarchy')}
             >
@@ -601,10 +649,10 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({ userRole, onOpenDo
             </button>
             <button
               type="button"
-              className={`h-7 text-xs px-3 rounded-full font-semibold transition-all cursor-pointer ${
+              className={`h-7 text-xs px-3 rounded-full font-medium transition-all cursor-pointer font-sans ${
                 viewMode === 'flat'
-                  ? 'bg-[#1B1411] text-[#FAF5F0] shadow-sm'
-                  : 'text-[#66574F] hover:text-[#1B1411]'
+                  ? 'bg-[#1F3954] text-[#FAF5F0] shadow-sm'
+                  : 'text-[#536174] hover:text-[#202936]'
               }`}
               onClick={() => setViewMode('flat')}
             >
@@ -660,113 +708,167 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({ userRole, onOpenDo
         /* Hierarchical Dossier Grouping: Institution -> Application -> Documents */
         <div className="space-y-6">
           {institutionGroups.map((group) => (
-            <Card key={group.institutionId} className="overflow-hidden border-border shadow-xs">
+            <div key={group.institutionId} className="rounded-2xl border border-[#E2E8F0] bg-[#FAF5F0]/70 p-4 sm:p-5 shadow-xs space-y-4">
               {/* Institution Header */}
-              <div className="p-4 sm:p-5 bg-muted/40 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E2E8F0]">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-[#1F3954] text-white flex items-center justify-center shrink-0 shadow-2xs">
                     <FolderOpen className="w-5 h-5" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className="text-base font-bold text-foreground">{group.institutionName}</h2>
-                      <Badge variant="secondary" className="font-mono text-[11px] font-semibold">
+                      <h2 className="text-base sm:text-lg font-display font-bold text-[#1F3954] tracking-tight">{group.institutionName}</h2>
+                      <Badge variant="secondary" className="font-mono text-xs font-semibold bg-white text-[#475569] border border-[#E2E8F0] shadow-2xs">
                         Code: {group.institutionIdentifier}
                       </Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {group.location} • {group.applicationGroups.length} Application{group.applicationGroups.length === 1 ? '' : 's'} • {group.totalDocuments} Supporting Document{group.totalDocuments === 1 ? '' : 's'}
+                    <p className="text-xs text-[#64748B] mt-0.5 font-sans flex items-center gap-1.5 flex-wrap">
+                      <span>{group.location}</span>
+                      <span className="text-[#CBD5E1]">•</span>
+                      <span className="font-medium text-[#334155]">{group.applicationGroups.length} Application{group.applicationGroups.length === 1 ? '' : 's'}</span>
+                      <span className="text-[#CBD5E1]">•</span>
+                      <span className="font-medium text-[#334155]">{group.totalDocuments} Supporting Document{group.totalDocuments === 1 ? '' : 's'}</span>
                     </p>
                   </div>
                 </div>
               </div>
 
               {/* Applications under this institution */}
-              <div className="p-4 sm:p-5 space-y-4 bg-muted/10">
+              <div className="space-y-5">
                 {group.applicationGroups.map((appGroup) => (
-                  <Card key={appGroup.application.id} className="overflow-hidden border-border shadow-2xs">
+                  <div
+                    key={appGroup.application.id}
+                    className="doc-repo-dossier-card bg-white rounded-xl border border-[#E2E8F0] shadow-[0_2px_6px_-1px_rgba(15,23,42,0.06),0_1px_3px_0_rgba(15,23,42,0.04)] hover:border-[#CBD5E1] hover:shadow-[0_4px_12px_-2px_rgba(15,23,42,0.08),0_2px_4px_0_rgba(15,23,42,0.04)] transition-all duration-150 overflow-hidden"
+                  >
                     {/* Application Dossier Header */}
-                    <div className="p-3.5 sm:p-4 bg-card border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="p-3.5 sm:p-4 bg-[#F8FAFC] border-b border-[#E2E8F0] flex flex-col md:flex-row md:items-center justify-between gap-3">
                       <div className="flex items-center gap-2.5 flex-wrap">
-                        <Badge variant="outline" className="font-mono text-xs font-bold text-foreground bg-accent/30">
-                          {appGroup.application.application_reference}
-                        </Badge>
-                        <span className="text-xs font-semibold text-muted-foreground">
-                          {appGroup.application.category_code}
+                        {/* Accent bar & Monospace Ref */}
+                        <div className="flex items-center gap-2">
+                          <span className="h-4 w-1 rounded-full bg-[#1F3954]" aria-hidden="true" />
+                          <span className="font-mono text-xs font-bold text-[#0F172A] bg-white px-2.5 py-1 rounded-md border border-[#E2E8F0] shadow-2xs">
+                            {appGroup.application.application_reference}
+                          </span>
+                        </div>
+
+                        <div className="h-4 w-px bg-[#CBD5E1] hidden sm:block" />
+
+                        {/* Category & Academic Year */}
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">Category:</span>
+                          <span className="text-xs font-semibold text-[#1E293B] bg-white px-2 py-0.5 rounded border border-[#E2E8F0]">
+                            {appGroup.application.category_code}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 text-xs text-[#64748B]">
+                          <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">AY:</span>
+                          <span className="font-semibold text-[#334155]">{appGroup.application.academic_year}</span>
+                        </div>
+
+                        {/* Status Badge */}
+                        {renderApplicationStatusBadge(appGroup.application.lifecycle_status)}
+
+                        {/* Document count pill */}
+                        <span className="text-[11px] font-medium text-[#64748B] bg-white px-2.5 py-0.5 rounded-full border border-[#E2E8F0]">
+                          {appGroup.documents.length} document{appGroup.documents.length === 1 ? '' : 's'}
                         </span>
-                        <span className="text-[11px] text-muted-foreground">
-                          AY {appGroup.application.academic_year}
-                        </span>
-                        <Badge variant="outline" className="text-[11px] font-bold bg-emerald-50 text-emerald-700 border-emerald-200">
-                          {appGroup.application.lifecycle_status}
-                        </Badge>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      {/* Right Action: Open Dossier */}
+                      <div className="flex items-center gap-2 shrink-0">
                         {onOpenDossier && (
-                          <Button
+                          <button
                             type="button"
-                            variant="secondary"
-                            size="sm"
                             onClick={() => onOpenDossier(appGroup.application.id)}
-                            className="gap-1.5 h-8 text-xs font-semibold"
+                            className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-lg bg-[#1F3954] hover:bg-[#162D47] text-white text-xs font-semibold font-sans shadow-2xs hover:shadow-xs transition-all duration-150 cursor-pointer"
+                            title={`Open full dossier for ${appGroup.application.application_reference}`}
                           >
-                            <Eye className="w-3.5 h-3.5" />
-                            Open Dossier
-                          </Button>
+                            <FolderOpen className="w-3.5 h-3.5" />
+                            <span>Open Dossier</span>
+                            <ArrowRight className="w-3 h-3 text-white/70" />
+                          </button>
                         )}
                       </div>
                     </div>
 
                     {/* Documents Table for this Application */}
                     {appGroup.documents.length === 0 ? (
-                      <div className="p-6 text-center text-xs text-muted-foreground italic">
-                        No supporting documents uploaded for this application.
+                      <div className="p-8 text-center bg-white">
+                        <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 text-slate-400 mb-2">
+                          <FileText className="w-5 h-5" />
+                        </div>
+                        <p className="text-xs font-medium text-[#475569] font-sans">
+                          No supporting documents uploaded for this application.
+                        </p>
+                        <p className="text-[11px] text-[#94A3B8] font-sans mt-0.5">
+                          Upload statutory documents or intake files to begin automated scrutiny.
+                        </p>
                       </div>
                     ) : (
-                      <div className="overflow-x-auto">
+                      <div className="overflow-x-auto bg-white">
                         <Table>
                           <TableHeader>
-                            <TableRow className="bg-muted/40 text-[10px] font-bold uppercase tracking-wider">
-                              <TableHead className="py-2.5 px-4">Document / SHA-256</TableHead>
-                              <TableHead className="py-2.5 px-3">Type</TableHead>
-                              <TableHead className="py-2.5 px-3">Pages / Size</TableHead>
-                              <TableHead className="py-2.5 px-3">Processing Status</TableHead>
-                              <TableHead className="py-2.5 px-3">Uploaded</TableHead>
-                              <TableHead className="py-2.5 px-4 text-right">Actions</TableHead>
+                            <TableRow className="bg-[#F8FAFC] border-b border-[#E2E8F0] hover:bg-[#F8FAFC]">
+                              <TableHead className="py-2.5 px-4 font-semibold text-[11px] font-sans text-[#475569] uppercase tracking-wider">
+                                Document / SHA-256
+                              </TableHead>
+                              <TableHead className="py-2.5 px-3 font-semibold text-[11px] font-sans text-[#475569] uppercase tracking-wider">
+                                Type
+                              </TableHead>
+                              <TableHead className="py-2.5 px-3 font-semibold text-[11px] font-sans text-[#475569] uppercase tracking-wider">
+                                Pages / Size
+                              </TableHead>
+                              <TableHead className="py-2.5 px-3 font-semibold text-[11px] font-sans text-[#475569] uppercase tracking-wider">
+                                Processing Status
+                              </TableHead>
+                              <TableHead className="py-2.5 px-3 font-semibold text-[11px] font-sans text-[#475569] uppercase tracking-wider">
+                                Uploaded
+                              </TableHead>
+                              <TableHead className="py-2.5 px-4 text-right font-semibold text-[11px] font-sans text-[#475569] uppercase tracking-wider">
+                                Actions
+                              </TableHead>
                             </TableRow>
                           </TableHeader>
-                          <TableBody className="text-xs">
+                          <TableBody className="text-xs divide-y divide-[#F1F5F9]">
                             {appGroup.documents.map((doc) => (
                               <TableRow
                                 key={doc.id}
                                 onClick={() => openDocumentWorkspace(doc)}
-                                className="hover:bg-muted/30 cursor-pointer group"
+                                className="hover:bg-[#F8FAFC] transition-colors cursor-pointer group"
                               >
                                 <TableCell className="py-3 px-4">
-                                  <div className="flex items-center gap-2.5">
-                                    <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors flex items-center justify-center shrink-0">
-                                      <FileText className="w-3.5 h-3.5" />
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-[#1F3954]/6 text-[#1F3954] group-hover:bg-[#1F3954] group-hover:text-white transition-colors flex items-center justify-center shrink-0">
+                                      <FileText className="w-4 h-4" />
                                     </div>
-                                    <div className="overflow-hidden max-w-[220px]">
-                                      <p className="font-semibold text-foreground truncate group-hover:text-primary transition-colors text-xs" title={doc.original_filename}>
+                                    <div className="overflow-hidden max-w-[240px] md:max-w-[320px]">
+                                      <p
+                                        className="font-semibold text-[#0F172A] truncate group-hover:text-[#1F3954] transition-colors text-[13px] font-sans leading-snug"
+                                        title={doc.original_filename}
+                                      >
                                         {doc.original_filename}
                                       </p>
-                                      <p className="text-[10px] font-mono text-muted-foreground truncate" title={doc.sha256}>
-                                        SHA: {doc.sha256.substring(0, 16)}...
+                                      <p
+                                        className="text-[11px] font-mono text-[#64748B] truncate tracking-tight mt-0.5"
+                                        title={doc.sha256}
+                                      >
+                                        <span className="text-[#94A3B8]">SHA:</span> {doc.sha256.substring(0, 16)}...
                                       </p>
                                     </div>
                                   </div>
                                 </TableCell>
-                                <TableCell className="py-3 px-3 text-xs text-foreground font-medium">
-                                  {doc.declared_type || doc.media_type.split('/')[1]?.toUpperCase() || 'DOCUMENT'}
+                                <TableCell className="py-3 px-3 text-xs text-[#1E293B] font-medium font-sans">
+                                  <span className="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px] font-medium font-mono">
+                                    {doc.declared_type || doc.media_type.split('/')[1]?.toUpperCase() || 'DOCUMENT'}
+                                  </span>
                                 </TableCell>
-                                <TableCell className="py-3 px-3 text-muted-foreground">
-                                  <div className="flex flex-col text-[11px]">
-                                    <span className="font-semibold text-foreground">
+                                <TableCell className="py-3 px-3 text-[#475569] font-sans">
+                                  <div className="flex flex-col text-xs">
+                                    <span className="font-semibold text-[#1E293B]">
                                       {doc.page_count !== null && doc.page_count !== undefined ? `${doc.page_count} pg` : '—'}
                                     </span>
-                                    <span className="font-mono text-[10px]">{formatBytes(doc.file_size_bytes)}</span>
+                                    <span className="text-[#64748B] text-[11px]">{formatBytes(doc.file_size_bytes)}</span>
                                   </div>
                                 </TableCell>
                                 <TableCell className="py-3 px-3">
@@ -775,23 +877,23 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({ userRole, onOpenDo
                                     {renderQualityBadge(doc.extraction_quality_band)}
                                   </div>
                                 </TableCell>
-                                <TableCell className="py-3 px-3 text-muted-foreground text-[11px]">
-                                  {formatDate(doc.created_at)}
+                                <TableCell className="py-3 px-3 text-[#475569] text-xs font-sans">
+                                  <span className="text-[#334155] font-medium">{formatDate(doc.created_at)}</span>
                                 </TableCell>
                                 <TableCell className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                                   <div className="flex items-center justify-end gap-1.5">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon-sm"
+                                    <button
+                                      type="button"
                                       onClick={() => openDocumentWorkspace(doc)}
+                                      className="inline-flex items-center justify-center w-7 h-7 rounded-md border border-[#E2E8F0] bg-white text-[#475569] hover:text-[#1F3954] hover:bg-slate-50 hover:border-[#CBD5E1] transition-colors cursor-pointer"
                                       title="Open Extraction Workspace"
                                     >
                                       <Eye className="w-3.5 h-3.5" />
-                                    </Button>
+                                    </button>
                                     <a
                                       href={getDocumentFileUrl(doc.id, true)}
                                       download={doc.original_filename}
-                                      className="inline-flex items-center justify-center w-7 h-7 rounded-md border border-input text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                      className="inline-flex items-center justify-center w-7 h-7 rounded-md border border-[#E2E8F0] bg-white text-[#475569] hover:text-emerald-700 hover:bg-emerald-50 hover:border-emerald-200 transition-colors"
                                       title="Download document file"
                                     >
                                       <Download className="w-3.5 h-3.5" />
@@ -804,26 +906,27 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({ userRole, onOpenDo
                         </Table>
                       </div>
                     )}
-                  </Card>
+                  </div>
                 ))}
               </div>
-            </Card>
+            </div>
           ))}
         </div>
+
       ) : (
         /* Flat Table */
         <Card className="overflow-hidden border-border shadow-xs">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/40 text-[11px] font-bold uppercase tracking-wider">
-                  <TableHead className="py-3.5 px-5">Document / SHA-256</TableHead>
-                  <TableHead className="py-3.5 px-4">Application</TableHead>
-                  <TableHead className="py-3.5 px-4">Type</TableHead>
-                  <TableHead className="py-3.5 px-4">Pages / Size</TableHead>
-                  <TableHead className="py-3.5 px-4">Processing Status</TableHead>
-                  <TableHead className="py-3.5 px-4">Uploaded</TableHead>
-                  <TableHead className="py-3.5 px-5 text-right">Actions</TableHead>
+                <TableRow className="bg-muted/40 text-xs font-medium text-[#536174] font-sans tracking-normal">
+                  <TableHead className="py-3.5 px-5 font-medium text-xs font-sans text-muted-foreground">Document / SHA-256</TableHead>
+                  <TableHead className="py-3.5 px-4 font-medium text-xs font-sans text-muted-foreground">Application</TableHead>
+                  <TableHead className="py-3.5 px-4 font-medium text-xs font-sans text-muted-foreground">Type</TableHead>
+                  <TableHead className="py-3.5 px-4 font-medium text-xs font-sans text-muted-foreground">Pages / Size</TableHead>
+                  <TableHead className="py-3.5 px-4 font-medium text-xs font-sans text-muted-foreground">Processing Status</TableHead>
+                  <TableHead className="py-3.5 px-4 font-medium text-xs font-sans text-muted-foreground">Uploaded</TableHead>
+                  <TableHead className="py-3.5 px-5 text-right font-medium text-xs font-sans text-muted-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody className="text-xs">
@@ -839,10 +942,10 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({ userRole, onOpenDo
                           <FileText className="w-4 h-4" />
                         </div>
                         <div className="overflow-hidden max-w-[220px]">
-                          <p className="font-semibold text-foreground truncate group-hover:text-primary transition-colors" title={doc.original_filename}>
+                          <p className="font-medium text-foreground truncate group-hover:text-primary transition-colors text-sm font-sans" title={doc.original_filename}>
                             {doc.original_filename}
                           </p>
-                          <p className="text-[10px] font-mono text-muted-foreground truncate" title={doc.sha256}>
+                          <p className="text-xs font-mono text-muted-foreground truncate" title={doc.sha256}>
                             SHA: {doc.sha256.substring(0, 16)}...
                           </p>
                         </div>
@@ -850,23 +953,23 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({ userRole, onOpenDo
                     </TableCell>
 
                     <TableCell className="py-3.5 px-4">
-                      <Badge variant="outline" className="font-mono text-xs font-semibold text-primary bg-primary/5">
+                      <Badge variant="outline" className="font-mono text-xs font-medium text-primary bg-primary/5">
                         {doc.application_id}
                       </Badge>
                     </TableCell>
 
                     <TableCell className="py-3.5 px-4">
-                      <span className="text-xs text-foreground font-medium">
+                      <span className="text-xs text-foreground font-medium font-sans">
                         {doc.declared_type || doc.media_type.split('/')[1]?.toUpperCase() || 'DOCUMENT'}
                       </span>
                     </TableCell>
 
-                    <TableCell className="py-3.5 px-4 text-muted-foreground">
-                      <div className="flex flex-col text-[11px]">
-                        <span className="font-semibold text-foreground">
+                    <TableCell className="py-3.5 px-4 text-muted-foreground font-sans">
+                      <div className="flex flex-col text-xs">
+                        <span className="font-medium text-foreground">
                           {doc.page_count !== null && doc.page_count !== undefined ? `${doc.page_count} page${doc.page_count === 1 ? '' : 's'}` : '—'}
                         </span>
-                        <span className="font-mono text-[10px]">{formatBytes(doc.file_size_bytes)}</span>
+                        <span className="text-muted-foreground text-xs">{formatBytes(doc.file_size_bytes)}</span>
                       </div>
                     </TableCell>
 
@@ -1576,27 +1679,27 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({ userRole, onOpenDo
 
                   {/* Revisions Table */}
                   <Card className="p-5 border-border shadow-xs space-y-3">
-                    <h5 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                    <h5 className="text-xs font-medium text-foreground font-sans">
                       Revision History Ledger ({docRevisions.length > 0 ? docRevisions.length : 1} revisions)
                     </h5>
 
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
-                          <TableRow className="bg-muted/40 text-[11px] font-bold uppercase">
-                            <TableHead className="py-2.5 px-3">Revision</TableHead>
-                            <TableHead className="py-2.5 px-3">Status</TableHead>
-                            <TableHead className="py-2.5 px-3">Amendment Summary</TableHead>
-                            <TableHead className="py-2.5 px-3">SHA-256 Hash</TableHead>
-                            <TableHead className="py-2.5 px-3">File Size</TableHead>
-                            <TableHead className="py-2.5 px-3">Recorded At</TableHead>
+                          <TableRow className="bg-muted/40 text-xs font-medium text-[#536174] font-sans tracking-normal">
+                            <TableHead className="py-2.5 px-3 font-medium text-xs font-sans text-muted-foreground">Revision</TableHead>
+                            <TableHead className="py-2.5 px-3 font-medium text-xs font-sans text-muted-foreground">Status</TableHead>
+                            <TableHead className="py-2.5 px-3 font-medium text-xs font-sans text-muted-foreground">Amendment Summary</TableHead>
+                            <TableHead className="py-2.5 px-3 font-medium text-xs font-sans text-muted-foreground">SHA-256 Hash</TableHead>
+                            <TableHead className="py-2.5 px-3 font-medium text-xs font-sans text-muted-foreground">File Size</TableHead>
+                            <TableHead className="py-2.5 px-3 font-medium text-xs font-sans text-muted-foreground">Recorded At</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody className="text-xs">
                           {docRevisions.length > 0 ? (
                             docRevisions.map((rev, idx) => (
                               <TableRow key={rev.id}>
-                                <TableCell className="py-2.5 px-3 font-mono font-bold text-primary">
+                                <TableCell className="py-2.5 px-3 font-mono font-medium text-primary">
                                   v{rev.revision_number}
                                 </TableCell>
                                 <TableCell className="py-2.5 px-3">

@@ -95,14 +95,14 @@ export function ApplicationList({ onSelectApplication, userRole }: Props = {}) {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1B1411]">
+            <h1 className="text-2xl sm:text-[30px] font-display font-bold tracking-tight text-[#202936]">
               Institutional Application Register
             </h1>
-            <span className="text-xs font-bold bg-[#EBF7F0] text-[#1B1411] border border-[#33CC7A]/30 px-3 py-0.5 rounded-full">
+            <span className="stat-number-display text-xs font-bold bg-[#EBF7F0] text-[#0D7A48] border border-[#0D7A48]/20 px-3 py-0.5 rounded-full">
               {total} Dossiers
             </span>
           </div>
-          <p className="text-xs text-[#66574F] mt-1">
+          <p className="text-sm text-[#536174] mt-1 font-sans font-normal leading-relaxed">
             Search, filter, and inspect regulatory applications and associated supporting documentation.
           </p>
         </div>
@@ -113,7 +113,7 @@ export function ApplicationList({ onSelectApplication, userRole }: Props = {}) {
             onClick={loadApplications}
             disabled={loading}
             title="Refresh application list"
-            className="h-9 px-4 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#66574F] hover:text-[#1B1411] inline-flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap shrink-0 transition-colors cursor-pointer"
+            className="h-9 px-4 rounded-full border border-[#E5DACF] bg-white hover:bg-[#FAF5F0] text-[#536174] hover:text-[#202936] inline-flex items-center gap-1.5 text-xs font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer"
           >
             <RefreshCw className={`size-3.5 ${loading ? 'animate-spin text-[#33CC7A]' : ''}`} />
             <span className="hidden sm:inline">Refresh</span>
@@ -123,9 +123,9 @@ export function ApplicationList({ onSelectApplication, userRole }: Props = {}) {
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className="h-9 px-4 rounded-full bg-[#33CC7A] hover:bg-[#2EB86E] text-[#1B1411] inline-flex items-center gap-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition-all shadow-[0_2px_10px_rgba(51,204,122,0.25)] cursor-pointer"
+              className="main-btn btn-hover !py-2 !px-4 text-xs font-semibold gap-1.5 whitespace-nowrap shrink-0 cursor-pointer shadow-xs"
             >
-              <Plus className="size-3.5" />
+              <Plus className="size-3.5 text-white" />
               <span>New Application</span>
             </button>
           )}
@@ -139,10 +139,10 @@ export function ApplicationList({ onSelectApplication, userRole }: Props = {}) {
             <button
               type="button"
               onClick={() => setStatusFilter('')}
-              className={`h-7 px-3.5 text-xs rounded-full font-semibold transition-all cursor-pointer ${
+              className={`h-7 px-3.5 text-xs rounded-full font-medium transition-all cursor-pointer font-sans ${
                 statusFilter === ''
-                  ? 'bg-[#1B1411] text-[#FAF5F0] shadow-sm'
-                  : 'text-[#66574F] hover:text-[#1B1411]'
+                  ? 'bg-[#1F3954] text-[#FAF5F0] shadow-sm'
+                  : 'text-[#536174] hover:text-[#202936]'
               }`}
             >
               All Applications
@@ -150,10 +150,10 @@ export function ApplicationList({ onSelectApplication, userRole }: Props = {}) {
             <button
               type="button"
               onClick={() => setStatusFilter('DRAFT')}
-              className={`h-7 px-3.5 text-xs rounded-full font-semibold transition-all cursor-pointer ${
+              className={`h-7 px-3.5 text-xs rounded-full font-medium transition-all cursor-pointer font-sans ${
                 statusFilter === 'DRAFT'
-                  ? 'bg-[#1B1411] text-[#FAF5F0] shadow-sm'
-                  : 'text-[#66574F] hover:text-[#1B1411]'
+                  ? 'bg-[#1F3954] text-[#FAF5F0] shadow-sm'
+                  : 'text-[#536174] hover:text-[#202936]'
               }`}
             >
               Drafts
@@ -161,10 +161,10 @@ export function ApplicationList({ onSelectApplication, userRole }: Props = {}) {
             <button
               type="button"
               onClick={() => setStatusFilter('SUBMITTED')}
-              className={`h-7 px-3.5 text-xs rounded-full font-semibold transition-all cursor-pointer ${
+              className={`h-7 px-3.5 text-xs rounded-full font-medium transition-all cursor-pointer font-sans ${
                 statusFilter === 'SUBMITTED'
-                  ? 'bg-[#1B1411] text-[#FAF5F0] shadow-sm'
-                  : 'text-[#66574F] hover:text-[#1B1411]'
+                  ? 'bg-[#1F3954] text-[#FAF5F0] shadow-sm'
+                  : 'text-[#536174] hover:text-[#202936]'
               }`}
             >
               Submitted
@@ -172,10 +172,10 @@ export function ApplicationList({ onSelectApplication, userRole }: Props = {}) {
             <button
               type="button"
               onClick={() => setStatusFilter('UNDER_REVIEW')}
-              className={`h-7 px-3.5 text-xs rounded-full font-semibold transition-all cursor-pointer ${
+              className={`h-7 px-3.5 text-xs rounded-full font-medium transition-all cursor-pointer font-sans ${
                 statusFilter === 'UNDER_REVIEW'
-                  ? 'bg-[#1B1411] text-[#FAF5F0] shadow-sm'
-                  : 'text-[#66574F] hover:text-[#1B1411]'
+                  ? 'bg-[#1F3954] text-[#FAF5F0] shadow-sm'
+                  : 'text-[#536174] hover:text-[#202936]'
               }`}
             >
               Under Review
@@ -184,7 +184,7 @@ export function ApplicationList({ onSelectApplication, userRole }: Props = {}) {
         </div>
 
         <form onSubmit={handleSearchSubmit} className="relative flex-1 md:max-w-xs">
-          <Search className="size-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#66574F] pointer-events-none" />
+          <Search className="size-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#536174] pointer-events-none" />
           <input
             id="application-search-input"
             name="application_search"
@@ -193,7 +193,7 @@ export function ApplicationList({ onSelectApplication, userRole }: Props = {}) {
             placeholder="Search reference or institution..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-9 text-xs pl-9 pr-4 rounded-full border border-[#E5DACF] bg-[#FAF5F0]/50 focus:bg-white focus:outline-hidden focus:border-[#1B1411] text-[#1B1411]"
+            className="w-full h-9 text-xs pl-9 pr-4 rounded-full border border-[#E5DACF] bg-[#FAF5F0]/50 focus:bg-white focus:outline-hidden focus:border-[#1B1411] text-[#202936] font-sans"
           />
         </form>
       </div>
@@ -203,7 +203,7 @@ export function ApplicationList({ onSelectApplication, userRole }: Props = {}) {
         <Alert variant="destructive">
           <AlertCircle className="size-4" />
           <AlertTitle className="text-xs font-semibold">Unable to Load Applications</AlertTitle>
-          <AlertDescription className="text-xs">{error}</AlertDescription>
+          <AlertDescription className="text-xs font-normal">{error}</AlertDescription>
         </Alert>
       )}
 
@@ -211,15 +211,15 @@ export function ApplicationList({ onSelectApplication, userRole }: Props = {}) {
       <div className="bg-white rounded-2xl border border-[#E5DACF] shadow-[0_4px_24px_-4px_rgba(27,20,17,0.04)] overflow-hidden">
         <div className="p-5 border-b border-[#E5DACF] flex flex-row items-center justify-between bg-[#FAF5F0]/40">
           <div>
-            <h2 className="text-sm font-bold flex items-center gap-2 text-[#1B1411]">
+            <h2 className="text-[17px] font-display font-semibold flex items-center gap-2 text-[#202936]">
               <FileText className="size-4 text-[#1F3954] shrink-0" />
               Registered Application Dossiers
             </h2>
-            <p className="text-xs text-[#66574F] mt-0.5">
+            <p className="text-xs sm:text-[13px] text-[#536174] mt-0.5 font-sans font-normal">
               Showing {applications.length} of {total} records from the regulatory store.
             </p>
           </div>
-          <span className="font-mono text-[10px] text-[#66574F] bg-[#EEE5DC] border border-[#E5DACF] px-2.5 py-0.5 rounded-full">
+          <span className="font-mono text-xs text-[#536174] bg-[#EEE5DC] border border-[#E5DACF] px-2.5 py-0.5 rounded-full">
             SQLite WAL · Immutable Audit
           </span>
         </div>
@@ -250,29 +250,29 @@ export function ApplicationList({ onSelectApplication, userRole }: Props = {}) {
             <Table>
               <TableHeader className="bg-muted/40">
                 <TableRow className="border-b border-border hover:bg-transparent">
-                  <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4">
-                    APPLICATION REFERENCE
+                  <TableHead className="text-xs font-medium text-muted-foreground py-2.5 px-4 font-sans tracking-normal">
+                    Application Reference
                   </TableHead>
-                  <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4">
-                    INSTITUTION
+                  <TableHead className="text-xs font-medium text-muted-foreground py-2.5 px-4 font-sans tracking-normal">
+                    Institution
                   </TableHead>
-                  <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4">
-                    CATEGORY
+                  <TableHead className="text-xs font-medium text-muted-foreground py-2.5 px-4 font-sans tracking-normal">
+                    Category
                   </TableHead>
-                  <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4">
-                    ACADEMIC YEAR
+                  <TableHead className="text-xs font-medium text-muted-foreground py-2.5 px-4 font-sans tracking-normal">
+                    Academic Year
                   </TableHead>
-                  <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4">
-                    LIFECYCLE STATUS
+                  <TableHead className="text-xs font-medium text-muted-foreground py-2.5 px-4 font-sans tracking-normal">
+                    Lifecycle Status
                   </TableHead>
-                  <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4">
-                    PIPELINE
+                  <TableHead className="text-xs font-medium text-muted-foreground py-2.5 px-4 font-sans tracking-normal">
+                    Pipeline Status
                   </TableHead>
-                  <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4">
-                    LAST MODIFIED
+                  <TableHead className="text-xs font-medium text-muted-foreground py-2.5 px-4 font-sans tracking-normal">
+                    Last Modified
                   </TableHead>
-                  <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 px-4 text-right">
-                    ACTIONS
+                  <TableHead className="text-xs font-medium text-muted-foreground py-2.5 px-4 text-right font-sans tracking-normal">
+                    Action
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -285,35 +285,35 @@ export function ApplicationList({ onSelectApplication, userRole }: Props = {}) {
                   >
                     <TableCell className="py-3 px-4">
                       <div className="flex items-center gap-2.5">
-                        <div className="size-7 rounded-md bg-secondary text-primary flex items-center justify-center font-bold text-[10px] shrink-0">
+                        <div className="size-7 rounded-md bg-secondary text-primary flex items-center justify-center font-medium text-[11px] shrink-0 font-sans">
                           APP
                         </div>
-                        <span className="font-mono font-semibold text-xs text-foreground group-hover:text-primary transition-colors">
+                        <span className="font-mono font-medium text-[13px] text-foreground group-hover:text-primary transition-colors">
                           {app.application_reference}
                         </span>
                       </div>
                     </TableCell>
 
                     <TableCell className="py-3 px-4">
-                      <div className="font-medium text-xs text-foreground flex items-center gap-1.5">
+                      <div className="font-medium text-sm text-foreground flex items-center gap-1.5 font-sans">
                         <Building2 className="size-3.5 text-muted-foreground shrink-0" />
-                        <span className="truncate max-w-[200px]" title={app.institution.institution_name}>
+                        <span className="truncate max-w-[220px]" title={app.institution.institution_name}>
                           {app.institution.institution_name}
                         </span>
                       </div>
-                      <div className="text-[10px] text-muted-foreground font-mono pl-5">
+                      <div className="text-xs text-muted-foreground font-mono font-normal pl-5 mt-0.5">
                         {app.institution.institution_identifier || app.institution.id.slice(0, 8)}
                       </div>
                     </TableCell>
 
                     <TableCell className="py-3 px-4">
-                      <Badge variant="outline" className="font-mono text-[10px] bg-secondary text-primary border-primary/20">
-                        {app.category_code}
+                      <Badge variant="outline" className="font-sans text-xs font-medium bg-secondary text-primary border-primary/20">
+                        {app.category_code.replace(/_/g, ' ')}
                       </Badge>
                     </TableCell>
 
-                    <TableCell className="py-3 px-4 text-xs text-muted-foreground">
-                      <span className="inline-flex items-center gap-1 font-mono text-[11px]">
+                    <TableCell className="py-3 px-4 text-xs text-muted-foreground font-sans font-normal">
+                      <span className="inline-flex items-center gap-1 text-xs">
                         <Calendar className="size-3 text-muted-foreground" />
                         {app.academic_year || '—'}
                       </span>
@@ -327,7 +327,7 @@ export function ApplicationList({ onSelectApplication, userRole }: Props = {}) {
                       <StatusBadge status={app.pipeline_status} category="pipeline" showIcon={false} />
                     </TableCell>
 
-                    <TableCell className="py-3 px-4 font-mono text-muted-foreground text-[11px]">
+                    <TableCell className="py-3 px-4 text-muted-foreground text-xs font-sans font-normal">
                       {new Date(app.updated_at).toLocaleDateString()} {new Date(app.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </TableCell>
 
@@ -337,7 +337,7 @@ export function ApplicationList({ onSelectApplication, userRole }: Props = {}) {
                           <button
                             type="button"
                             onClick={() => onSelectApplication(app.id)}
-                            className="h-7 text-xs font-bold gap-1 px-3.5 rounded-full bg-[#33CC7A] hover:bg-[#2EB86E] text-[#1B1411] inline-flex items-center transition-all cursor-pointer shadow-xs"
+                            className="h-7 text-xs font-medium gap-1 px-3.5 rounded-full bg-[#33CC7A] hover:bg-[#2EB86E] text-[#202936] inline-flex items-center transition-all cursor-pointer shadow-xs font-sans"
                             title="Open Application Scrutiny Dossier"
                           >
                             <span>Scrutinize</span>
@@ -348,7 +348,7 @@ export function ApplicationList({ onSelectApplication, userRole }: Props = {}) {
                           <button
                             type="button"
                             onClick={() => setUploadModalAppId(app.id)}
-                            className="h-7 text-xs font-semibold gap-1 px-3 rounded-full border border-[#E5DACF] bg-[#FAF5F0] hover:bg-[#EEE5DC] text-[#1B1411] inline-flex items-center transition-colors cursor-pointer"
+                            className="h-7 text-xs font-semibold gap-1 px-3 rounded-full border border-[#E5DACF] bg-[#FAF5F0] hover:bg-[#EEE5DC] text-[#202936] inline-flex items-center transition-colors cursor-pointer"
                             title="Upload Document"
                           >
                             <Upload className="size-3 text-[#1F3954]" />

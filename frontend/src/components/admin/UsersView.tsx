@@ -164,36 +164,36 @@ export const UsersView: React.FC = () => {
     switch (role.toUpperCase()) {
       case 'ADMIN':
         return (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#1B1411] text-[#FAF5F0] text-[10px] font-mono font-bold px-2.5 py-0.5">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#1F3954] text-[#FAF5F0] text-[11px] font-sans font-semibold px-2.5 py-0.5">
             <ShieldAlert className="w-3 h-3 text-[#33CC7A]" />
             Administrator
           </span>
         );
       case 'REVIEWER':
         return (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E8F8F0] text-[#1B804D] text-[10px] font-mono font-bold px-2.5 py-0.5">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E8F8F0] text-[#1B804D] text-[11px] font-sans font-semibold px-2.5 py-0.5">
             <UserCheck className="w-3 h-3 text-[#33CC7A]" />
             Scrutiny Officer
           </span>
         );
       case 'VIEWER':
         return (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#EBF2F7] text-[#1F3954] text-[10px] font-mono font-bold px-2.5 py-0.5">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#EBF2F7] text-[#1F3954] text-[11px] font-sans font-semibold px-2.5 py-0.5">
             <Eye className="w-3 h-3 text-[#1F3954]" />
             Auditor / Viewer
           </span>
         );
       case 'INSTITUTION_USER':
         return (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FAF5F0] text-[#66574F] border border-[#EEE5DC] text-[10px] font-mono font-bold px-2.5 py-0.5">
-            <Building className="w-3 h-3 text-[#66574F]" />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FAF5F0] text-[#536174] border border-[#EEE5DC] text-[11px] font-sans font-semibold px-2.5 py-0.5">
+            <Building className="w-3 h-3 text-[#536174]" />
             Institution Rep
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FAF5F0] text-[#1B1411] border border-[#EEE5DC] text-[10px] font-mono font-bold px-2.5 py-0.5">
-            <Shield className="w-3 h-3 text-[#1B1411]" />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FAF5F0] text-[#202936] border border-[#EEE5DC] text-[11px] font-sans font-semibold px-2.5 py-0.5">
+            <Shield className="w-3 h-3 text-[#202936]" />
             {role}
           </span>
         );
@@ -206,12 +206,9 @@ export const UsersView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#EEE5DC]">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1B1411]">User &amp; Role Administration</h1>
-            <span className="rounded-full bg-[#1B1411] text-[#FAF5F0] font-mono text-[10px] font-bold px-2.5 py-0.5">
-              ADMIN ONLY
-            </span>
+            <h1 className="text-2xl sm:text-[30px] font-display font-bold tracking-tight text-[#202936] leading-[1.15]">User &amp; Role Administration</h1>
           </div>
-          <p className="text-xs text-[#66574F] mt-1">
+          <p className="text-xs sm:text-sm text-[#536174] mt-1 font-sans font-normal">
             Manage authenticated regulatory officers, scrutiny reviewers, and role assignments with full audit tracking.
           </p>
         </div>
@@ -222,16 +219,16 @@ export const UsersView: React.FC = () => {
             size="sm"
             onClick={handleRefresh}
             disabled={refreshing}
-            className="gap-1.5 text-xs text-[#1B1411] bg-white border-[#EEE5DC] hover:bg-[#FAF5F0] rounded-full px-4 shadow-sm"
+            className="gap-1.5 text-xs text-[#202936] bg-white border-[#EEE5DC] hover:bg-[#FAF5F0] rounded-full px-4 shadow-sm font-medium font-sans"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-[#33CC7A]' : 'text-[#66574F]'}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-[#33CC7A]' : 'text-[#536174]'}`} />
             <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
           </Button>
 
           <button
             type="button"
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center gap-1.5 bg-[#33CC7A] text-[#1B1411] hover:bg-[#2EB86E] font-bold text-xs rounded-full px-4 py-2 shadow-sm transition-all"
+            className="inline-flex items-center gap-1.5 bg-[#33CC7A] text-[#202936] hover:bg-[#2EB86E] font-medium text-xs rounded-full px-4 py-2 shadow-sm transition-all font-sans"
           >
             <UserPlus className="w-4 h-4" />
             <span>Create New User</span>
@@ -242,7 +239,7 @@ export const UsersView: React.FC = () => {
       {/* Filter and Search Bar */}
       <div className="bg-white rounded-2xl border border-[#EEE5DC] shadow-[0_2px_8px_rgba(27,20,17,0.03)] p-4 flex flex-col md:flex-row items-center gap-3">
         <div className="relative flex-1 w-full">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#66574F] pointer-events-none" />
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#536174] pointer-events-none" />
           <Input
             id="users-admin-search-input"
             name="user_search"
@@ -251,19 +248,19 @@ export const UsersView: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by name, email, or institution identifier..."
-            className="pl-9 text-xs h-9 bg-[#FAF5F0] border-[#EEE5DC] rounded-full focus:bg-white text-[#1B1411]"
+            className="pl-9 text-xs h-9 bg-[#FAF5F0] border-[#EEE5DC] rounded-full focus:bg-white text-[#202936] font-sans"
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-          <div className="flex items-center gap-1.5 text-xs text-[#66574F]">
-            <Filter className="w-3.5 h-3.5 text-[#1B1411]" />
-            <span className="font-semibold">Role:</span>
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto font-sans">
+          <div className="flex items-center gap-1.5 text-xs text-[#536174]">
+            <Filter className="w-3.5 h-3.5 text-[#202936]" />
+            <span className="font-medium">Role:</span>
           </div>
           <select
             value={selectedRole}
             onChange={(e) => setSelectedRole(e.target.value)}
-            className="text-xs rounded-full border border-[#EEE5DC] bg-[#FAF5F0] px-3.5 py-1.5 text-[#1B1411] font-medium focus:outline-hidden focus:ring-2 focus:ring-[#1B1411]"
+            className="text-xs rounded-full border border-[#EEE5DC] bg-[#FAF5F0] px-3.5 py-1.5 text-[#202936] font-medium focus:outline-hidden focus:ring-2 focus:ring-[#1B1411]"
           >
             <option value="">All Roles</option>
             <option value="ADMIN">Administrator</option>
@@ -272,13 +269,13 @@ export const UsersView: React.FC = () => {
             <option value="INSTITUTION_USER">Institution User</option>
           </select>
 
-          <div className="flex items-center gap-1.5 text-xs text-[#66574F] ml-1">
-            <span className="font-semibold">Status:</span>
+          <div className="flex items-center gap-1.5 text-xs text-[#536174] ml-1">
+            <span className="font-medium">Status:</span>
           </div>
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="text-xs rounded-full border border-[#EEE5DC] bg-[#FAF5F0] px-3.5 py-1.5 text-[#1B1411] font-medium focus:outline-hidden focus:ring-2 focus:ring-[#1B1411]"
+            className="text-xs rounded-full border border-[#EEE5DC] bg-[#FAF5F0] px-3.5 py-1.5 text-[#202936] font-medium focus:outline-hidden focus:ring-2 focus:ring-[#1B1411]"
           >
             <option value="">All Statuses</option>
             <option value="active">Active Only</option>
@@ -291,13 +288,13 @@ export const UsersView: React.FC = () => {
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="w-4 h-4" />
-          <AlertDescription className="flex items-center justify-between text-xs">
+          <AlertDescription className="flex items-center justify-between text-xs font-sans">
             <span>{error}</span>
             <Button
               variant="link"
               size="sm"
               onClick={loadUsers}
-              className="text-destructive font-semibold p-0 h-auto"
+              className="text-destructive font-medium p-0 h-auto"
             >
               Retry
             </Button>
@@ -308,15 +305,15 @@ export const UsersView: React.FC = () => {
       {/* Users Table */}
       <div className="bg-white rounded-2xl border border-[#EEE5DC] shadow-[0_2px_8px_rgba(27,20,17,0.04)] overflow-hidden">
         {loading ? (
-          <div className="py-16 text-center text-xs text-muted-foreground flex flex-col items-center justify-center gap-2">
+          <div className="py-16 text-center text-xs text-muted-foreground flex flex-col items-center justify-center gap-2 font-sans">
             <RefreshCw className="w-5 h-5 animate-spin text-primary" />
             <span>Loading system user accounts...</span>
           </div>
         ) : filteredUsers.length === 0 ? (
-          <div className="py-16 text-center text-xs text-muted-foreground space-y-2">
+          <div className="py-16 text-center text-xs text-muted-foreground space-y-2 font-sans">
             <Users className="w-8 h-8 text-muted-foreground/60 mx-auto" />
-            <p className="font-semibold text-foreground">No matching user accounts found</p>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="font-medium text-foreground">No matching user accounts found</p>
+            <p className="text-xs text-muted-foreground">
               Try adjusting your search query or role filter.
             </p>
           </div>
@@ -324,13 +321,13 @@ export const UsersView: React.FC = () => {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-[#FAF5F0] border-b border-[#EEE5DC] text-[11px] font-mono font-bold text-[#66574F] uppercase tracking-wider">
-                  <TableHead className="px-4 py-3 text-[#66574F]">User &amp; Email</TableHead>
-                  <TableHead className="px-4 py-3 text-[#66574F]">Assigned Role</TableHead>
-                  <TableHead className="px-4 py-3 text-[#66574F]">Institution Scope</TableHead>
-                  <TableHead className="px-4 py-3 text-[#66574F]">Account Status</TableHead>
-                  <TableHead className="px-4 py-3 text-[#66574F]">Last Active</TableHead>
-                  <TableHead className="px-4 py-3 text-right text-[#66574F]">Access Controls</TableHead>
+                <TableRow className="bg-[#FAF5F0] border-b border-[#EEE5DC] text-xs font-medium text-[#536174] font-sans tracking-normal">
+                  <TableHead className="px-4 py-3 text-[#536174] font-medium text-xs font-sans">User &amp; Email</TableHead>
+                  <TableHead className="px-4 py-3 text-[#536174] font-medium text-xs font-sans">Assigned Role</TableHead>
+                  <TableHead className="px-4 py-3 text-[#536174] font-medium text-xs font-sans">Institution Scope</TableHead>
+                  <TableHead className="px-4 py-3 text-[#536174] font-medium text-xs font-sans">Account Status</TableHead>
+                  <TableHead className="px-4 py-3 text-[#536174] font-medium text-xs font-sans">Last Active</TableHead>
+                  <TableHead className="px-4 py-3 text-right text-[#536174] font-medium text-xs font-sans">Access Controls</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody className="text-xs">
@@ -338,12 +335,12 @@ export const UsersView: React.FC = () => {
                   <TableRow key={u.id} className="hover:bg-[#FAF5F0]/60 border-b border-[#EEE5DC]/60 transition-colors">
                     <TableCell className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="size-8 rounded-full bg-[#1B1411] text-[#33CC7A] font-bold text-xs flex items-center justify-center shrink-0 shadow-xs font-mono">
+                        <div className="size-8 rounded-full bg-[#1F3954] text-[#33CC7A] font-medium text-xs flex items-center justify-center shrink-0 shadow-xs font-sans">
                           {u.display_name.slice(0, 2).toUpperCase()}
                         </div>
                         <div>
-                          <div className="font-semibold text-[#1B1411]">{u.display_name}</div>
-                          <div className="text-[11px] text-[#66574F] font-mono">{u.email}</div>
+                          <div className="font-medium text-sm text-[#202936] font-sans">{u.display_name}</div>
+                          <div className="text-xs text-[#536174] font-sans">{u.email}</div>
                         </div>
                       </div>
                     </TableCell>
@@ -352,27 +349,27 @@ export const UsersView: React.FC = () => {
 
                     <TableCell className="px-4 py-3 whitespace-nowrap">
                       {u.institution_id ? (
-                        <span className="font-mono text-[11px] rounded-full bg-[#EEE5DC] text-[#1B1411] px-2.5 py-0.5 font-bold">
+                        <span className="font-mono text-[11px] rounded-full bg-[#EEE5DC] text-[#202936] px-2.5 py-0.5 font-medium">
                           {u.institution_id}
                         </span>
                       ) : (
-                        <span className="text-[11px] text-[#66574F] italic">Global Regulatory</span>
+                        <span className="text-[11px] text-[#536174] italic font-sans">Global Regulatory</span>
                       )}
                     </TableCell>
 
                     <TableCell className="px-4 py-3 whitespace-nowrap">
                       {u.is_active ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] rounded-full bg-[#E8F8F0] text-[#1B804D] px-2.5 py-0.5 font-bold font-mono">
+                        <span className="inline-flex items-center gap-1 text-[11px] rounded-full bg-[#E8F8F0] text-[#1B804D] px-2.5 py-0.5 font-semibold font-sans">
                           <CheckCircle2 className="w-3 h-3 text-[#33CC7A]" /> Active
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[10px] rounded-full bg-[#FDF2F2] text-[#B91C1C] px-2.5 py-0.5 font-bold font-mono">
+                        <span className="inline-flex items-center gap-1 text-[11px] rounded-full bg-[#FDF2F2] text-[#B91C1C] px-2.5 py-0.5 font-semibold font-sans">
                           <XCircle className="w-3 h-3 text-[#EF4444]" /> Deactivated
                         </span>
                       )}
                     </TableCell>
 
-                    <TableCell className="px-4 py-3 whitespace-nowrap text-[11px] text-[#66574F] font-mono">
+                    <TableCell className="px-4 py-3 whitespace-nowrap text-[11px] text-[#536174] font-sans">
                       {u.last_login_at
                         ? new Date(u.last_login_at).toLocaleDateString('en-GB', {
                             day: 'numeric',

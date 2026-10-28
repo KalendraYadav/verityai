@@ -69,8 +69,8 @@ export const RegulatoryGatewaysView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-              <Network className="size-6 text-primary shrink-0" />
+            <h1 className="text-2xl sm:text-[30px] font-display font-bold tracking-tight text-[#202936] leading-[1.15] flex items-center gap-2.5">
+              <Network className="size-6 text-[#1F3954] shrink-0" />
               Regulatory Gateways
             </h1>
           </div>

@@ -118,8 +118,8 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
         })
         .finally(() => setLoading(false));
     } else {
-      if (categories.length > 0 && !categoryCode) {
-        setCategoryCode(categories[0].code);
+      if (categories.length > 0) {
+        setCategoryCode((prev) => prev || categories[0].code);
       }
     }
   }, [initialAppId, categories]);
@@ -508,24 +508,24 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#1B1411]/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#1F3954]/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6">
       <div className="bg-white rounded-3xl shadow-2xl border border-[#E5DACF] max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* ── Wizard Header ────────────────────────────────────────────── */}
         <div className="px-6 py-4 bg-[#FAF5F0] border-b border-[#E5DACF] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#1B1411] text-[#33CC7A] flex items-center justify-center font-bold shadow-xs">
+            <div className="w-9 h-9 rounded-xl bg-[#1F3954] text-[#33CC7A] flex items-center justify-center font-bold shadow-xs">
               <Building2 className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-extrabold text-[#1B1411]">
+                <h2 className="text-[15px] font-semibold tracking-tight text-[#0F2540] leading-snug">
                   {app ? `Application ${app.application_reference}` : 'New Statutory Approval Application'}
                 </h2>
                 {app && (
                   <span
                     className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                       app.lifecycle_status === 'DRAFT'
-                        ? 'bg-[#EEE5DC] text-[#1B1411] border-[#E5DACF]'
+                        ? 'bg-[#EEE5DC] text-[#202936] border-[#E5DACF]'
                         : 'bg-[#BACDE0]/30 text-[#1F3954] border-[#BACDE0]'
                     }`}
                   >
@@ -533,7 +533,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[#66574F]">
+              <p className="text-[11px] font-medium text-[#536174] tracking-wide leading-snug">
                 {boundInstitution?.institution_name || 'AICTE Institutional Intake Portal'} · Academic Year {academicYear}
               </p>
             </div>
@@ -541,7 +541,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
 
           <button
             onClick={onClose}
-            className="p-2 rounded-full text-[#66574F] hover:text-[#1B1411] hover:bg-[#EEE5DC] transition-colors cursor-pointer"
+            className="p-2 rounded-full text-[#536174] hover:text-[#202936] hover:bg-[#EEE5DC] transition-colors cursor-pointer"
             aria-label="Close intake wizard"
           >
             <X className="w-5 h-5" />
@@ -568,24 +568,24 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                   }}
                   className={`flex items-center gap-2 p-2 rounded-full text-left transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
                     isActive
-                      ? 'bg-[#1B1411] text-[#FAF5F0] font-bold shadow-sm'
+                      ? 'bg-[#1F3954] text-[#FAF5F0] font-semibold shadow-sm'
                       : isPast
-                      ? 'text-[#1B1411] font-semibold bg-[#EBF7F0]'
-                      : 'text-[#66574F] hover:bg-[#EEE5DC]/50'
+                      ? 'text-[#1F3954] font-medium bg-[#EBF7F0]'
+                      : 'text-[#536174] font-medium hover:bg-[#EEE5DC]/50'
                   }`}
                 >
                   <div
                     className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
                       isActive
-                        ? 'bg-[#33CC7A] text-[#1B1411]'
+                        ? 'bg-[#33CC7A] text-[#202936]'
                         : isPast
-                        ? 'bg-[#1B1411] text-[#33CC7A]'
-                        : 'bg-[#EEE5DC] text-[#66574F]'
+                        ? 'bg-[#1F3954] text-[#33CC7A]'
+                        : 'bg-[#EEE5DC] text-[#536174]'
                     }`}
                   >
                     {isPast ? <CheckCircle2 className="w-3.5 h-3.5" /> : step.num}
                   </div>
-                  <span className="truncate hidden sm:inline text-xs">{step.title}</span>
+                  <span className="truncate hidden sm:inline text-[11px] tracking-wide">{step.title}</span>
                 </button>
               );
             })}
@@ -653,7 +653,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
               <div className="flex justify-center gap-3 pt-2">
                 <button
                   onClick={onClose}
-                  className="px-5 py-2.5 rounded-xl bg-[#6941C6] text-white text-xs font-semibold hover:bg-[#5631A8] transition-colors cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl main-btn btn-hover text-white text-xs font-semibold transition-colors cursor-pointer"
                 >
                   Return to Dashboard
                 </button>
@@ -665,18 +665,18 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
               {currentStep === 1 && (
                 <div className="space-y-5">
                   <div className="space-y-1">
-                    <h3 className="text-sm font-bold text-[#111827]">Step 1: Statutory Category & Academic Year</h3>
-                    <p className="text-xs text-[#667085]">
+                    <h3 className="text-[13px] font-semibold tracking-tight text-[#0F2540] leading-snug">Step 1: Statutory Category & Academic Year</h3>
+                    <p className="text-[12px] text-[#536174] leading-relaxed">
                       Select the statutory approval category under the AICTE Approval Process Handbook (APH 2024-27).
                     </p>
                   </div>
 
                   <div className="p-4 rounded-xl bg-[#F9FAFB] border border-[#E4E7EC] space-y-3">
                     <div className="text-xs font-semibold text-[#111827] flex items-center gap-2">
-                      <Building2 className="w-4 h-4 text-[#6941C6]" />
+                      <Building2 className="w-3.5 h-3.5 text-[#37C2CC]" />
                       <span>Applicant Institution</span>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <span className="text-[#667085]">Institution Name:</span>
                         <div className="font-bold text-[#111827] mt-0.5">
@@ -685,7 +685,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                       </div>
                       <div>
                         <span className="text-[#667085]">Institutional Code / Identifier:</span>
-                        <div className="font-mono font-bold text-[#111827] mt-0.5">
+                        <div className="font-mono text-[12px] font-semibold text-[#1F3954] mt-0.5">
                           {boundInstitution?.institution_identifier || 'VAI-I-001'}
                         </div>
                       </div>
@@ -694,7 +694,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
 
                   <div className="space-y-4 text-xs">
                     <div>
-                      <label className="block font-semibold text-[#344054] mb-1.5">
+                      <label className="block text-[12px] font-medium text-[#1F3954] mb-1.5">
                         Application Category <span className="text-red-500">*</span>
                       </label>
                       <select
@@ -712,7 +712,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                         className={`w-full px-3 py-2 rounded-xl border bg-white focus:outline-none focus:ring-2 ${
                           fieldErrors.categoryCode
                             ? 'border-red-400 focus:ring-red-400/20 focus:border-red-500 text-red-900'
-                            : 'border-[#D0D5DD] focus:ring-[#6941C6]/20 focus:border-[#6941C6] text-[#111827]'
+                            : 'border-[#D0D5DD] focus:ring-[#37C2CC]/30 focus:border-[#37C2CC] text-[#111827]'
                         }`}
                       >
                         {!categoryCode && <option value="">-- Select Application Category --</option>}
@@ -728,14 +728,14 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                           <span>{fieldErrors.categoryCode}</span>
                         </p>
                       )}
-                      <p className="text-[11px] text-[#667085] mt-1">
+                      <p className="text-[11px] text-[#536174] mt-1 leading-relaxed">
                         Select Extension of Approval (EoA) or specialized approval type.
                       </p>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block font-semibold text-[#344054] mb-1.5">
+                        <label className="block text-[12px] font-medium text-[#1F3954] mb-1.5">
                           Academic Year <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -755,7 +755,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                           className={`w-full px-3 py-2 rounded-xl border bg-white font-mono focus:outline-none focus:ring-2 ${
                             fieldErrors.academicYear
                               ? 'border-red-400 focus:ring-red-400/20 focus:border-red-500 text-red-900'
-                              : 'border-[#D0D5DD] focus:ring-[#6941C6]/20 focus:border-[#6941C6] text-[#111827]'
+                              : 'border-[#D0D5DD] focus:ring-[#37C2CC]/30 focus:border-[#37C2CC] text-[#111827]'
                           }`}
                         />
                         {fieldErrors.academicYear && (
@@ -764,11 +764,11 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                             <span>{fieldErrors.academicYear}</span>
                           </p>
                         )}
-                        <p className="text-[11px] text-[#667085] mt-1">Format: YYYY-YY (e.g. 2026-27)</p>
+                        <p className="text-[11px] text-[#536174] mt-1 leading-relaxed">Format: YYYY-YY (e.g. 2026-27)</p>
                       </div>
 
                       <div>
-                        <label className="block font-semibold text-[#344054] mb-1.5">
+                        <label className="block text-[12px] font-medium text-[#1F3954] mb-1.5">
                           Primary Programme <span className="text-red-500">*</span>
                         </label>
                         <select
@@ -786,7 +786,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                           className={`w-full px-3 py-2 rounded-xl border bg-white focus:outline-none focus:ring-2 ${
                             fieldErrors.programmeName
                               ? 'border-red-400 focus:ring-red-400/20 focus:border-red-500 text-red-900'
-                              : 'border-[#D0D5DD] focus:ring-[#6941C6]/20 focus:border-[#6941C6] text-[#111827]'
+                              : 'border-[#D0D5DD] focus:ring-[#37C2CC]/30 focus:border-[#37C2CC] text-[#111827]'
                           }`}
                         >
                           <option value="ENGINEERING_AND_TECHNOLOGY">Engineering & Technology</option>
@@ -810,15 +810,15 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
               {currentStep === 2 && (
                 <div className="space-y-5">
                   <div className="space-y-1">
-                    <h3 className="text-sm font-bold text-[#111827]">Step 2: Statutory Declared Parameters</h3>
-                    <p className="text-xs text-[#667085]">
+                    <h3 className="text-[13px] font-semibold tracking-tight text-[#0F2540] leading-snug">Step 2: Statutory Declared Parameters</h3>
+                    <p className="text-[12px] text-[#536174] leading-relaxed">
                       Enter declared institutional capacity, campus land area, and building particulars for APH 2024-27 norm validation.
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                     <div>
-                      <label className="block font-semibold text-[#344054] mb-1">
+                      <label className="block text-[12px] font-medium text-[#1F3954] mb-1">
                         Head of Institution / Principal Name <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -838,7 +838,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                         className={`w-full px-3 py-2 rounded-xl border bg-white focus:outline-none focus:ring-2 ${
                           fieldErrors.principalName
                             ? 'border-red-400 focus:ring-red-400/20 focus:border-red-500 text-red-900'
-                            : 'border-[#D0D5DD] focus:ring-[#6941C6]/20 focus:border-[#6941C6] text-[#111827]'
+                            : 'border-[#D0D5DD] focus:ring-[#37C2CC]/30 focus:border-[#37C2CC] text-[#111827]'
                         }`}
                       />
                       {fieldErrors.principalName && (
@@ -850,7 +850,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                     </div>
 
                     <div>
-                      <label className="block font-semibold text-[#344054] mb-1">
+                      <label className="block text-[12px] font-medium text-[#1F3954] mb-1">
                         Total Approved Student Intake <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -871,7 +871,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                         className={`w-full px-3 py-2 rounded-xl border bg-white font-mono focus:outline-none focus:ring-2 ${
                           fieldErrors.approvedIntake
                             ? 'border-red-400 focus:ring-red-400/20 focus:border-red-500 text-red-900'
-                            : 'border-[#D0D5DD] focus:ring-[#6941C6]/20 focus:border-[#6941C6] text-[#111827]'
+                            : 'border-[#D0D5DD] focus:ring-[#37C2CC]/30 focus:border-[#37C2CC] text-[#111827]'
                         }`}
                       />
                       {fieldErrors.approvedIntake ? (
@@ -880,12 +880,12 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                           <span>{fieldErrors.approvedIntake}</span>
                         </p>
                       ) : (
-                        <p className="text-[11px] text-[#667085] mt-1">Calculates Faculty-Student Ratio (FSR) norms</p>
+                        <p className="text-[11px] text-[#536174] mt-1 leading-relaxed">Calculates Faculty-Student Ratio (FSR) norms</p>
                       )}
                     </div>
 
                     <div>
-                      <label className="block font-semibold text-[#344054] mb-1">
+                      <label className="block text-[12px] font-medium text-[#1F3954] mb-1">
                         Campus Land Area (Acres) <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -907,7 +907,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                         className={`w-full px-3 py-2 rounded-xl border bg-white font-mono focus:outline-none focus:ring-2 ${
                           fieldErrors.landAreaAcres
                             ? 'border-red-400 focus:ring-red-400/20 focus:border-red-500 text-red-900'
-                            : 'border-[#D0D5DD] focus:ring-[#6941C6]/20 focus:border-[#6941C6] text-[#111827]'
+                            : 'border-[#D0D5DD] focus:ring-[#37C2CC]/30 focus:border-[#37C2CC] text-[#111827]'
                         }`}
                       />
                       {fieldErrors.landAreaAcres ? (
@@ -916,12 +916,12 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                           <span>{fieldErrors.landAreaAcres}</span>
                         </p>
                       ) : (
-                        <p className="text-[11px] text-[#667085] mt-1">Minimum land norm per APH Chapter I (&gt; 0 Acres)</p>
+                        <p className="text-[11px] text-[#536174] mt-1 leading-relaxed">Minimum land norm per APH Chapter I (&gt; 0 Acres)</p>
                       )}
                     </div>
 
                     <div>
-                      <label className="block font-semibold text-[#344054] mb-1">
+                      <label className="block text-[12px] font-medium text-[#1F3954] mb-1">
                         Total Built-up Instructional Area (Sqm) <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -943,7 +943,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                         className={`w-full px-3 py-2 rounded-xl border bg-white font-mono focus:outline-none focus:ring-2 ${
                           fieldErrors.builtUpAreaSqm
                             ? 'border-red-400 focus:ring-red-400/20 focus:border-red-500 text-red-900'
-                            : 'border-[#D0D5DD] focus:ring-[#6941C6]/20 focus:border-[#6941C6] text-[#111827]'
+                            : 'border-[#D0D5DD] focus:ring-[#37C2CC]/30 focus:border-[#37C2CC] text-[#111827]'
                         }`}
                       />
                       {fieldErrors.builtUpAreaSqm ? (
@@ -952,12 +952,12 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                           <span>{fieldErrors.builtUpAreaSqm}</span>
                         </p>
                       ) : (
-                        <p className="text-[11px] text-[#667085] mt-1">Classroom and laboratory floor requirement (&gt; 0 Sqm)</p>
+                        <p className="text-[11px] text-[#536174] mt-1 leading-relaxed">Classroom and laboratory floor requirement (&gt; 0 Sqm)</p>
                       )}
                     </div>
 
                     <div>
-                      <label className="block font-semibold text-[#344054] mb-1">
+                      <label className="block text-[12px] font-medium text-[#1F3954] mb-1">
                         Building Construction Age (Years)
                       </label>
                       <input
@@ -978,7 +978,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                         className={`w-full px-3 py-2 rounded-xl border bg-white font-mono focus:outline-none focus:ring-2 ${
                           fieldErrors.buildingAgeYears
                             ? 'border-red-400 focus:ring-red-400/20 focus:border-red-500 text-red-900'
-                            : 'border-[#D0D5DD] focus:ring-[#6941C6]/20 focus:border-[#6941C6] text-[#111827]'
+                            : 'border-[#D0D5DD] focus:ring-[#37C2CC]/30 focus:border-[#37C2CC] text-[#111827]'
                         }`}
                       />
                       {fieldErrors.buildingAgeYears ? (
@@ -987,12 +987,12 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                           <span>{fieldErrors.buildingAgeYears}</span>
                         </p>
                       ) : (
-                        <p className="text-[11px] text-[#667085] mt-1">Buildings &gt; 30 years require Structural Stability Certificate</p>
+                        <p className="text-[11px] text-[#536174] mt-1 leading-relaxed">Buildings &gt; 30 years require Structural Stability Certificate</p>
                       )}
                     </div>
 
                     <div>
-                      <label className="block font-semibold text-[#344054] mb-1">
+                      <label className="block text-[12px] font-medium text-[#1F3954] mb-1">
                         Campus Land Title / Ownership Type <span className="text-red-500">*</span>
                       </label>
                       <select
@@ -1010,7 +1010,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                         className={`w-full px-3 py-2 rounded-xl border bg-white focus:outline-none focus:ring-2 ${
                           fieldErrors.landOwnershipType
                             ? 'border-red-400 focus:ring-red-400/20 focus:border-red-500 text-red-900'
-                            : 'border-[#D0D5DD] focus:ring-[#6941C6]/20 focus:border-[#6941C6] text-[#111827]'
+                            : 'border-[#D0D5DD] focus:ring-[#37C2CC]/30 focus:border-[#37C2CC] text-[#111827]'
                         }`}
                       >
                         <option value="OWNED">Freehold Owned (Sole Proprietorship / Trust)</option>
@@ -1027,7 +1027,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                     </div>
 
                     <div>
-                      <label className="block font-semibold text-[#344054] mb-1">
+                      <label className="block text-[12px] font-medium text-[#1F3954] mb-1">
                         Existing Statutory Certificate Number
                       </label>
                       <input
@@ -1035,12 +1035,12 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                         value={certificateNumber}
                         onChange={(e) => setCertificateNumber(e.target.value)}
                         placeholder="e.g. CERT-2024-AICTE-091"
-                        className="w-full px-3 py-2 rounded-xl border border-[#D0D5DD] bg-white text-[#111827] font-mono focus:outline-none focus:ring-2 focus:ring-[#6941C6]/20 focus:border-[#6941C6]"
+                        className="w-full px-3 py-2 rounded-xl border border-[#D0D5DD] bg-white text-[#111827] font-mono focus:outline-none focus:ring-2 focus:ring-[#37C2CC]/30 focus:border-[#37C2CC]"
                       />
                     </div>
 
                     <div>
-                      <label className="block font-semibold text-[#344054] mb-1">
+                      <label className="block text-[12px] font-medium text-[#1F3954] mb-1">
                         Certificate Expiry Date (YYYY-MM-DD)
                       </label>
                       <input
@@ -1059,7 +1059,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                         className={`w-full px-3 py-2 rounded-xl border bg-white font-mono focus:outline-none focus:ring-2 ${
                           fieldErrors.certificateExpiryDate
                             ? 'border-red-400 focus:ring-red-400/20 focus:border-red-500 text-red-900'
-                            : 'border-[#D0D5DD] focus:ring-[#6941C6]/20 focus:border-[#6941C6] text-[#111827]'
+                            : 'border-[#D0D5DD] focus:ring-[#37C2CC]/30 focus:border-[#37C2CC] text-[#111827]'
                         }`}
                       />
                       {fieldErrors.certificateExpiryDate ? (
@@ -1119,7 +1119,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                   <div className="space-y-3">
                     {!checklist || checklist.items.length === 0 ? (
                       <div className="p-8 text-center text-[#667085] text-xs">
-                        <RefreshCw className="w-5 h-5 animate-spin mx-auto text-[#6941C6] mb-2" />
+                        <RefreshCw className="w-5 h-5 animate-spin mx-auto text-[#37C2CC] mb-2" />
                         <span>Evaluating statutory conditional checklist...</span>
                       </div>
                     ) : (
@@ -1142,8 +1142,8 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
               {currentStep === 4 && (
                 <div className="space-y-5">
                   <div className="space-y-1">
-                    <h3 className="text-sm font-bold text-[#111827]">Step 4: Dossier Review & Final Submission</h3>
-                    <p className="text-xs text-[#667085]">
+                    <h3 className="text-[13px] font-semibold tracking-tight text-[#0F2540] leading-snug">Step 4: Dossier Review &amp; Final Submission</h3>
+                    <p className="text-[12px] text-[#536174] leading-relaxed">
                       Verify all declared metrics and supporting documentation before formal transmission to AICTE.
                     </p>
                   </div>
@@ -1218,7 +1218,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                   <div className="p-5 rounded-xl bg-[#F9FAFB] border border-[#E4E7EC] space-y-4 text-xs">
                     <div className="flex items-center justify-between border-b border-[#E4E7EC] pb-3">
                       <span className="font-bold text-[#111827]">Application Portfolio Summary</span>
-                      <span className="font-mono text-[11px] text-[#6941C6] font-bold">
+                      <span className="font-mono text-[11px] text-[#0E7490] bg-[#E3FDFF] px-2 py-0.5 rounded font-bold">
                         {app?.application_reference}
                       </span>
                     </div>
@@ -1260,9 +1260,9 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                   </div>
 
                   {/* Statutory Declaration Checkbox */}
-                  <div className="p-4 rounded-xl bg-purple-50/60 border border-purple-100 text-xs space-y-2">
+                  <div className="p-4 rounded-xl bg-[#E3FDFF]/60 border border-[#A5F3FC] text-xs space-y-2">
                     <div className="flex items-start gap-2.5">
-                      <Lock className="w-4 h-4 text-[#6941C6] shrink-0 mt-0.5" />
+                      <Lock className="w-4 h-4 text-[#0E7490] shrink-0 mt-0.5" />
                       <div className="text-[#344054] leading-relaxed">
                         <strong>Statutory Undertaking:</strong> By submitting, the institution certifies that all declared
                         information and attached certificates are authentic, valid, and compliant with AICTE Approval Process
@@ -1278,7 +1278,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
 
         {/* ── Wizard Footer Actions ───────────────────────────────────── */}
         {!isSubmittedSuccess && (
-          <div className="px-6 py-4 bg-[#FAF8FF] border-t border-[#E9E6F2] flex items-center justify-between shrink-0">
+          <div className="px-6 py-4 bg-[#FAF5F0] border-t border-[#E5DACF] flex items-center justify-between shrink-0">
             <div>
               {currentStep > 1 && (
                 <button
@@ -1299,7 +1299,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                   type="button"
                   onClick={() => handleStep2SaveAndProceed(false)}
                   disabled={saving}
-                  className="px-4 py-2 rounded-full border border-[#E5DACF] bg-[#FAF5F0] text-[#1B1411] text-xs font-semibold hover:bg-[#EEE5DC] transition-colors cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2 rounded-full border border-[#E5DACF] bg-[#FAF5F0] text-[#202936] text-xs font-semibold hover:bg-[#EEE5DC] transition-colors cursor-pointer disabled:opacity-50"
                 >
                   {saving ? 'Saving...' : 'Save Draft'}
                 </button>
@@ -1311,7 +1311,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                   type="button"
                   onClick={handleStep1Proceed}
                   disabled={saving}
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[#33CC7A] text-[#1B1411] text-xs font-bold hover:bg-[#2EB86E] transition-all cursor-pointer disabled:opacity-50 shadow-xs"
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[#33CC7A] text-[#202936] text-xs font-bold hover:bg-[#2EB86E] transition-all cursor-pointer disabled:opacity-50 shadow-xs"
                 >
                   <span>{saving ? 'Creating Draft...' : 'Proceed to Declared Metrics'}</span>
                   <ArrowRight className="w-4 h-4" />
@@ -1324,7 +1324,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                   type="button"
                   onClick={() => handleStep2SaveAndProceed(true)}
                   disabled={saving}
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[#33CC7A] text-[#1B1411] text-xs font-bold hover:bg-[#2EB86E] transition-all cursor-pointer disabled:opacity-50 shadow-xs"
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[#33CC7A] text-[#202936] text-xs font-bold hover:bg-[#2EB86E] transition-all cursor-pointer disabled:opacity-50 shadow-xs"
                 >
                   <span>{saving ? 'Saving...' : 'Proceed to Document Checklist'}</span>
                   <ArrowRight className="w-4 h-4" />
@@ -1336,7 +1336,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => handleStepNavigation(4)}
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[#33CC7A] text-[#1B1411] text-xs font-bold hover:bg-[#2EB86E] transition-all cursor-pointer shadow-xs"
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[#33CC7A] text-[#202936] text-xs font-bold hover:bg-[#2EB86E] transition-all cursor-pointer shadow-xs"
                 >
                   <span>Proceed to Final Review</span>
                   <ArrowRight className="w-4 h-4" />
@@ -1349,7 +1349,7 @@ export const ApplicantIntakeWizard: React.FC<Props> = ({
                   type="button"
                   onClick={handleSubmitApplication}
                   disabled={submitting || !isDossierComplete || app?.lifecycle_status !== 'DRAFT'}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#33CC7A] text-[#1B1411] text-xs font-bold shadow-md hover:bg-[#2EB86E] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#33CC7A] text-[#202936] text-xs font-bold shadow-md hover:bg-[#2EB86E] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting ? (
                     <>
@@ -1441,7 +1441,7 @@ function ChecklistItemCard({
               <span>Locked</span>
             </span>
           ) : (
-            <label className="relative inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#33CC7A] hover:bg-[#2EB86E] text-[#1B1411] text-xs font-bold transition-all cursor-pointer shadow-xs">
+            <label className="relative inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#33CC7A] hover:bg-[#2EB86E] text-[#202936] text-xs font-bold transition-all cursor-pointer shadow-xs">
               <Upload className="w-3.5 h-3.5" />
               <span>{isUploading ? `${uploadProgress}%` : 'Upload File'}</span>
               <input

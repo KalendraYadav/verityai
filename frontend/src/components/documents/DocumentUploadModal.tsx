@@ -553,7 +553,9 @@ export const DocumentUploadModal: React.FC<Props> = ({
                 </Button>
                 <Button
                   type="submit"
+                  variant="teal"
                   size="sm"
+                  className="btn-hover"
                   disabled={uploading || !file || !selectedAppId || !declaredType}
                 >
                   {uploading ? (

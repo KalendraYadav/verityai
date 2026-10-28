@@ -52,7 +52,7 @@ export const EntityLockerLogo: React.FC<Props> = ({
       </div>
 
       <div className="flex flex-col">
-        <div className={`font-bold tracking-tight text-[#171B45] leading-none ${textSizes[size]}`}>
+        <div className={`font-display font-bold tracking-tight text-[#171B45] leading-none ${textSizes[size]}`}>
           Entity<span className="text-[#7450D8]">Locker</span>
         </div>
         {showSubtitle && (
